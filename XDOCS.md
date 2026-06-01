@@ -8,6 +8,7 @@
   - [BRAINSTORM.md](BRAINSTORM.md): The brainstorming document for the project. Contains the vision, problem statement, and early design thinking for xdocs and its areas (code, work, startup).
   - [CHANGELOG.md](CHANGELOG.md): The changelog tracking released versions and what changed in each release.
   - [TECHNICAL.md](TECHNICAL.md): Technical notes and implementation details for the project.
+  - [ARCHITECTURE.md](ARCHITECTURE.md): Architecture and technical decisions for the project. Covers file format, CLI design, configuration schema, and all structural choices.
   - [TODO.md](TODO.md): The task list tracking outstanding work items for the project.
 
 ## Directories
