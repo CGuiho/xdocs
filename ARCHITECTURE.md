@@ -2,16 +2,12 @@
 
 This document contains all architectural and technical decisions for xdocs. It is the reference for implementation.
 
----
-
 ## 1. Naming
 
 - The canonical spelling is **xdocs** -- one word, no hyphen, no space, lowercase.
 - When used in a title or heading, capitalize as **XDocs**.
 - The npm package is `@guiho/xdocs`.
 - The CLI binary is `xdocs`.
-
----
 
 ## 2. File Conventions
 
@@ -24,6 +20,7 @@ Every project has exactly one root file: `XDOCS.md` (uppercase). This is the mai
 All other xdocs files throughout the project are named with a descriptive prefix and one of the configured extensions. The name describes the subject the file documents.
 
 Examples:
+
 - `authentication.xdocs.md`
 - `authorization-layer.xdocs.md`
 - `user.docs.md`
@@ -37,8 +34,6 @@ The default extensions recognized by xdocs are:
 - `.xdocs.md`
 
 Extensions are configurable in `xdocs.config.toml`. The user may add, remove, or replace extensions. For example, a user could configure `.md` to target every Markdown file, or `.txt` to include plain text files. Only files matching the configured extensions are discovered, processed, and matched by the CLI and agent skills.
-
----
 
 ## 3. File Structure
 
@@ -67,20 +62,20 @@ files:
 
 #### Required Metadata Fields
 
-| Field | Type | Description |
-|---|---|---|
-| `subject` | `string` | The name of this module/subject. Identifies what this file documents. |
-| `description` | `string` | A short description of this module. This is what the AI reads first to understand the module without reading the full body. Must be concise and informative enough on its own. |
-| `parent` | `string \| null` | The parent subject in the hierarchy. `null` for the root. |
-| `children` | `string[]` | The child subjects (submodules) contained within this module. Empty array if none. |
-| `files` | `map<string, string>` | The files in this directory. Each key is a filename, each value is a short description of what that file does. |
+| Field         | Type                  | Description                                                                                                                                                                    |
+| ------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `subject`     | `string`              | The name of this module/subject. Identifies what this file documents.                                                                                                          |
+| `description` | `string`              | A short description of this module. This is what the AI reads first to understand the module without reading the full body. Must be concise and informative enough on its own. |
+| `parent`      | `string \| null`      | The parent subject in the hierarchy. `null` for the root.                                                                                                                      |
+| `children`    | `string[]`            | The child subjects (submodules) contained within this module. Empty array if none.                                                                                             |
+| `files`       | `map<string, string>` | The files in this directory. Each key is a filename, each value is a short description of what that file does.                                                                 |
 
 #### Optional Metadata Fields
 
-| Field | Type | Description |
-|---|---|---|
-| `tags` | `string[]` | Tags for categorization and search. |
-| `status` | `string` | Status of the module (e.g., `active`, `deprecated`, `experimental`). |
+| Field    | Type       | Description                                                          |
+| -------- | ---------- | -------------------------------------------------------------------- |
+| `tags`   | `string[]` | Tags for categorization and search.                                  |
+| `status` | `string`   | Status of the module (e.g., `active`, `deprecated`, `experimental`). |
 
 ### 3.2 Body (Free-form Markdown)
 
@@ -93,8 +88,6 @@ Recommended (but not required) sections:
 - **Notes** -- implementation notes, caveats, or decisions
 
 The body is the user's space. Any shape, any content.
-
----
 
 ## 4. The Tree
 
@@ -137,8 +130,6 @@ When the CLI builds the tree, it validates:
 
 Violations are reported as warnings or errors depending on severity.
 
----
-
 ## 5. Configuration
 
 ### 5.1 File
@@ -172,8 +163,6 @@ exclude = ["node_modules", ".git", "dist", "build", "library", "bin", "bundle"]
 name = "my-project"
 ```
 
----
-
 ## 6. Discovery
 
 xdocs files are discovered by scanning every directory and subdirectory in the project for files matching the configured extensions. There is no registry, no manifest, no index file.
@@ -181,8 +170,6 @@ xdocs files are discovered by scanning every directory and subdirectory in the p
 The scan respects the `[scan].exclude` list to skip directories like `node_modules`, `.git`, and build outputs.
 
 The root `XDOCS.md` is always discovered regardless of extension configuration.
-
----
 
 ## 7. CLI
 
@@ -201,20 +188,20 @@ Distribution uses a **compiled binary with a thin JavaScript loader** pattern:
 
    Full target matrix:
 
-   | Target | OS | Arch | Variant |
-   |---|---|---|---|
-   | `bun-darwin-arm64` | macOS | ARM64 | -- |
-   | `bun-darwin-x64` | macOS | x64 | default |
-   | `bun-darwin-x64-modern` | macOS | x64 | modern |
-   | `bun-darwin-x64-baseline` | macOS | x64 | baseline |
-   | `bun-linux-arm64` | Linux | ARM64 | -- |
-   | `bun-linux-x64` | Linux | x64 | default |
-   | `bun-linux-x64-modern` | Linux | x64 | modern |
-   | `bun-linux-x64-baseline` | Linux | x64 | baseline |
-   | `bun-windows-arm64` | Windows | ARM64 | -- |
-   | `bun-windows-x64` | Windows | x64 | default |
-   | `bun-windows-x64-modern` | Windows | x64 | modern |
-   | `bun-windows-x64-baseline` | Windows | x64 | baseline |
+   | Target                     | OS      | Arch  | Variant  |
+   | -------------------------- | ------- | ----- | -------- |
+   | `bun-darwin-arm64`         | macOS   | ARM64 | --       |
+   | `bun-darwin-x64`           | macOS   | x64   | default  |
+   | `bun-darwin-x64-modern`    | macOS   | x64   | modern   |
+   | `bun-darwin-x64-baseline`  | macOS   | x64   | baseline |
+   | `bun-linux-arm64`          | Linux   | ARM64 | --       |
+   | `bun-linux-x64`            | Linux   | x64   | default  |
+   | `bun-linux-x64-modern`     | Linux   | x64   | modern   |
+   | `bun-linux-x64-baseline`   | Linux   | x64   | baseline |
+   | `bun-windows-arm64`        | Windows | ARM64 | --       |
+   | `bun-windows-x64`          | Windows | x64   | default  |
+   | `bun-windows-x64-modern`   | Windows | x64   | modern   |
+   | `bun-windows-x64-baseline` | Windows | x64   | baseline |
 
    This produces **12 binaries** per release. Users who see `"Illegal instruction"` errors on x64 platforms should use the baseline variant.
 
@@ -223,6 +210,7 @@ Distribution uses a **compiled binary with a thin JavaScript loader** pattern:
 3. Users who prefer a standalone binary can download it directly from releases.
 
 This approach means:
+
 - No runtime dependency on Bun or Node for end users.
 - Works with `npx`, `bunx`, or direct binary execution.
 - The heavy lifting is in the compiled binary; the JS loader is minimal.
@@ -304,8 +292,6 @@ Lists files in a given scope with descriptions.
 - `xdocs list ./path/to/module` -- lists every file in the module with a short description of its purpose (pulled from the `files` metadata field).
 - Useful as a quick inventory or manifest.
 
----
-
 ## 8. Agent Skills and Plugins
 
 ### 8.1 Agent Skills
@@ -322,18 +308,16 @@ xdocs ships agent skill files that teach AI agents how to work with xdocs. These
 
 Plugins are **generated configuration and skill files**, not code packages. Each AI tool has its own extension/instruction model:
 
-| Tool | Plugin Format |
-|---|---|
-| **OpenCode** | `SKILL.md` file installed in the skills directory |
-| **Claude Code** | `CLAUDE.md` file in the project root or `.claude/` directory |
-| **OpenAI Codex** | Instructions file in the tool's expected location |
-| **Google Jules** | Instructions file in the tool's expected location |
+| Tool             | Plugin Format                                                |
+| ---------------- | ------------------------------------------------------------ |
+| **OpenCode**     | `SKILL.md` file installed in the skills directory            |
+| **Claude Code**  | `CLAUDE.md` file in the project root or `.claude/` directory |
+| **OpenAI Codex** | Instructions file in the tool's expected location            |
+| **Google Jules** | Instructions file in the tool's expected location            |
 
 `xdocs init` generates the correct file for the user's chosen tool. Multiple tools can be supported simultaneously in the same project.
 
 The plugin files are generated once and committed to the repo. They instruct the AI on xdocs behavior and point it to the CLI for operations.
-
----
 
 ## 9. How AI Uses xdocs
 
@@ -346,8 +330,6 @@ The AI workflow with xdocs:
    - **Auto mode**: the AI updates the relevant xdocs files immediately.
 4. **On creating new modules**: the AI creates a new xdocs file with proper metadata (subject, parent, children, files, description).
 5. **On request**: the AI uses CLI commands (`xdocs generate`, `xdocs merge`, `xdocs tree`, etc.) to produce documentation artifacts.
-
----
 
 ## 10. Repository Structure
 
@@ -405,17 +387,15 @@ The AI workflow with xdocs:
   .vscode/                        # VS Code workspace settings
 ```
 
----
-
 ## 11. Technology Decisions
 
-| Decision | Choice | Rationale |
-|---|---|---|
-| Language | TypeScript | Type safety, existing codebase convention. |
-| Runtime | Bun | Project standard. All-in-one toolkit. |
-| File format | Markdown with YAML frontmatter | Human-readable, widely supported, parseable. |
-| Config format | TOML | Already used in the project (`xdocs.config.toml`). |
-| Distribution | Compiled binary + thin JS loader | Cross-platform without runtime dependencies. Works with npx/bunx. |
-| Metadata encoding | YAML frontmatter | Standard, supported by every Markdown parser and tool. |
-| Plugin model | Generated skill/config files | No code dependencies. Each tool reads its native instruction format. |
-| Tree structure | Hierarchy (parent-child) | Not a dependency graph. Containment only. |
+| Decision          | Choice                           | Rationale                                                            |
+| ----------------- | -------------------------------- | -------------------------------------------------------------------- |
+| Language          | TypeScript                       | Type safety, existing codebase convention.                           |
+| Runtime           | Bun                              | Project standard. All-in-one toolkit.                                |
+| File format       | Markdown with YAML frontmatter   | Human-readable, widely supported, parseable.                         |
+| Config format     | TOML                             | Already used in the project (`xdocs.config.toml`).                   |
+| Distribution      | Compiled binary + thin JS loader | Cross-platform without runtime dependencies. Works with npx/bunx.    |
+| Metadata encoding | YAML frontmatter                 | Standard, supported by every Markdown parser and tool.               |
+| Plugin model      | Generated skill/config files     | No code dependencies. Each tool reads its native instruction format. |
+| Tree structure    | Hierarchy (parent-child)         | Not a dependency graph. Containment only.                            |
