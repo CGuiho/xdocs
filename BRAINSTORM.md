@@ -144,7 +144,7 @@ The generate command produces a complete, self-contained document for whatever s
 
 #### `xdocs prompt`
 
-Outputs ready-made prompts for AI agents. Each prompt is tailored to a specific xdocs task. The CLI assembles the prompt, but it is the AI that executes it. All commands receive flags to modify behavior; the prompt command uses flags or subcommands to select the specific prompt.
+Outputs ready-made prompts for AI agents. Each prompt is tailored to a specific xdocs task. The CLI assembles the prompt, but it is the AI that executes it. Prompts are selected via the `--name` flag (not subcommands) to avoid ambiguity where prompt names look like verbs. Both `--name=value` and `--name value` forms are supported.
 
 Prompts include (not exhaustive):
 
