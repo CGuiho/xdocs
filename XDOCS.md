@@ -9,4 +9,5 @@
   - [ARCHITECTURE.md](ARCHITECTURE.md)
   - [CHANGELOG.md](CHANGELOG.md)
   - [TECHNICAL.md](TECHNICAL.md)
+  - [MEMORY.md](MEMORY.md)
   
