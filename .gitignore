@@ -1,0 +1,15 @@
+
+# Environment-related
+*.env
+
+# Application-related
+**/.temp/
+**/build/
+**/dist/
+**/node_modules/
+
+
+# Library-related
+**/library/
+**/bundle/
+**/bin/
