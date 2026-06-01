@@ -1,5 +1,6 @@
 # Repository Notes
 
+- `xdocs` is almost always written lowercase (CLI, code, text). Only capitalize as `XDocs` when used in a title or heading.
 - The real package lives in `xdocs/`; run package commands there unless editing root docs or `ci/`.
 - `@guiho40/xdocs` is a Bun/TypeScript ESM CLI/library. The library entrypoint is `xdocs/source/guiho-xdocs.ts` and the CLI entrypoint is `xdocs/source/guiho-xdocs-bin.ts`; `tsc` emits `xdocs/library/` for `main`/`types`, and Bun compiles `xdocs/bin/` for the CLI binary.
 - New library entrypoints must use the full library name instead of generic `index.ts` files. For XDocs v3, use `guiho-xdocs.ts`.
