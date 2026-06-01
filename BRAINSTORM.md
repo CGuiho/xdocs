@@ -142,13 +142,43 @@ Generates documentation. This is a versatile command that works at different sco
 
 The generate command produces a complete, self-contained document for whatever scope it targets.
 
+#### `xdocs prompt`
+
+Outputs ready-made prompts for AI agents. Each prompt is tailored to a specific xdocs task. The CLI assembles the prompt, but it is the AI that executes it. All commands receive flags to modify behavior; the prompt command uses flags or subcommands to select the specific prompt.
+
+Prompts include (not exhaustive):
+
+- **Write documentation** -- instructs the AI on how to scan a directory and write xdocs documentation for it
+- **Update documentation** -- instructs the AI to update existing xdocs files after code has changed
+- **Update AGENTS.md** -- instructs the AI to update the AGENTS.md file with xdocs instructions
+- **Generate full docs** -- instructs the AI to generate comprehensive documentation for a specific domain or the whole project
+
+There will be many prompts, one for each individual task. The prompt command is the collection of all of them.
+
+#### `xdocs merge`
+
+Merges xdocs files from a specific domain or directory into a single file. Given a domain, it takes all the xdocs files within it and produces one consolidated document with everything merged together.
+
+#### `xdocs tree`
+
+Generates a tree view of the project hierarchy. Similar to merge, but instead of merging file contents, it produces a structural tree with references between modules. It does not list individual files -- it shows the module hierarchy and how modules relate to each other in the parent-child structure.
+
+#### `xdocs list`
+
+Lists the files that exist in a given scope with an explanation of what each file is for. For example, running it on a directory would produce a list of every file with a short description of its purpose. This is useful as a quick inventory, similar to what you would put in an `lnms.txt` or a file manifest.
+
+#### More commands
+
+There will be more CLI commands as the design evolves. All commands accept flags to modify their behavior.
+
 ### Key Design Considerations
 
 These are open questions to be resolved as the design evolves:
 
 - What is the schema or structure within an xdocs Markdown file? (headings, sections, metadata)
-- What additional CLI commands are needed? (e.g., tree, validate, diff, update)
 - How does the tree get rendered? (CLI output, generated Markdown, or both)
 - What does the `xdocs.config.toml` schema look like in detail?
 - What does the agent skill contain and how does it instruct the AI to behave?
 - What are the default skill installation locations to support across tools?
+- What is the full catalog of prompts the prompt command should ship?
+- How do plugins integrate with each AI tool's extension model?
