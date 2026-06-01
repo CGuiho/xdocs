@@ -349,32 +349,48 @@ The AI workflow with xdocs:
 
 ---
 
-## 10. Project Structure
+## 10. Repository Structure
 
 ```
-xdocs/                          # npm package directory
-  source/
-    guiho-xdocs.ts              # library entrypoint
-    guiho-xdocs-bin.ts          # CLI entrypoint
-    commands/
-      init.ts
-      scan.ts
-      generate.ts
-      prompt.ts
-      merge.ts
-      tree.ts
-      list.ts
-    core/
-      config.ts                 # config loading and validation
-      discovery.ts              # filesystem scanning and matching
-      metadata.ts               # YAML frontmatter parsing and validation
-      tree.ts                   # tree assembly and integrity checks
-    prompts/
-      write.ts
-      update.ts
-      agents.ts
-      generate.ts
-  skills/                       # agent skill templates
+/                                 # repository root
+  XDOCS.md                        # root xdocs file for the project
+  ARCHITECTURE.md                 # this file
+  BRAINSTORM.md                   # brainstorming and vision
+  AGENTS.md                       # AI agent instructions
+  README.md                       # public-facing README
+  CHANGELOG.md                    # release changelog
+  TECHNICAL.md                    # technical notes
+  TODO.md                         # task list
+  xdocs/                          # npm package directory
+    package.json
+    tsconfig.json
+    tsconfig.build.json
+    jsr.json
+    .npmrc
+    source/
+      guiho-xdocs.ts              # library entrypoint
+      guiho-xdocs-bin.ts          # CLI entrypoint
+      commands/
+        init.ts
+        scan.ts
+        generate.ts
+        prompt.ts
+        merge.ts
+        tree.ts
+        list.ts
+      core/
+        config.ts                 # config loading and validation
+        discovery.ts              # filesystem scanning and matching
+        metadata.ts               # YAML frontmatter parsing and validation
+        tree.ts                   # tree assembly and integrity checks
+      prompts/
+        write.ts
+        update.ts
+        agents.ts
+        generate.ts
+    library/                      # tsc output (ignored)
+    bin/                          # compiled binaries (ignored)
+  skills/                         # agent skill templates (same level as xdocs/)
     opencode/
       SKILL.md
     claude/
@@ -383,10 +399,10 @@ xdocs/                          # npm package directory
       ...
     jules/
       ...
-  library/                      # tsc output (ignored)
-  bin/                          # compiled binaries (ignored)
-  package.json
-  tsconfig.json
+  docs/                           # documentation (reserved)
+  devops/                         # devops configuration
+  .github/                        # GitHub workflows and config
+  .vscode/                        # VS Code workspace settings
 ```
 
 ---
