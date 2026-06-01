@@ -106,16 +106,49 @@ The tree is generated from the xdocs files and their references to each other. I
 
 ### What xdocs Delivers
 
-xdocs ships two things:
+xdocs ships three things:
 
-1. **A CLI** -- the command-line tool with actions for initializing configuration, scanning the project, generating the tree, and other operations. The AI uses the CLI to perform xdocs operations.
+1. **A CLI** -- a cross-platform command-line tool with actions for initializing configuration, scanning the project, generating the tree, and other operations. The CLI must work on macOS, Linux, and Windows.
 2. **Agent skills** -- documentation and instructions that teach AI agents how to work with xdocs, when to use the CLI, and how to maintain xdocs files as part of their workflow.
+3. **Plugins** -- native integrations for AI coding tools so that xdocs works seamlessly within each tool's ecosystem. Target plugins:
+   - Claude Code
+   - OpenAI Codex
+   - Google Jules
+   - OpenCode
+
+### CLI
+
+The xdocs CLI is the primary interface for both humans and AI to interact with xdocs. The AI uses the CLI to perform xdocs operations.
+
+#### `xdocs init`
+
+Initializes xdocs in a project. This command:
+
+- Creates a root `XDOCS.md` file for the project
+- Creates an `xdocs.config.toml` configuration file with defaults
+- Updates the project's `AGENTS.md` file to include instructions for AI agents to use xdocs
+- Installs the xdocs agent skills into the repository (or prompts the user to choose where to place them, since there are default locations supported by many tools)
+
+#### `xdocs scan`
+
+Scans every directory and subdirectory in the project for files matching the configured extensions. Reports what xdocs files exist, where they are, and which directories are missing documentation.
+
+#### `xdocs generate`
+
+Generates documentation. This is a versatile command that works at different scopes:
+
+- **Directory/module scope** -- when run on a directory, it scans all the files in that directory and its subdirectories, then generates a comprehensive xdocs file describing the whole module. The generated file includes information about the files, their purpose, and the submodules contained within.
+- **Project scope** -- when run at the project level, it scans the entire project and generates a single `.md` file with the complete description of everything: all modules, all files, the full hierarchy, and how it all fits together.
+
+The generate command produces a complete, self-contained document for whatever scope it targets.
 
 ### Key Design Considerations
 
 These are open questions to be resolved as the design evolves:
 
 - What is the schema or structure within an xdocs Markdown file? (headings, sections, metadata)
-- What CLI commands are needed beyond init and scan?
+- What additional CLI commands are needed? (e.g., tree, validate, diff, update)
 - How does the tree get rendered? (CLI output, generated Markdown, or both)
 - What does the `xdocs.config.toml` schema look like in detail?
+- What does the agent skill contain and how does it instruct the AI to behave?
+- What are the default skill installation locations to support across tools?
