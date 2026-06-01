@@ -264,12 +264,21 @@ Outputs ready-made prompts for AI agents.
 
 Each prompt is a self-contained instruction for the AI to execute a specific xdocs task. The CLI assembles the prompt with the relevant context (paths, config, current state); the AI executes it.
 
-Subcommands / flags select the prompt:
+Prompts are selected by a **flag**, not by subcommand. This avoids ambiguity where prompt names look like verbs (e.g., `xdocs prompt update` could be misread as "update the prompt" rather than "give me the prompt for updating docs").
 
-- `xdocs prompt write` -- how to scan a directory and write xdocs documentation for it.
-- `xdocs prompt update` -- how to update existing xdocs files after code changes.
-- `xdocs prompt agents` -- how to update AGENTS.md with xdocs instructions.
-- `xdocs prompt generate` -- how to generate comprehensive documentation for a domain or the full project.
+Both flag styles are supported:
+
+```
+xdocs prompt --name=write
+xdocs prompt --name write
+```
+
+Available prompts:
+
+- `--name=write` -- how to scan a directory and write xdocs documentation for it.
+- `--name=update` -- how to update existing xdocs files after code changes.
+- `--name=agents` -- how to update AGENTS.md with xdocs instructions.
+- `--name=generate` -- how to generate comprehensive documentation for a domain or the full project.
 
 More prompts will be added. Each task gets its own prompt.
 
