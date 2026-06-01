@@ -4,7 +4,7 @@
 
 xdocs is a way of describing things. It is a structured documentation system that makes complex projects understandable without requiring someone (human or AI) to read every file and piece things together manually.
 
-The canonical spelling is **xdocs** -- one word, no hyphen, no space, lowercase.
+The canonical spelling is **xdocs** -- one word, no hyphen, no space, lowercase. When used in a title or heading, capitalize as **XDocs**.
 
 ## Vision
 
@@ -64,14 +64,58 @@ With xdocs, each of these directories would have an xdocs file that makes the st
 
 The primary goal of xdocs code is to **help AI make sense of the codebase and use it effectively**. The xdocs files are the structured context that AI agents need to navigate, understand, and work within a project without guessing or reading everything.
 
+### File Format
+
+xdocs files are Markdown. A file is recognized as an xdocs file if it ends with one of the configured extensions. The default extensions are:
+
+- `.docs.md`
+- `.xdocs.md`
+
+Extensions are configurable. The user may add or replace extensions in the configuration. For example, a user could configure `.md` to target every Markdown file, or even `.txt` files. The defaults above cover the typical case.
+
+### Who Writes xdocs Files
+
+xdocs files are written by AI. When AI writes or modifies code, it also writes or updates the corresponding xdocs documentation. The human does not need to manually maintain these files.
+
+### Configuration
+
+xdocs is configurable through an `xdocs.config.toml` file at the project root. The configuration controls:
+
+- **Extensions** -- which file extensions are recognized as xdocs files (default: `.docs.md`, `.xdocs.md`)
+- **AI behavior** -- how the AI handles documentation updates when the codebase changes. Two modes:
+  - **Prompt mode** -- the AI detects that documentation needs to be generated or updated, announces it to the user, and waits for the user to prompt it to proceed
+  - **Auto mode** -- the AI automatically updates documentation whenever there is a change or a new addition that requires it, without waiting for user confirmation
+
+### Discovery
+
+xdocs files are discovered by scanning every directory and subdirectory in the project for files matching the configured extensions. There is no registry or manifest. The filesystem is the source of truth.
+
+### References Between xdocs Files
+
+xdocs files reference each other. This is fundamental to the system. Each file knows its parent and its children, and through these references, the full project structure is navigable.
+
+### The Tree
+
+The tree is a crucial part of xdocs. It is the hierarchy of the project.
+
+Files in a project are not thrown randomly into directories. Every module serves a purpose. Every piece of code was created to do something, and every piece of code is used in another part of the application. The tree makes this explicit.
+
+The tree represents **hierarchy, not connections**. It shows containment: this is inside this, which is inside this, which is inside this. It is a parent-child structure, not a graph of relationships or dependencies.
+
+The tree is generated from the xdocs files and their references to each other. It provides a complete, navigable view of the project's module hierarchy from root to leaf.
+
+### What xdocs Delivers
+
+xdocs ships two things:
+
+1. **A CLI** -- the command-line tool with actions for initializing configuration, scanning the project, generating the tree, and other operations. The AI uses the CLI to perform xdocs operations.
+2. **Agent skills** -- documentation and instructions that teach AI agents how to work with xdocs, when to use the CLI, and how to maintain xdocs files as part of their workflow.
+
 ### Key Design Considerations
 
-These are open questions and decisions to be made as the design evolves:
+These are open questions to be resolved as the design evolves:
 
-- What is the file format of an xdocs file? (Markdown, TOML, JSON, YAML, or a custom format)
-- What is the naming convention? (e.g., `XDOCS.md`, `xdocs.toml`, `.xdocs`)
-- How are xdocs files generated? (manually written, CLI-assisted, AI-generated, or a combination)
-- How are xdocs files kept in sync when the codebase changes?
-- What is the schema or structure within an xdocs file?
-- How does an AI agent discover and traverse xdocs files across a project?
-- Should xdocs files reference each other (e.g., links between parent and child)?
+- What is the schema or structure within an xdocs Markdown file? (headings, sections, metadata)
+- What CLI commands are needed beyond init and scan?
+- How does the tree get rendered? (CLI output, generated Markdown, or both)
+- What does the `xdocs.config.toml` schema look like in detail?
