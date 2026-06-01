@@ -192,13 +192,31 @@ The CLI is built with **Bun and TypeScript**.
 
 Distribution uses a **compiled binary with a thin JavaScript loader** pattern:
 
-1. The core CLI is compiled to platform-specific binaries using `bun build --compile` for every supported target:
-   - macOS ARM (`darwin-arm64`)
-   - macOS x86 (`darwin-x64`)
-   - Linux ARM (`linux-arm64`)
-   - Linux x86 (`linux-x64`)
-   - Windows ARM (`windows-arm64`)
-   - Windows x86 (`windows-x64`)
+1. The core CLI is compiled to platform-specific binaries using `bun build --compile` for every supported target. On x64 platforms, Bun provides three variants:
+   - **default** -- standard build, equivalent to modern
+   - **modern** -- targets CPUs from 2013+ (Haswell) with AVX2 instructions, faster
+   - **baseline** -- targets older CPUs (Nehalem, pre-2013), broader compatibility
+
+   ARM platforms do not have the baseline/modern distinction.
+
+   Full target matrix:
+
+   | Target | OS | Arch | Variant |
+   |---|---|---|---|
+   | `bun-darwin-arm64` | macOS | ARM64 | -- |
+   | `bun-darwin-x64` | macOS | x64 | default |
+   | `bun-darwin-x64-modern` | macOS | x64 | modern |
+   | `bun-darwin-x64-baseline` | macOS | x64 | baseline |
+   | `bun-linux-arm64` | Linux | ARM64 | -- |
+   | `bun-linux-x64` | Linux | x64 | default |
+   | `bun-linux-x64-modern` | Linux | x64 | modern |
+   | `bun-linux-x64-baseline` | Linux | x64 | baseline |
+   | `bun-windows-arm64` | Windows | ARM64 | -- |
+   | `bun-windows-x64` | Windows | x64 | default |
+   | `bun-windows-x64-modern` | Windows | x64 | modern |
+   | `bun-windows-x64-baseline` | Windows | x64 | baseline |
+
+   This produces **12 binaries** per release. Users who see `"Illegal instruction"` errors on x64 platforms should use the baseline variant.
 
 2. The npm package contains a thin JavaScript entry point that detects the current platform and architecture, loads the correct binary, and executes it. This allows the CLI to be run via `npx xdocs` or `bunx xdocs` without requiring Bun to be installed, and without forcing users to install a specific binary manually.
 
