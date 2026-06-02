@@ -23,9 +23,6 @@
     "LICENSE.md",
     "docs.md"
   ],
-  "engines": {
-    "node": ">=20"
-  },
   "keywords": [
     "ai",
     "bun",
@@ -70,10 +67,10 @@
   },
   "dependencies": {
     "smol-toml": "^1.6.1",
-    "yaml": "^2.8.0"
+    "yaml": "^2.9.0"
   },
   "devDependencies": {
-    "@types/bun": "1.3.3",
-    "typescript": "5.8.2"
+    "@types/bun": "1.3.14",
+    "typescript": "6.0.3"
   }
 }
