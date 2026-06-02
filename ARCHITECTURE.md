@@ -58,6 +58,7 @@ files:
   - reset-password.ts: Handles password reset flow via email link.
   - session.ts: Manages session creation, validation, and expiration.
 tags: []
+flags: []
 ---
 ```
 
@@ -71,6 +72,7 @@ tags: []
 | `children`    | `string[]`            | The child subjects (submodules) contained within this module. Empty array if none.                                                                                             |
 | `files`       | `map<string, string>` | The files in this directory. Each key is a filename, each value is a short description of what that file does.                                                                 |
 | `tags`        | `string[]`            | A list of tags for categorization and search. Most of the time this will be empty (`[]`).                                                                                      |
+| `flags`       | `string[]`            | A list of flags for marking attributes or states. Most of the time this will be empty (`[]`).                                                                                  |
 
 #### Optional Metadata Fields
 
