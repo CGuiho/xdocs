@@ -10,6 +10,7 @@
   - [TECHNICAL.md](TECHNICAL.md): Technical notes and implementation details for the project.
   - [ARCHITECTURE.md](ARCHITECTURE.md): Architecture and technical decisions for the project. Covers file format, CLI design, configuration schema, and all structural choices.
   - [TODO.md](TODO.md): The task list tracking outstanding work items for the project.
+  - [DESCRIPTION.md](DESCRIPTION.md): The full description of the project.
 
 ## Directories
   - [xdocs/](xdocs/): The actual package directory. Contains the source code, configuration, and build outputs for the `@guiho40/xdocs` CLI and library.
