@@ -2,128 +2,113 @@
  * @copyright Copyright (c) 2026 GUIHO Technologies as represented by Cristóvão GUIHO. All Rights Reserved.
  */
 
-import type { ReleaseType } from 'semver'
+/** Supported output formats for CLI commands. */
+export type XDocsFormat = 'text' | 'json' | 'markdown'
 
-export type MirrorAdapterName = 'package.json' | 'jsr.json' | 'git'
-export type MirrorProjectNameSource = 'package.json' | 'jsr.json'
-export type MirrorFormat = 'text' | 'json'
-export type MirrorVersionTarget = ReleaseType | string
-export type MirrorJsonObject = Record<string, unknown>
+/** AI behavior mode for documentation updates. */
+export type XDocsAiMode = 'prompt' | 'auto'
 
-export type MirrorRawConfig = Partial<{
+/** Command names recognized by the CLI. */
+export type XDocsCommand = 'init' | 'scan' | 'generate' | 'prompt' | 'merge' | 'tree' | 'list'
+
+/** Raw configuration as parsed from xdocs.config.toml. */
+export type XDocsRawConfig = Partial<{
   schema: number
+  extensions: Partial<{
+    supported: string[]
+  }>
+  ai: Partial<{
+    mode: string
+  }>
+  scan: Partial<{
+    exclude: string[]
+  }>
   project: Partial<{
     name: string
-    name_source: MirrorProjectNameSource
-  }>
-  version: Partial<{
-    scheme: 'semver'
-    source: MirrorAdapterName
-    output: MirrorAdapterName[]
-    prerelease_id: string
-  }>
-  package: Partial<{ path: string }>
-  jsr: Partial<{ path: string }>
-  git: Partial<{
-    tag_template: string
-    commit: boolean
-    push: boolean
-    allow_dirty: boolean
   }>
 }>
 
-export type MirrorConfig = {
+/** Normalized, validated configuration. */
+export type XDocsConfig = {
   schema: 1
   cwd: string
   configPath?: string
+  extensions: {
+    supported: string[]
+  }
+  ai: {
+    mode: XDocsAiMode
+  }
+  scan: {
+    exclude: string[]
+  }
   project: {
-    name?: string
-    nameSource?: MirrorProjectNameSource
-  }
-  version: {
-    scheme: 'semver'
-    source: MirrorAdapterName
-    output: MirrorAdapterName[]
-    prereleaseId: string
-  }
-  package: { path: string }
-  jsr: { path: string }
-  git: {
-    tagTemplate: string
-    commit: boolean
-    push: boolean
-    allowDirty: boolean
+    name: string
   }
 }
 
-export type MirrorCliOptions = {
-  cwd?: string
-  config?: string
-  format?: MirrorFormat
-  noColor?: boolean
-  source?: MirrorAdapterName
-  output?: MirrorAdapterName[]
-  packageFile?: string
-  jsrFile?: string
-  preid?: string
-  dryRun?: boolean
-  commit?: boolean
-  push?: boolean
-  allowDirty?: boolean
-  yes?: boolean
-  verbose?: boolean
+/** YAML frontmatter metadata from an xdocs file. */
+export type XDocsMetadata = {
+  subject: string
+  description: string
+  parent: string | null
+  children: string[]
+  files: Record<string, string>
+  tags: string[]
+  flags: string[]
+  status?: string
 }
 
-export type MirrorConfigDiscovery = {
-  path?: string
-  raw?: MirrorRawConfig
+/** A discovered xdocs file with its path and parsed metadata. */
+export type XDocsFile = {
+  path: string
+  relativePath: string
+  directory: string
+  metadata: XDocsMetadata | null
+  body: string
+  valid: boolean
+  errors: string[]
 }
 
-export type MirrorProject = {
-  name?: string
+/** A node in the xdocs hierarchy tree. */
+export type XDocsTreeNode = {
+  subject: string
+  description: string
+  path: string | null
+  children: XDocsTreeNode[]
 }
 
-export type MirrorVersionPlanAction =
-  | {
-      type: 'write-file'
-      adapter: 'package.json' | 'jsr.json'
-      path: string
-      currentVersion: string
-      nextVersion: string
-    }
-  | {
-      type: 'git-commit'
-      message: string
-      paths: string[]
-    }
-  | {
-      type: 'git-tag'
-      tag: string
-    }
-  | {
-      type: 'git-push'
-      includeCommit: boolean
-      includeTags: boolean
-    }
+/** Result of a tree integrity check. */
+export type XDocsTreeValidation = {
+  valid: boolean
+  warnings: string[]
+  errors: string[]
+}
 
-export type MirrorVersionPlan = {
+/** Parsed CLI arguments. */
+export type XDocsParsedArgs = {
+  command: string | undefined
+  positionals: string[]
+  flags: Record<string, string | boolean | string[]>
+}
+
+/** Options passed through the CLI to command handlers. */
+export type XDocsCliOptions = {
   cwd: string
-  configPath?: string
-  source: MirrorAdapterName
-  output: MirrorAdapterName[]
-  currentVersion: string
-  nextVersion: string
-  project: MirrorProject
-  commitEnabled: boolean
-  pushEnabled: boolean
-  allowDirty: boolean
-  fileOutputPaths: string[]
-  gitTag?: string
-  actions: MirrorVersionPlanAction[]
+  config?: string
+  format: XDocsFormat
+  verbose: boolean
 }
 
-export type MirrorExecutionResult = {
-  plan: MirrorVersionPlan
-  applied: boolean
-  dryRun: boolean
+/** Scan result for a single directory. */
+export type XDocsScanResult = {
+  totalFiles: number
+  totalDirectories: number
+  coveredDirectories: number
+  uncoveredDirectories: number
+  xdocsFiles: XDocsFile[]
+  uncoveredPaths: string[]
 }
+
+/** Available prompt names for xdocs prompt --name. */
+export type XDocsPromptName = 'write' | 'update' | 'agents' | 'generate'
