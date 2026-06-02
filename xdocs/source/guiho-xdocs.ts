@@ -15,6 +15,7 @@ export type {
   XDocsFormat,
   XDocsMetadata,
   XDocsParsedArgs,
+  XDocsPrompt,
   XDocsPromptName,
   XDocsRawConfig,
   XDocsScanResult,
@@ -48,6 +49,9 @@ export { buildTree, renderTree, renderTreeMarkdown, validateTree } from './tree.
 
 // Help
 export { readPackageVersion, showCommandHelp, showHelp, showVersion } from './help.js'
+
+// Prompts
+export { getPrompt, getPromptNames, prompts } from './prompts.js'
 
 // CLI
 export { runCli, runCliWithErrorHandling } from './cli.js'
