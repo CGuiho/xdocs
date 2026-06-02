@@ -2,84 +2,119 @@
  * @copyright Copyright (c) 2026 GUIHO Technologies as represented by Cristóvão GUIHO. All Rights Reserved.
  */
 
-import type { MirrorAdapterName, MirrorCliOptions, MirrorFormat } from './types.js'
-import { MirrorError } from './errors.js'
+import type { XDocsParsedArgs } from './types.js'
+import { XDocsError } from './errors.js'
 
-const booleanFlags = new Set(['dry-run', 'commit', 'push', 'allow-dirty', 'yes', 'no-color', 'verbose', 'help', 'version'])
-const adapterNames = new Set(['package.json', 'jsr.json', 'git'])
+const booleanFlags = new Set([
+  'help',
+  'version',
+  'verbose',
+])
 
-const shortFlagAliases: Record<string, string> = {
-  '-dy': '--dry-run',
-  '-y': '--yes',
+const shortFlagMap: Record<string, string> = {
+  '-h': '--help',
+  '-v': '--version',
 }
 
-const normalizeKey = (key: string) => key.replace(/-([a-z])/g, (_match, letter: string) => letter.toUpperCase())
+const listFlags = new Set([
+  'extensions',
+  'exclude',
+])
 
-const expandShortFlags = (rawArgs: string[]) => rawArgs.map((token) => shortFlagAliases[token] ?? token)
-
-export const parseMirrorCliOptions = (rawArgs: string[]): MirrorCliOptions => {
-  const parsed: Record<string, string | boolean | string[]> = {}
+/**
+ * Parse raw CLI arguments into a structured object.
+ *
+ * Supports:
+ * - Commands as the first non-flag token: `xdocs scan`
+ * - Long flags with value: `--name=write` or `--name write`
+ * - Long boolean flags: `--verbose`
+ * - Short flags: `-h`, `-v`
+ * - List values as comma-separated: `--extensions=.docs.md,.xdocs.md`
+ * - Positional arguments after the command
+ */
+export const parseArgs = (rawArgs: string[]): XDocsParsedArgs => {
   const args = expandShortFlags(rawArgs)
+  const flags: Record<string, string | boolean | string[]> = {}
+  const positionals: string[] = []
+  let command: string | undefined
 
   for (let index = 0; index < args.length; index += 1) {
     const token = args[index]
 
-    if (!token?.startsWith('--')) continue
+    if (token === undefined) continue
 
-    const withoutPrefix = token.slice(2)
-    const equalsIndex = withoutPrefix.indexOf('=')
-    const rawKey = equalsIndex >= 0 ? withoutPrefix.slice(0, equalsIndex) : withoutPrefix
-    const key = normalizeKey(rawKey)
+    if (token === '--') {
+      positionals.push(...args.slice(index + 1).filter((a): a is string => a !== undefined))
+      break
+    }
 
-    if (booleanFlags.has(rawKey)) {
-      parsed[key] = true
+    if (token.startsWith('--')) {
+      const withoutPrefix = token.slice(2)
+      const equalsIndex = withoutPrefix.indexOf('=')
+      const rawKey = equalsIndex >= 0 ? withoutPrefix.slice(0, equalsIndex) : withoutPrefix
+
+      if (booleanFlags.has(rawKey)) {
+        flags[normalizeKey(rawKey)] = true
+        continue
+      }
+
+      const value =
+        equalsIndex >= 0
+          ? withoutPrefix.slice(equalsIndex + 1)
+          : (args[index + 1] !== undefined && !args[index + 1]?.startsWith('-'))
+            ? args[++index] ?? ''
+            : ''
+
+      if (!value) throw new XDocsError(`Missing value for --${rawKey}`)
+
+      const key = normalizeKey(rawKey)
+
+      if (listFlags.has(rawKey)) {
+        const values = value.split(',').filter(Boolean)
+        const current = flags[key]
+        flags[key] = [...(Array.isArray(current) ? current : []), ...values]
+        continue
+      }
+
+      flags[key] = value
       continue
     }
 
-    const value =
-      equalsIndex >= 0
-        ? withoutPrefix.slice(equalsIndex + 1)
-        : args[index + 1] && !args[index + 1]?.startsWith('-')
-        ? args[++index] ?? ''
-        : ''
-
-    if (!value) throw new MirrorError(`Missing value for --${rawKey}`)
-
-    if (key === 'output') {
-      const nextValues = value.split(',').map((item) => item.trim()).filter(Boolean)
-      const current = parsed['output']
-      parsed['output'] = [...(Array.isArray(current) ? current : current ? [String(current)] : []), ...nextValues]
-      continue
+    if (token.startsWith('-') && token.length > 1) {
+      throw new XDocsError(`Unknown short flag: ${token}`)
     }
 
-    parsed[key] = value
+    if (command === undefined) {
+      command = token
+    } else {
+      positionals.push(token)
+    }
   }
 
-  return {
-    cwd: typeof parsed['cwd'] === 'string' ? parsed['cwd'] : undefined,
-    config: typeof parsed['config'] === 'string' ? parsed['config'] : undefined,
-    format: typeof parsed['format'] === 'string' ? assertFormat(parsed['format']) : undefined,
-    noColor: parsed['noColor'] === true,
-    source: typeof parsed['source'] === 'string' ? assertAdapter(parsed['source'], '--source') : undefined,
-    output: Array.isArray(parsed['output']) ? parsed['output'].map((value) => assertAdapter(value, '--output')) : undefined,
-    packageFile: typeof parsed['packageFile'] === 'string' ? parsed['packageFile'] : undefined,
-    jsrFile: typeof parsed['jsrFile'] === 'string' ? parsed['jsrFile'] : undefined,
-    preid: typeof parsed['preid'] === 'string' ? parsed['preid'] : undefined,
-    dryRun: parsed['dryRun'] === true,
-    commit: parsed['commit'] === true,
-    push: parsed['push'] === true,
-    allowDirty: parsed['allowDirty'] === true,
-    yes: parsed['yes'] === true,
-    verbose: parsed['verbose'] === true,
-  }
+  return { command, positionals, flags }
 }
 
-const assertAdapter = (value: string, flagName: string): MirrorAdapterName => {
-  if (!adapterNames.has(value)) throw new MirrorError(`Invalid ${flagName} value: ${value}`)
-  return value as MirrorAdapterName
+/** Convert kebab-case to camelCase. */
+const normalizeKey = (key: string) =>
+  key.replace(/-([a-z])/g, (_match, letter: string) => letter.toUpperCase())
+
+/** Expand short flags like -h to --help. */
+const expandShortFlags = (rawArgs: string[]) =>
+  rawArgs.map((token) => shortFlagMap[token] ?? token)
+
+/** Extract a string flag value or undefined. */
+export const stringFlag = (flags: Record<string, string | boolean | string[]>, key: string): string | undefined => {
+  const value = flags[key]
+  return typeof value === 'string' ? value : undefined
 }
 
-const assertFormat = (value: string): MirrorFormat => {
-  if (value !== 'text' && value !== 'json') throw new MirrorError(`Invalid --format value: ${value}`)
-  return value
+/** Extract a boolean flag value. */
+export const booleanFlag = (flags: Record<string, string | boolean | string[]>, key: string): boolean => {
+  return flags[key] === true
+}
+
+/** Extract a list flag value or undefined. */
+export const listFlag = (flags: Record<string, string | boolean | string[]>, key: string): string[] | undefined => {
+  const value = flags[key]
+  return Array.isArray(value) ? value : undefined
 }
