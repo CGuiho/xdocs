@@ -4,230 +4,149 @@
 
 import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
-import { basename, isAbsolute, join, relative, resolve } from 'node:path'
+import { basename, isAbsolute, resolve } from 'node:path'
 import { parse as parseToml } from 'smol-toml'
-import type {
-  MirrorAdapterName,
-  MirrorCliOptions,
-  MirrorConfig,
-  MirrorConfigDiscovery,
-  MirrorProjectNameSource,
-  MirrorRawConfig,
-} from './types.js'
-import { MirrorError } from './errors.js'
+import type { XDocsAiMode, XDocsCliOptions, XDocsConfig, XDocsRawConfig } from './types.js'
+import { XDocsError } from './errors.js'
 
-const adapters = new Set(['package.json', 'jsr.json', 'git'])
-const projectNameSources = new Set(['package.json', 'jsr.json'])
+const DEFAULT_EXTENSIONS = ['.docs.md', '.xdocs.md']
+const DEFAULT_EXCLUDE = ['node_modules', '.git', 'dist', 'build', 'library', 'bin', 'bundle']
+const DEFAULT_AI_MODE: XDocsAiMode = 'prompt'
+const CONFIG_FILENAME = 'xdocs.config.toml'
 
-export const resolveMirrorPath = (cwd: string, path: string) => (isAbsolute(path) ? path : resolve(cwd, path))
-
-export const relativeFromCwd = (cwd: string, path: string) => {
-  const relativePath = relative(cwd, resolveMirrorPath(cwd, path))
-  return relativePath || '.'
-}
-
-export const discoverMirrorConfig = async (cwd: string, explicitPath?: string): Promise<MirrorConfigDiscovery> => {
+/** Discover the xdocs.config.toml file. */
+export const discoverConfig = async (cwd: string, explicitPath?: string): Promise<{ path?: string, raw?: XDocsRawConfig }> => {
   if (explicitPath) {
-    const configPath = resolveMirrorPath(cwd, explicitPath)
+    const configPath = resolvePath(cwd, explicitPath)
     return { path: configPath, raw: await readConfigFile(configPath) }
   }
 
-  const rootConfigPath = resolve(cwd, 'mirror.config.toml')
-  if (existsSync(rootConfigPath)) return { path: rootConfigPath, raw: await readConfigFile(rootConfigPath) }
+  const rootPath = resolve(cwd, CONFIG_FILENAME)
+  if (existsSync(rootPath)) return { path: rootPath, raw: await readConfigFile(rootPath) }
 
-  const nestedConfigPath = resolve(cwd, 'config', 'mirror.config.toml')
-  if (existsSync(nestedConfigPath)) return { path: nestedConfigPath, raw: await readConfigFile(nestedConfigPath) }
+  const nestedPath = resolve(cwd, 'config', CONFIG_FILENAME)
+  if (existsSync(nestedPath)) return { path: nestedPath, raw: await readConfigFile(nestedPath) }
 
   return {}
 }
 
-export const readConfigFile = async (path: string): Promise<MirrorRawConfig> => {
-  if (!existsSync(path)) throw new MirrorError(`Configuration file not found: ${path}`)
+/** Load and normalize the xdocs configuration. */
+export const loadConfig = async (options: XDocsCliOptions): Promise<XDocsConfig> => {
+  const cwd = resolve(options.cwd)
+  const discovered = await discoverConfig(cwd, options.config)
 
-  const content = await readFile(path, 'utf8')
-  let parsed: unknown
-  try {
-    parsed = parseToml(content)
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-    throw new MirrorError(`Invalid TOML in configuration file: ${path}\n${message}`)
+  if (!discovered.raw) {
+    throw new XDocsError(`xdocs configuration not found. Run \`xdocs init\` to create one.`)
   }
 
-  if (!isRecord(parsed)) throw new MirrorError(`Configuration file must contain a TOML object: ${path}`)
-
-  return parsed as MirrorRawConfig
+  return normalizeConfig(discovered.raw, cwd, discovered.path)
 }
 
-export const loadMirrorConfig = async (options: MirrorCliOptions = {}): Promise<MirrorConfig> => {
-  const cwd = resolve(options.cwd ?? process.cwd())
-  const discovered = await discoverMirrorConfig(cwd, options.config)
+/** Load config if it exists, otherwise return defaults. */
+export const loadConfigOrDefaults = async (options: XDocsCliOptions): Promise<XDocsConfig> => {
+  const cwd = resolve(options.cwd)
+  const discovered = await discoverConfig(cwd, options.config)
 
-  if (!discovered.raw) throw new MirrorError('Mirror configuration not found. Run `mirror init package`, `mirror init jsr`, or `mirror init git`.')
+  if (!discovered.raw) return defaultConfig(cwd)
 
-  return normalizeMirrorConfig(discovered.raw, cwd, discovered.path, options)
+  return normalizeConfig(discovered.raw, cwd, discovered.path)
 }
 
-export const normalizeMirrorConfig = (
-  raw: MirrorRawConfig,
-  cwd: string,
-  configPath: string | undefined,
-  options: MirrorCliOptions = {},
-): MirrorConfig => {
-  if (raw.schema !== 1) throw new MirrorError('Unsupported or missing configuration schema. Expected `schema = 1`.')
-  if (raw.version?.scheme !== undefined && raw.version.scheme !== 'semver') throw new MirrorError('Only `version.scheme = "semver"` is supported.')
+/** Normalize raw TOML config into validated XDocsConfig. */
+export const normalizeConfig = (raw: XDocsRawConfig, cwd: string, configPath?: string): XDocsConfig => {
+  if (raw.schema !== undefined && raw.schema !== 1) {
+    throw new XDocsError('Unsupported configuration schema. Expected `schema = 1`.')
+  }
 
-  const source = options.source ?? assertAdapter(raw.version?.source, 'version.source')
-  const output = dedupeAdapters(options.output ?? assertOutput(raw.version?.output))
-  const nameSource: MirrorProjectNameSource | undefined = raw.project?.name_source
-    ? assertProjectNameSource(raw.project.name_source, 'project.name_source')
-    : undefined
-  const projectName = optionalString(raw.project?.name, 'project.name')
-  const prereleaseId = options.preid ?? optionalString(raw.version?.prerelease_id, 'version.prerelease_id') ?? ''
-  const packagePath = options.packageFile ?? optionalString(raw.package?.path, 'package.path') ?? 'package.json'
-  const jsrPath = options.jsrFile ?? optionalString(raw.jsr?.path, 'jsr.path') ?? 'jsr.json'
-  const tagTemplate = optionalString(raw.git?.tag_template, 'git.tag_template') ?? 'v{version}'
-  const gitCommit = optionalBoolean(raw.git?.commit, 'git.commit') === true
-  const gitPush = optionalBoolean(raw.git?.push, 'git.push') === true
-  const gitAllowDirty = optionalBoolean(raw.git?.allow_dirty, 'git.allow_dirty') === true
+  const aiMode = raw.ai?.mode
+  if (aiMode !== undefined && aiMode !== 'prompt' && aiMode !== 'auto') {
+    throw new XDocsError(`Invalid ai.mode: "${aiMode}". Expected "prompt" or "auto".`)
+  }
+
+  const extensions = raw.extensions?.supported ?? DEFAULT_EXTENSIONS
+  if (!Array.isArray(extensions) || extensions.some((ext) => typeof ext !== 'string')) {
+    throw new XDocsError('Invalid extensions.supported. Expected an array of strings.')
+  }
+
+  const exclude = raw.scan?.exclude ?? DEFAULT_EXCLUDE
+  if (!Array.isArray(exclude) || exclude.some((dir) => typeof dir !== 'string')) {
+    throw new XDocsError('Invalid scan.exclude. Expected an array of strings.')
+  }
 
   return {
     schema: 1,
     cwd,
     configPath,
-    project: {
-      name: projectName,
-      nameSource,
-    },
-    version: {
-      scheme: 'semver',
-      source,
-      output,
-      prereleaseId,
-    },
-    package: {
-      path: packagePath,
-    },
-    jsr: {
-      path: jsrPath,
-    },
-    git: {
-      tagTemplate,
-      commit: options.commit === true || options.push === true || gitCommit || gitPush,
-      push: options.push === true || gitPush,
-      allowDirty: options.allowDirty === true || gitAllowDirty,
-    },
+    extensions: { supported: extensions },
+    ai: { mode: (aiMode as XDocsAiMode) ?? DEFAULT_AI_MODE },
+    scan: { exclude },
+    project: { name: raw.project?.name ?? basename(cwd) },
   }
 }
 
-export const createInitConfig = (kind: MirrorAdapterName, cwd: string) => {
-  const projectName = basename(cwd)
+/** Create a default config object for a given cwd. */
+export const defaultConfig = (cwd: string): XDocsConfig => ({
+  schema: 1,
+  cwd,
+  extensions: { supported: DEFAULT_EXTENSIONS },
+  ai: { mode: DEFAULT_AI_MODE },
+  scan: { exclude: DEFAULT_EXCLUDE },
+  project: { name: basename(cwd) },
+})
 
-  if (kind === 'package.json') {
-    return `schema = 1
-
-[project]
-name_source = "package.json"
-
-[version]
-scheme = "semver"
-source = "package.json"
-output = ["package.json"]
-prerelease_id = ""
-
-[package]
-path = "package.json"
-
-[jsr]
-path = "jsr.json"
-
-[git]
-tag_template = "{name}@{version}"
-commit = false
-push = false
-allow_dirty = false
-`
-  }
-
-  if (kind === 'jsr.json') {
-    return `schema = 1
-
-[project]
-name_source = "jsr.json"
-
-[version]
-scheme = "semver"
-source = "jsr.json"
-output = ["jsr.json"]
-prerelease_id = ""
-
-[jsr]
-path = "jsr.json"
-
-[git]
-tag_template = "{name}@{version}"
-commit = false
-push = false
-allow_dirty = false
-`
-  }
+/** Generate the default xdocs.config.toml content. */
+export const createDefaultConfigContent = (cwd: string): string => {
+  const name = basename(cwd)
 
   return `schema = 1
 
+[extensions]
+supported = [".docs.md", ".xdocs.md"]
+
+[ai]
+mode = "prompt"
+
+[scan]
+exclude = ["node_modules", ".git", "dist", "build", "library", "bin", "bundle"]
+
 [project]
-name = "${projectName}"
-
-[version]
-scheme = "semver"
-source = "git"
-output = ["git"]
-prerelease_id = ""
-
-[git]
-tag_template = "v{version}"
-commit = false
-push = false
-allow_dirty = false
+name = "${name}"
 `
 }
 
-export const writeInitConfig = async (kind: MirrorAdapterName, cwd: string, overwrite = false) => {
-  const path = join(cwd, 'mirror.config.toml')
+/** Write the default xdocs.config.toml to disk. */
+export const writeDefaultConfig = async (cwd: string, overwrite = false): Promise<string> => {
+  const path = resolve(cwd, CONFIG_FILENAME)
 
-  if (existsSync(path) && !overwrite) throw new MirrorError(`Configuration already exists: ${path}`)
+  if (existsSync(path) && !overwrite) {
+    throw new XDocsError(`Configuration already exists: ${path}`)
+  }
 
-  await writeFile(path, createInitConfig(kind, cwd), 'utf8')
+  await writeFile(path, createDefaultConfigContent(cwd), 'utf8')
   return path
 }
 
-export const configPathForDisplay = (config: MirrorConfig) => (config.configPath ? relativeFromCwd(config.cwd, config.configPath) : '(none)')
+/** Read and parse a TOML config file. */
+const readConfigFile = async (path: string): Promise<XDocsRawConfig> => {
+  if (!existsSync(path)) throw new XDocsError(`Configuration file not found: ${path}`)
 
-const assertAdapter = (value: unknown, key: string): MirrorAdapterName => {
-  if (typeof value !== 'string' || !adapters.has(value)) throw new MirrorError(`Invalid or missing ${key}. Expected package.json, jsr.json, or git.`)
-  return value as MirrorAdapterName
+  const content = await readFile(path, 'utf8')
+  let parsed: unknown
+
+  try {
+    parsed = parseToml(content)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    throw new XDocsError(`Invalid TOML in configuration file: ${path}\n${message}`)
+  }
+
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    throw new XDocsError(`Configuration file must contain a TOML object: ${path}`)
+  }
+
+  return parsed as XDocsRawConfig
 }
 
-const assertProjectNameSource = (value: unknown, key: string): MirrorProjectNameSource => {
-  if (typeof value !== 'string' || !projectNameSources.has(value)) throw new MirrorError(`Invalid ${key}. Expected package.json or jsr.json.`)
-  return value as MirrorProjectNameSource
-}
-
-const assertOutput = (value: unknown): MirrorAdapterName[] => {
-  if (!Array.isArray(value) || value.length === 0) throw new MirrorError('Invalid or missing version.output. Expected at least one output adapter.')
-  return value.map((item) => assertAdapter(item, 'version.output'))
-}
-
-const dedupeAdapters = (value: MirrorAdapterName[]) => [...new Set(value)]
-
-const optionalString = (value: unknown, key: string) => {
-  if (value === undefined) return undefined
-  if (typeof value !== 'string') throw new MirrorError(`Invalid ${key}. Expected a string.`)
-  return value
-}
-
-const optionalBoolean = (value: unknown, key: string) => {
-  if (value === undefined) return undefined
-  if (typeof value !== 'boolean') throw new MirrorError(`Invalid ${key}. Expected true or false.`)
-  return value
-}
-
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
+/** Resolve a path relative to cwd if not absolute. */
+export const resolvePath = (cwd: string, path: string) =>
+  isAbsolute(path) ? path : resolve(cwd, path)
