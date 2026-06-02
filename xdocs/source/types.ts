@@ -112,3 +112,10 @@ export type XDocsScanResult = {
 
 /** Available prompt names for xdocs prompt --name. */
 export type XDocsPromptName = 'write' | 'update' | 'agents' | 'generate'
+
+/** A parsed prompt loaded from a .md file. */
+export type XDocsPrompt = {
+  name: string
+  description: string
+  body: string
+}
