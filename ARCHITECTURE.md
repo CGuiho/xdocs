@@ -57,6 +57,7 @@ files:
   - register.ts: Creates a new user account with email verification.
   - reset-password.ts: Handles password reset flow via email link.
   - session.ts: Manages session creation, validation, and expiration.
+tags: []
 ---
 ```
 
@@ -69,12 +70,12 @@ files:
 | `parent`      | `string \| null`      | The parent subject in the hierarchy. `null` for the root.                                                                                                                      |
 | `children`    | `string[]`            | The child subjects (submodules) contained within this module. Empty array if none.                                                                                             |
 | `files`       | `map<string, string>` | The files in this directory. Each key is a filename, each value is a short description of what that file does.                                                                 |
+| `tags`        | `string[]`            | A list of tags for categorization and search. Most of the time this will be empty (`[]`).                                                                                      |
 
 #### Optional Metadata Fields
 
 | Field    | Type       | Description                                                          |
 | -------- | ---------- | -------------------------------------------------------------------- |
-| `tags`   | `string[]` | Tags for categorization and search.                                  |
 | `status` | `string`   | Status of the module (e.g., `active`, `deprecated`, `experimental`). |
 
 ### 3.2 Body (Free-form Markdown)
