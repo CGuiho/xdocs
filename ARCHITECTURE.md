@@ -76,9 +76,9 @@ flags: []
 
 #### Optional Metadata Fields
 
-| Field    | Type       | Description                                                          |
-| -------- | ---------- | -------------------------------------------------------------------- |
-| `status` | `string`   | Status of the module (e.g., `active`, `deprecated`, `experimental`). |
+| Field    | Type     | Description                                                          |
+| -------- | -------- | -------------------------------------------------------------------- |
+| `status` | `string` | Status of the module (e.g., `active`, `deprecated`, `experimental`). |
 
 ### 3.2 Body (Free-form Markdown)
 
