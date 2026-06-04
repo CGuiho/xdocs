@@ -18,4 +18,3 @@
   - [devops/](devops/): DevOps configuration and tooling.
   - [.github/](.github/): GitHub-specific configuration (workflows, issue templates, etc.).
   - [.vscode/](.vscode/): VS Code workspace settings and configurations.
-
