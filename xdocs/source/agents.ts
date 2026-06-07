@@ -10,10 +10,7 @@
  *     skills directory of one or more AI tools.
  */
 
-// @ts-expect-error -- Bun text import, no TS declaration needed
-import skillRaw from '../skills/guiho-as-xdocs/SKILL.md' with { type: 'text' }
-
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { dirname, isAbsolute, resolve } from 'node:path'
@@ -32,8 +29,16 @@ import { XDocsError } from './errors.js'
 /** Canonical name of the xdocs agent skill. */
 export const xdocsSkillName = 'guiho-as-xdocs'
 
-/** Raw contents of the bundled guiho-as-xdocs/SKILL.md (embedded at build time). */
-export const xdocsSkillContent: string = skillRaw
+/** Raw contents of the bundled guiho-as-xdocs/SKILL.md, read from disk at
+ * runtime (relative to this module) so the compiled library works under both
+ * Node and Bun. The file ships with the package in `skills/`. */
+export const xdocsSkillContent: string = (() => {
+  try {
+    return readFileSync(new URL('../skills/guiho-as-xdocs/SKILL.md', import.meta.url), 'utf8')
+  } catch {
+    return ''
+  }
+})()
 
 /** All AI tools the skill can be installed for. `agents` is the standard. */
 export const xdocsAgentTools: readonly XDocsAgentTool[] = ['agents', 'claude']
