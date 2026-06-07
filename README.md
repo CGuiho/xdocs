@@ -34,7 +34,7 @@ This creates:
 - `XDOCS.md` -- the root documentation file for the project
 - `xdocs.config.toml` -- configuration with sensible defaults
 - Updates `AGENTS.md` with instructions for AI agents
-- Installs agent skill files for your AI tool
+- Installs the `guiho-as-xdocs` agent skill (standard `.agents/skills`)
 
 ### Typical Workflow
 
@@ -130,7 +130,7 @@ The CLI validates tree integrity: no orphan subjects, no missing parents, no cyc
 
 #### `xdocs init`
 
-Initializes xdocs in a project. Creates the root `XDOCS.md`, the `xdocs.config.toml` configuration, updates `AGENTS.md`, and installs agent skills.
+Initializes xdocs in a project. Creates the root `XDOCS.md`, the `xdocs.config.toml` configuration, updates `AGENTS.md`, and installs the `guiho-as-xdocs` skill to the standard `.agents/skills` location.
 
 #### `xdocs scan`
 
@@ -189,6 +189,18 @@ Lists files in a scope with descriptions pulled from xdocs metadata.
 xdocs list ./src/auth
 ```
 
+#### `xdocs agents`
+
+Installs the `guiho-as-xdocs` agent skill and maintains the `AGENTS.md` section.
+
+```bash
+xdocs agents install local     # install the skill under the project (.agents/skills)
+xdocs agents install global    # install the skill under ~/.agents/skills
+xdocs agents instructions      # insert/refresh the xdocs section in AGENTS.md
+```
+
+Accepts `--tool <agents|claude|all>`. See [Agent Skills](#agent-skills) for details.
+
 #### Global Flags
 
 All commands accept:
@@ -229,22 +241,34 @@ exclude = ["node_modules", ".git", "dist", "build", "library", "bin", "bundle"]
 [project]
 # Project name. Used in the root XDOCS.md and tree output.
 name = "my-project"
+
+[agents]
+# Keep the xdocs section in AGENTS.md fresh on normal commands. Default: true
+auto_agents_md = true
+# Install the standard skill globally when missing. Default: true
+auto_skill_install = true
+# Default target for skill auto-install: "agents" (standard) or "claude". Default: "agents"
+skill_tool = "agents"
 ```
 
-### Agent Skills and Plugins
+### Agent Skills
 
-xdocs ships agent skill files that teach AI tools how to work with xdocs -- when to create, update, or regenerate documentation, how to use the CLI, and how to respect the configured AI behavior mode.
+xdocs ships the `guiho-as-xdocs` agent skill that teaches AI tools how to work with xdocs -- when to create, update, or regenerate documentation, how to use the CLI, and how to respect the configured AI behavior mode. The skill is large and loaded on demand; a small section in `AGENTS.md` points the agent at it.
 
-Supported tools:
+Installation is **standard-first**:
 
-| Tool             | Plugin Format                                     |
-| ---------------- | ------------------------------------------------- |
-| **OpenCode**     | `SKILL.md` in the skills directory                |
-| **Claude Code**  | `CLAUDE.md` in the project root or `.claude/`     |
-| **OpenAI Codex** | Instructions file in the tool's expected location |
-| **Google Jules** | Instructions file in the tool's expected location |
+| Target                    | Location                                            | When installed                                                  |
+| ------------------------- | --------------------------------------------------- | --------------------------------------------------------------- |
+| **agents** (standard)     | `.agents/skills/guiho-as-xdocs/SKILL.md`            | Always (default). Read by OpenCode, Codex, Jules, and any AGENTS.md tool. |
+| **claude** (non-standard) | `.claude/skills/guiho-as-xdocs/SKILL.md`            | When `--tool claude` is given, or a `.claude/` dir or `CLAUDE.md` is detected. |
 
-`xdocs init` generates the correct file for your chosen tool. Multiple tools can be supported simultaneously.
+```bash
+xdocs agents install local     # standard target, under the project
+xdocs agents install global    # standard target, under ~/.agents/skills
+xdocs agents instructions      # insert/refresh the AGENTS.md section
+```
+
+`xdocs init` runs this automatically for the standard target (`local` scope). `local` scope installs under the project; `global` installs under your home directory. The default is always the standard target -- non-standard files are written only when you ask (`--tool`) or when they are already present.
 
 ---
 
