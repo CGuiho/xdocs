@@ -6,13 +6,47 @@ import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { basename, isAbsolute, resolve } from 'node:path'
 import { parse as parseToml } from 'smol-toml'
-import type { XDocsAiMode, XDocsCliOptions, XDocsConfig, XDocsRawConfig } from './types.js'
+import type { XDocsAgentSettings, XDocsAgentTool, XDocsAiMode, XDocsCliOptions, XDocsConfig, XDocsRawConfig } from './types.js'
 import { XDocsError } from './errors.js'
 
 const DEFAULT_EXTENSIONS = ['.docs.md', '.xdocs.md']
 const DEFAULT_EXCLUDE = ['node_modules', '.git', 'dist', 'build', 'library', 'bin', 'bundle']
 const DEFAULT_AI_MODE: XDocsAiMode = 'prompt'
 const CONFIG_FILENAME = 'xdocs.config.toml'
+
+const AGENT_TOOLS = new Set<XDocsAgentTool>(['agents', 'claude'])
+
+/** Default agent automation settings when no [agents] section is configured. */
+export const DEFAULT_AGENT_SETTINGS: XDocsAgentSettings = {
+  autoAgentsMd: true,
+  autoSkillInstall: true,
+  skillTool: 'agents',
+}
+
+/** Normalize the raw [agents] config section into validated settings. */
+export const normalizeAgentSettings = (raw: XDocsRawConfig['agents']): XDocsAgentSettings => {
+  if (raw === undefined) return { ...DEFAULT_AGENT_SETTINGS }
+
+  const autoAgentsMd = optionalBoolean(raw.auto_agents_md, 'agents.auto_agents_md')
+  const autoSkillInstall = optionalBoolean(raw.auto_skill_install, 'agents.auto_skill_install')
+  const skillTool = raw.skill_tool
+
+  if (skillTool !== undefined && (typeof skillTool !== 'string' || !AGENT_TOOLS.has(skillTool as XDocsAgentTool))) {
+    throw new XDocsError(`Invalid agents.skill_tool: "${String(skillTool)}". Expected agents or claude.`)
+  }
+
+  return {
+    autoAgentsMd: autoAgentsMd !== false,
+    autoSkillInstall: autoSkillInstall !== false,
+    skillTool: (skillTool as XDocsAgentTool | undefined) ?? DEFAULT_AGENT_SETTINGS.skillTool,
+  }
+}
+
+const optionalBoolean = (value: unknown, key: string): boolean | undefined => {
+  if (value === undefined) return undefined
+  if (typeof value !== 'boolean') throw new XDocsError(`Invalid ${key}. Expected true or false.`)
+  return value
+}
 
 /** Discover the xdocs.config.toml file. */
 export const discoverConfig = async (cwd: string, explicitPath?: string): Promise<{ path?: string, raw?: XDocsRawConfig }> => {
@@ -81,6 +115,7 @@ export const normalizeConfig = (raw: XDocsRawConfig, cwd: string, configPath?: s
     ai: { mode: (aiMode as XDocsAiMode) ?? DEFAULT_AI_MODE },
     scan: { exclude },
     project: { name: raw.project?.name ?? basename(cwd) },
+    agents: normalizeAgentSettings(raw.agents),
   }
 }
 
@@ -92,6 +127,7 @@ export const defaultConfig = (cwd: string): XDocsConfig => ({
   ai: { mode: DEFAULT_AI_MODE },
   scan: { exclude: DEFAULT_EXCLUDE },
   project: { name: basename(cwd) },
+  agents: { ...DEFAULT_AGENT_SETTINGS },
 })
 
 /** Generate the default xdocs.config.toml content. */
@@ -111,6 +147,11 @@ exclude = ["node_modules", ".git", "dist", "build", "library", "bin", "bundle"]
 
 [project]
 name = "${name}"
+
+[agents]
+auto_agents_md = true
+auto_skill_install = true
+skill_tool = "agents"
 `
 }
 
