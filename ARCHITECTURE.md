@@ -228,8 +228,8 @@ Initializes xdocs in a project.
 
 - Creates the root `XDOCS.md` file.
 - Creates `xdocs.config.toml` with defaults.
-- Updates the project's `AGENTS.md` to include xdocs instructions for AI agents.
-- Installs agent skill files for the user's AI tool (prompts the user to choose their tool and skill directory, with defaults for common locations).
+- Updates the project's `AGENTS.md` to include the xdocs section that points AI agents at the `guiho-as-xdocs` skill.
+- Installs the `guiho-as-xdocs` skill to the standard `.agents/skills` location (use `--global` for `~/.agents/skills`, `--tool` to add non-standard targets). The non-standard Claude target is added automatically when a `.claude/` directory or `CLAUDE.md` is detected.
 
 #### `xdocs scan`
 
@@ -299,7 +299,7 @@ Lists files in a given scope with descriptions.
 
 ### 8.1 Agent Skills
 
-xdocs ships agent skill files that teach AI agents how to work with xdocs. These are instruction documents (e.g., `SKILL.md`, `CLAUDE.md`) that the AI tool reads to understand:
+xdocs ships an agent skill that teaches AI agents how to work with xdocs. It is a `SKILL.md` instruction document (installed to `.agents/skills/guiho-as-xdocs/`) that the AI tool reads to understand:
 
 - What xdocs is and how it works.
 - When to create, update, or regenerate xdocs files.
@@ -307,20 +307,26 @@ xdocs ships agent skill files that teach AI agents how to work with xdocs. These
 - How to respect the configured AI behavior mode (prompt vs auto).
 - The metadata schema and file structure conventions.
 
-### 8.2 Plugins
+### 8.2 Installation Targets
 
-Plugins are **generated configuration and skill files**, not code packages. Each AI tool has its own extension/instruction model:
+The skill ships inside the `@guiho/xdocs` package at `skills/guiho-as-xdocs/SKILL.md` and is installed by the `xdocs agents` commands (and by `xdocs init`). Installation is **standard-first**:
 
-| Tool             | Plugin Format                                                |
-| ---------------- | ------------------------------------------------------------ |
-| **OpenCode**     | `SKILL.md` file installed in the skills directory            |
-| **Claude Code**  | `CLAUDE.md` file in the project root or `.claude/` directory |
-| **OpenAI Codex** | Instructions file in the tool's expected location            |
-| **Google Jules** | Instructions file in the tool's expected location            |
+| Target                    | Skill location                                  | When used                                              |
+| ------------------------- | ----------------------------------------------- | ------------------------------------------------------ |
+| **agents** (standard)     | `.agents/skills/guiho-as-xdocs/SKILL.md`        | Always. The default. Read by OpenCode, Codex, Jules, and any AGENTS.md tool. |
+| **claude** (non-standard) | `.claude/skills/guiho-as-xdocs/SKILL.md`        | Only when requested (`--tool claude`) or detected (a `.claude/` directory or `CLAUDE.md` exists). |
 
-`xdocs init` generates the correct file for the user's chosen tool. Multiple tools can be supported simultaneously in the same project.
+`local` scope installs under the project root; `global` scope installs under the user home directory (`~/.agents/skills/...`). The companion instruction is a small section inserted into `AGENTS.md` (the standard file every tool reads) that tells the agent to load the `guiho-as-xdocs` skill — the skill body itself is large and loaded on demand.
 
-The plugin files are generated once and committed to the repo. They instruct the AI on xdocs behavior and point it to the CLI for operations.
+```
+xdocs agents install local            # standard target under the project
+xdocs agents install global           # standard target under the home directory
+xdocs agents install local --tool claude   # explicit non-standard Claude target
+xdocs agents install local --tool all      # standard + claude
+xdocs agents instructions             # insert/refresh the AGENTS.md section
+```
+
+The rule is: **default to the standard target.** Only write non-standard files (`.claude`, `CLAUDE.md`, etc.) when the user asks for them or when those files already exist in the project. Configuration in `xdocs.config.toml` (`[agents]`) controls automation: `auto_agents_md` keeps the AGENTS.md section fresh, `auto_skill_install` installs the global standard skill when missing, and `skill_tool` selects the auto-install target.
 
 ## 9. How AI Uses xdocs
 
@@ -373,17 +379,12 @@ The AI workflow with xdocs:
         update.ts
         agents.ts
         generate.ts
+    skills/                       # bundled agent skill (shipped inside the package)
+      guiho-as-xdocs/
+        SKILL.md
     library/                      # tsc output (ignored)
     bin/                          # compiled binaries (ignored)
-  skills/                         # agent skill templates (same level as xdocs/)
-    opencode/
-      SKILL.md
-    claude/
-      CLAUDE.md
-    codex/
-      ...
-    jules/
-      ...
+  skills/                         # repository-root placeholder (.gitkeep)
   docs/                           # documentation (reserved)
   devops/                         # devops configuration
   .github/                        # GitHub workflows and config
@@ -400,5 +401,5 @@ The AI workflow with xdocs:
 | Config format     | TOML                             | Already used in the project (`xdocs.config.toml`).                   |
 | Distribution      | Compiled binary + thin JS loader | Cross-platform without runtime dependencies. Works with npx/bunx.    |
 | Metadata encoding | YAML frontmatter                 | Standard, supported by every Markdown parser and tool.               |
-| Plugin model      | Generated skill/config files     | No code dependencies. Each tool reads its native instruction format. |
+| Plugin model      | Standard `AGENTS.md` + `.agents/skills` | One `guiho-as-xdocs` skill bundled in the package. Non-standard targets (Claude `.claude/skills`) are opt-in or auto-detected. |
 | Tree structure    | Hierarchy (parent-child)         | Not a dependency graph. Containment only.                            |
