@@ -1,6 +1,6 @@
 ---
 name: guiho-as-xdocs
-description: Use this skill whenever the user works with xdocs (`@guiho/xdocs`) structured documentation. This includes creating, updating, or regenerating `.docs.md` / `.xdocs.md` files, the root `XDOCS.md`, the project tree, scanning documentation coverage, merging docs, or maintaining xdocs metadata and AGENTS.md guidance, even when the user only says "document this module", "update the docs", or "what does this folder do" without naming xdocs.
+description: Use this skill whenever the user works with xdocs (`@guiho/xdocs`) structured documentation, AND proactively whenever you create a new module or subdirectory or add/change/remove files in a directory of an xdocs project, so you create or update that directory's `.xdocs.md` as part of the change. This includes creating, updating, or regenerating `.docs.md` / `.xdocs.md` files, the root `XDOCS.md`, the project tree, scanning documentation coverage, merging docs, or maintaining xdocs metadata and AGENTS.md guidance, even when the user only says "document this module", "update the docs", or "what does this folder do" without naming xdocs.
 ---
 
 # GUIHO XDocs
@@ -30,7 +30,7 @@ xdocs is a Bun/TypeScript ESM tool. Bun is the recommended runtime. The CLI neve
 - **xdocs file**: a Markdown file with YAML frontmatter that documents one directory/module. Default extensions are `.docs.md` and `.xdocs.md`. Extensions are configurable in `xdocs.config.toml`.
 - **Root file**: `XDOCS.md` (uppercase, no prefix) at the project root is the entry point and top of the tree.
 - **Tree**: a parent-child **containment** hierarchy (not a dependency graph), assembled from each file's `subject` / `parent` / `children` fields.
-- **AI mode**: `xdocs.config.toml` `[ai].mode` is either `"prompt"` (announce documentation updates and wait for the user) or `"auto"` (update documentation immediately). Always read and respect this mode before writing docs.
+- **AI mode**: `xdocs.config.toml` `[ai].mode` is either `"prompt"` (announce the documentation updates, then write them) or `"auto"` (write immediately). It governs *how* you write docs, not *whether* — documenting a changed module is always required (see Automatic Documentation Maintenance).
 
 ### Metadata schema (YAML frontmatter)
 
@@ -49,6 +49,62 @@ Every xdocs file (except the root content body) carries frontmatter with these f
 
 Keep `subject` values unique across the project, keep `parent`/`children` consistent in both directions, and keep `files` in sync with what is actually on disk.
 
+## Automatic Documentation Maintenance (core responsibility)
+
+Maintaining xdocs files is an **automatic, built-in responsibility — not a task the user has to request.** Treat it as part of the definition of done for every code change in an xdocs project. The user should never have to ask you to document a module; you do it as a reflex whenever you touch one.
+
+**Trigger.** Whenever you, as the agent, do any of the following, you must create or update the affected directory's xdocs file in the *same unit of work*, before you consider the task finished:
+
+- Create a new directory, module, or subpackage.
+- Add, rename, move, or delete significant files in a directory.
+- Change what a module does, what it exposes, or how it relates to its parent or children.
+
+**Action.**
+
+- If the directory has **no** xdocs file, create one (for example `<name>.xdocs.md`) in that directory.
+- If it **already** has one, update it so it matches the new reality.
+- Then fix the parent/child links and verify with `<xdocs> tree`.
+
+**What every module's xdocs file must capture:**
+
+- `subject` — the module's unique name in the tree.
+- `description` — the module's **purpose**: what it is for and what it does.
+- `files` — each significant file in the directory mapped to a short description of its responsibility, **including the key functions/exports it provides**.
+- `parent` — the `subject` of the containing module (and add this module to that parent's `children`).
+- `children` — the `subject`s of the modules contained inside this one.
+
+**Do not wait to be asked.** After you finish creating or modifying a module or directory, create or update its xdocs file as part of the same change. A code change that adds or alters a module is **not complete** until its xdocs file and the affected parent/child links are updated.
+
+**How `[ai].mode` applies.** The mode controls only *how* you write the docs, never *whether* you write them and never whether the user must ask first:
+
+- `auto` — create/update the xdocs files immediately as part of the change, then report what changed.
+- `prompt` — state exactly which xdocs files you are creating or updating, then write them (honoring any pending confirmation). Announcing is for transparency; it does not make documentation optional and the user never has to request it.
+
+### Example: documenting a new module
+
+Suppose you just created `src/auth/` with `login.ts` and `session.ts`. As part of that work, create `src/auth/auth.xdocs.md`:
+
+```markdown
+---
+subject: auth
+description: Authentication and session handling for the API.
+parent: src
+children: []
+files:
+  login.ts: Email/password login flow; exports `login()` and `verifyPassword()`.
+  session.ts: Session lifecycle; exports `createSession()` and `validateSession()`.
+tags:
+  - security
+flags: []
+status: stable
+---
+
+Auth validates credentials and issues sessions. `login()` delegates password
+checks to `verifyPassword()`; sessions are created and validated in `session.ts`.
+```
+
+Then add `auth` to the `children` list of the `src` module's xdocs file so the tree stays consistent.
+
 ## Onboarding Workflow (entering a project)
 
 When you start working in a project that uses xdocs:
@@ -61,15 +117,15 @@ When you start working in a project that uses xdocs:
 
 ## Documentation Workflow (writing and updating)
 
-When the user asks to document a directory, or when you change code that an xdocs file describes:
+Follow this whenever the automatic trigger above fires, or when the user asks to document a directory:
 
 1. Determine the target directory and whether it already has an xdocs file (`<xdocs> scan` or `<xdocs> list <path>`).
 2. Read the directory's actual files so the documentation reflects reality. Never invent files, modules, or behavior that is not present.
-3. Respect `[ai].mode`:
-   - **prompt mode**: state exactly which xdocs files you would create or change and wait for confirmation before writing.
+3. Respect `[ai].mode` (it controls how you write, not whether you write):
+   - **prompt mode**: state exactly which xdocs files you are creating or updating, then write them (honor a pending confirmation, but never skip the documentation).
    - **auto mode**: create or update the xdocs files immediately, then report what changed.
 4. Write or update the xdocs file with correct frontmatter:
-   - Set `subject` (unique), `description`, and `files` (each real file -> short purpose).
+   - Set `subject` (unique), `description` (the module's purpose), and `files` (each real file -> short purpose, including key functions/exports).
    - Set `parent` to the containing module's `subject`, and add this `subject` to that parent's `children`.
    - Use `tags`/`flags`/`status` where useful.
 5. Keep the tree consistent: if you add a module, update its parent's `children`; if you remove one, update both sides.
@@ -90,9 +146,10 @@ When generating from scratch, prefer `<xdocs> generate <path>` (one directory) o
 
 ## Safety Rules
 
+- Never leave a new or changed module undocumented. Creating or updating its xdocs file is part of finishing the work, not a separate request the user must make.
 - Never fabricate files, modules, descriptions, or relationships. Documentation must match the repository.
 - Never edit generated or build outputs (`library/`, `bundle/`, `bin/`, `*.tgz`). They are ignored and regenerated.
-- In prompt mode, do not write documentation changes before the user confirms.
+- In prompt mode, announce the xdocs changes you will make and honor a pending confirmation — but still treat documenting the change as required, never optional.
 - Do not break tree integrity: every `child` must have a matching `parent`, and every `subject` must be unique.
 - Do not silently change a module's `subject` — it is the identity used by `parent`/`children` links across the project.
 - When `<xdocs> tree` or `<xdocs> scan` reports warnings, resolve them rather than ignoring them.
