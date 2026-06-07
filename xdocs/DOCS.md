@@ -11,7 +11,7 @@ XDocs is a documentation tool, not a versioning tool. It never bumps versions or
 ## Package Overview
 
 - Package name: `@guiho/xdocs`
-- Runtime target: Bun (ESM)
+- Runtime: Node (>= 18) and Bun (ESM)
 - Package type: ESM
 - Library entrypoint: `source/guiho-xdocs.ts`
 - CLI entrypoint: `source/guiho-xdocs-bin.ts`
@@ -468,7 +468,7 @@ Compile the standalone binary:
 bun run binary
 ```
 
-The compiled binary embeds the prompt templates and the `guiho-as-xdocs` skill via Bun text imports, so `xdocs prompt` and `xdocs agents install` work without adjacent package files.
+The library reads the prompt templates and the `guiho-as-xdocs` skill from the package's `prompts/` and `skills/` directories at runtime (via `readFileSync` relative to `import.meta.url`), so the published package works under both Node and Bun.
 
 ## Documentation Requirement Before Publishing
 
