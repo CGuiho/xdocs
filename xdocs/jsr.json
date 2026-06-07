@@ -5,6 +5,8 @@
   "publish": {
     "include": [
       "source/**/*.ts",
+      "prompts/**/*.md",
+      "skills/**/*.md",
       "README.md",
       "LICENSE.md"
     ]
