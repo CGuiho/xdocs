@@ -32,6 +32,7 @@ Commands:
   merge [path]          Merge xdocs files from a directory into one file
   tree                  Display the project hierarchy tree
   list [path]           List files with descriptions
+  agents                Install the guiho-as-xdocs skill and AGENTS.md instructions
 
 Global Flags:
   -h, --help            Show help for a command
@@ -48,6 +49,8 @@ Examples:
   xdocs merge ./src/domain
   xdocs tree
   xdocs list ./src/auth
+  xdocs agents install local
+  xdocs agents instructions
 `.trim()
 
 /** Show help for a specific command. */
@@ -61,15 +64,21 @@ const commandHelpMap: Record<string, string> = {
   init: `
 xdocs init - Initialize xdocs in a project
 
-Usage: xdocs init
+Usage: xdocs init [--tool <agents|claude|all>] [--global]
 
 Creates:
   - XDOCS.md              Root documentation file
   - xdocs.config.toml     Configuration with defaults
-  - Updates AGENTS.md     Adds xdocs instructions for AI agents
-  - Installs agent skills Prompts for AI tool and skill directory
+  - Updates AGENTS.md     Adds the xdocs section pointing AI at the skill
+  - Installs the skill    guiho-as-xdocs into .agents/skills (standard, local)
+
+By default the skill is installed for the standard target (AGENTS.md +
+.agents/skills). The non-standard claude target (.claude/skills) is added only
+when a .claude directory or CLAUDE.md is detected, or when requested via --tool.
 
 Flags:
+  --tool <tool>           agents (default/standard), claude, or all
+  --global                Install the skill in the user home skills directory
   --cwd <path>            Target directory (default: current directory)
   --verbose               Show detailed output
 `.trim(),
@@ -171,5 +180,32 @@ Flags:
   --cwd <path>            Target directory (default: current directory)
   --config <path>         Path to xdocs.config.toml
   --verbose               Show detailed output
+`.trim(),
+
+  agents: `
+xdocs agents - Install the guiho-as-xdocs skill and AGENTS.md instructions
+
+Usage:
+  xdocs agents install <local|global> [--tool <tool>]
+  xdocs agents instructions
+
+Subcommands:
+  install local           Install the skill under the current project
+  install global          Install the skill under the user home directory
+  instructions            Insert or refresh the xdocs section in AGENTS.md
+
+Skill locations:
+  agents (standard)       <root>/.agents/skills/guiho-as-xdocs/SKILL.md
+  claude (non-standard)   <root>/.claude/skills/guiho-as-xdocs/SKILL.md
+
+<root> is the project for local scope, or the user home directory for global.
+Without --tool, the standard agents target is installed, plus claude when a
+.claude directory or CLAUDE.md is detected. Codex, Jules, and other AGENTS.md
+tools read the standard target and the AGENTS.md instructions.
+
+Flags:
+  --tool <tool>           agents (default/standard), claude, or all
+  --format <format>       Output format: text, json (default: text)
+  --cwd <path>            Target directory (default: current directory)
 `.trim(),
 }
