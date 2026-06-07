@@ -7,6 +7,10 @@ export { XDocsError, invariant } from './errors.js'
 
 // Types
 export type {
+  XDocsAgentAutomationResult,
+  XDocsAgentSettings,
+  XDocsAgentTool,
+  XDocsAgentsInstructionsResult,
   XDocsAiMode,
   XDocsCliOptions,
   XDocsCommand,
@@ -19,6 +23,8 @@ export type {
   XDocsPromptName,
   XDocsRawConfig,
   XDocsScanResult,
+  XDocsSkillInstallResult,
+  XDocsSkillScope,
   XDocsTreeNode,
   XDocsTreeValidation,
 } from './types.js'
@@ -29,10 +35,12 @@ export { parseArgs, stringFlag, booleanFlag, listFlag } from './flags.js'
 // Config
 export {
   createDefaultConfigContent,
+  DEFAULT_AGENT_SETTINGS,
   defaultConfig,
   discoverConfig,
   loadConfig,
   loadConfigOrDefaults,
+  normalizeAgentSettings,
   normalizeConfig,
   resolvePath,
   writeDefaultConfig,
@@ -52,6 +60,26 @@ export { readPackageVersion, showCommandHelp, showHelp, showVersion } from './he
 
 // Prompts
 export { getPrompt, getPromptNames, prompts } from './prompts.js'
+
+// Agents
+export {
+  detectAgentTools,
+  ensureAgentsInstructions,
+  findAgentsFile,
+  installSkill,
+  installSkills,
+  isSkillInstalled,
+  parseAgentTools,
+  resolveAgentSettings,
+  resolveInstallTools,
+  resolveSkillPath,
+  runAgentAutomation,
+  standardAgentTool,
+  xdocsAgentsSection,
+  xdocsAgentTools,
+  xdocsSkillContent,
+  xdocsSkillName,
+} from './agents.js'
 
 // CLI
 export { runCli, runCliWithErrorHandling } from './cli.js'
