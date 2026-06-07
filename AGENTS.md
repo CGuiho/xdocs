@@ -71,3 +71,12 @@ Read `.agentkanban/memory.md` for project context.
 
 If a task file (`.agentkanban/tasks/**/*.md`) was referenced earlier in this conversation, re-read it before responding and always respond in and at the end the task file.
 <!-- END AGENT KANBAN -->
+
+## Semantic Project Versioning -- GUIHO Mirror
+
+Invoke the guiho-as-mirror agent skill every time the user wants to bump, tag, release, plan, initialize, configure, or troubleshoot semantic project versioning with GUIHO Mirror.
+
+Before editing release docs or changelogs, inspect mirror.config.toml. If [agents].write_changelog is false, skip changelog edits. If it is missing or true, changelog edits are allowed when the project has a changelog.
+
+Use [agents].changelog_path as the changelog file path. If it is missing, use CHANGELOG.md in the project root.
+
