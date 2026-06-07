@@ -39,7 +39,8 @@ export const runScan = async (options: XDocsCliOptions, _parsed: XDocsParsedArgs
   if (result.xdocsFiles.length > 0) {
     process.stdout.write(`\nfiles:\n`)
     for (const file of result.xdocsFiles) {
-      const status = file.valid ? 'valid' : 'incomplete'
+      const isRootIndex = file.relativePath === 'XDOCS.md' && !file.metadata
+      const status = isRootIndex ? 'root index' : (file.valid ? 'valid' : 'incomplete')
       const subject = file.metadata?.subject ? ` (${file.metadata.subject})` : ''
       process.stdout.write(`  ${file.relativePath} [${status}]${subject}\n`)
 
