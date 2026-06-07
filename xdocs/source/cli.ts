@@ -7,6 +7,7 @@ import type { XDocsCliOptions, XDocsCommand, XDocsFormat } from './types.js'
 import { XDocsError } from './errors.js'
 import { parseArgs, booleanFlag, stringFlag } from './flags.js'
 import { showHelp, showCommandHelp, showVersion } from './help.js'
+import { runAgentAutomation } from './agents.js'
 import { runInit } from './commands/init.js'
 import { runScan } from './commands/scan.js'
 import { runGenerate } from './commands/generate.js'
@@ -14,8 +15,12 @@ import { runPrompt } from './commands/prompt.js'
 import { runMerge } from './commands/merge.js'
 import { runTree } from './commands/tree.js'
 import { runList } from './commands/list.js'
+import { runAgents } from './commands/agents.js'
 
-const validCommands = new Set<XDocsCommand>(['init', 'scan', 'generate', 'prompt', 'merge', 'tree', 'list'])
+const validCommands = new Set<XDocsCommand>(['init', 'scan', 'generate', 'prompt', 'merge', 'tree', 'list', 'agents'])
+
+/** Commands that run the config-gated agent automation before executing. */
+const automationCommands = new Set<XDocsCommand>(['scan', 'generate', 'merge', 'tree', 'list'])
 
 /** Main CLI entry point. */
 export const runCli = async (rawArgs: string[] = process.argv.slice(2)): Promise<void> => {
@@ -48,6 +53,10 @@ export const runCli = async (rawArgs: string[] = process.argv.slice(2)): Promise
 
   const command = parsed.command as XDocsCommand
 
+  if (automationCommands.has(command)) {
+    await runAgentAutomation(options, (message) => process.stderr.write(message + '\n'))
+  }
+
   switch (command) {
     case 'init':
       await runInit(options, parsed)
@@ -69,6 +78,9 @@ export const runCli = async (rawArgs: string[] = process.argv.slice(2)): Promise
       break
     case 'list':
       await runList(options, parsed)
+      break
+    case 'agents':
+      await runAgents(options, parsed)
       break
   }
 }
