@@ -3,10 +3,26 @@
  */
 
 import { describe, test, expect } from 'bun:test'
+import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join, resolve } from 'node:path'
 import { parseArgs, stringFlag, booleanFlag, listFlag } from './flags.js'
 import { extractFrontmatter, validateMetadata } from './metadata.js'
 import { buildTree, renderTree, renderTreeMarkdown, validateTree } from './tree.js'
-import { normalizeConfig, defaultConfig } from './config.js'
+import { normalizeConfig, defaultConfig, normalizeAgentSettings } from './config.js'
+import {
+  detectAgentTools,
+  ensureAgentsInstructions,
+  installSkill,
+  installSkills,
+  isSkillInstalled,
+  parseAgentTools,
+  resolveInstallTools,
+  resolveSkillPath,
+  xdocsAgentsSection,
+  xdocsSkillContent,
+  xdocsSkillName,
+} from './agents.js'
 import { XDocsError, invariant } from './errors.js'
 import type { XDocsFile, XDocsRawConfig } from './types.js'
 
@@ -467,5 +483,233 @@ describe('defaultConfig', () => {
     expect(config.extensions.supported).toContain('.xdocs.md')
     expect(config.ai.mode).toBe('prompt')
     expect(config.project.name).toBe('project')
+  })
+
+  test('includes default agent settings', () => {
+    const config = defaultConfig('/my/project')
+    expect(config.agents).toEqual({ autoAgentsMd: true, autoSkillInstall: true, skillTool: 'agents' })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// agents.ts
+// ---------------------------------------------------------------------------
+describe('normalizeAgentSettings', () => {
+  test('returns defaults when no section is present', () => {
+    expect(normalizeAgentSettings(undefined)).toEqual({ autoAgentsMd: true, autoSkillInstall: true, skillTool: 'agents' })
+  })
+
+  test('honors explicit false flags and a custom tool', () => {
+    const settings = normalizeAgentSettings({ auto_agents_md: false, auto_skill_install: false, skill_tool: 'claude' })
+    expect(settings).toEqual({ autoAgentsMd: false, autoSkillInstall: false, skillTool: 'claude' })
+  })
+
+  test('rejects an invalid skill_tool', () => {
+    expect(() => normalizeAgentSettings({ skill_tool: 'bogus' })).toThrow(XDocsError)
+  })
+
+  test('rejects a non-boolean flag', () => {
+    expect(() => normalizeAgentSettings({ auto_agents_md: 'yes' as unknown as boolean })).toThrow(XDocsError)
+  })
+})
+
+describe('normalizeConfig agents section', () => {
+  test('fills agent defaults when omitted', () => {
+    const config = normalizeConfig({ schema: 1 }, '/project')
+    expect(config.agents.autoAgentsMd).toBe(true)
+    expect(config.agents.skillTool).toBe('agents')
+  })
+
+  test('reads a configured agents section', () => {
+    const raw: XDocsRawConfig = { schema: 1, agents: { auto_skill_install: false, skill_tool: 'claude' } }
+    const config = normalizeConfig(raw, '/project')
+    expect(config.agents.autoSkillInstall).toBe(false)
+    expect(config.agents.skillTool).toBe('claude')
+  })
+})
+
+describe('parseAgentTools', () => {
+  test('defaults to the standard agents target', () => {
+    expect(parseAgentTools(undefined)).toEqual(['agents'])
+    expect(parseAgentTools('agents')).toEqual(['agents'])
+  })
+
+  test('expands "all" to every tool', () => {
+    expect(parseAgentTools('all')).toEqual(['agents', 'claude'])
+  })
+
+  test('accepts the non-standard claude tool', () => {
+    expect(parseAgentTools('claude')).toEqual(['claude'])
+  })
+
+  test('rejects an unknown tool', () => {
+    expect(() => parseAgentTools('bogus')).toThrow(XDocsError)
+  })
+})
+
+describe('detectAgentTools', () => {
+  test('returns only the standard target with no non-standard markers', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-detect-'))
+    try {
+      expect(detectAgentTools(dir)).toEqual(['agents'])
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('adds claude when a CLAUDE.md is present', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-detect-'))
+    try {
+      await writeFile(join(dir, 'CLAUDE.md'), '# Claude\n', 'utf8')
+      expect(detectAgentTools(dir)).toEqual(['agents', 'claude'])
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('resolveInstallTools prefers an explicit --tool over detection', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-detect-'))
+    try {
+      await writeFile(join(dir, 'CLAUDE.md'), '# Claude\n', 'utf8')
+      expect(resolveInstallTools(dir, 'agents')).toEqual(['agents'])
+      expect(resolveInstallTools(dir, undefined)).toEqual(['agents', 'claude'])
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+})
+
+describe('resolveSkillPath', () => {
+  test('resolves local paths under cwd per tool', () => {
+    const cwd = process.cwd()
+    expect(resolveSkillPath('agents', 'local', { cwd })).toBe(resolve(cwd, '.agents/skills/guiho-as-xdocs/SKILL.md'))
+    expect(resolveSkillPath('claude', 'local', { cwd })).toBe(resolve(cwd, '.claude/skills/guiho-as-xdocs/SKILL.md'))
+  })
+
+  test('resolves global paths under the provided home directory', () => {
+    const home = resolve(tmpdir(), 'xdocs-home-fixture')
+    expect(resolveSkillPath('agents', 'global', { homeDirectory: home })).toBe(resolve(home, '.agents/skills/guiho-as-xdocs/SKILL.md'))
+    expect(resolveSkillPath('claude', 'global', { homeDirectory: home })).toBe(resolve(home, '.claude/skills/guiho-as-xdocs/SKILL.md'))
+  })
+})
+
+describe('installSkill', () => {
+  test('installs, is idempotent, and reports updates', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-skill-'))
+    try {
+      expect(isSkillInstalled('agents', 'local', { cwd: dir })).toBe(false)
+
+      const first = await installSkill('agents', 'local', { cwd: dir })
+      expect(first.installed).toBe(true)
+      expect(first.updated).toBe(false)
+      expect(isSkillInstalled('agents', 'local', { cwd: dir })).toBe(true)
+
+      const written = await readFile(first.path, 'utf8')
+      expect(written).toBe(xdocsSkillContent)
+
+      const second = await installSkill('agents', 'local', { cwd: dir })
+      expect(second.installed).toBe(false)
+      expect(second.updated).toBe(false)
+
+      await writeFile(first.path, 'stale content', 'utf8')
+      const third = await installSkill('agents', 'local', { cwd: dir })
+      expect(third.installed).toBe(false)
+      expect(third.updated).toBe(true)
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('respects overwrite: false on an existing file', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-skill-'))
+    try {
+      await installSkill('agents', 'local', { cwd: dir })
+      await writeFile(resolveSkillPath('agents', 'local', { cwd: dir }), 'custom', 'utf8')
+      const result = await installSkill('agents', 'local', { cwd: dir, overwrite: false })
+      expect(result.installed).toBe(false)
+      expect(result.updated).toBe(false)
+      expect(await readFile(result.path, 'utf8')).toBe('custom')
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+})
+
+describe('installSkills', () => {
+  test('installs the skill for several tools', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-skills-'))
+    try {
+      const results = await installSkills(['agents', 'claude'], 'global', { homeDirectory: dir })
+      expect(results.map((r) => r.tool)).toEqual(['agents', 'claude'])
+      expect(results.every((r) => r.installed)).toBe(true)
+      for (const result of results) {
+        expect(await readFile(result.path, 'utf8')).toBe(xdocsSkillContent)
+      }
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+})
+
+describe('ensureAgentsInstructions', () => {
+  test('appends the xdocs section to an existing AGENTS.md without markers', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-agents-'))
+    try {
+      const path = join(dir, 'AGENTS.md')
+      await writeFile(path, '# Project\n\nSome notes.\n', 'utf8')
+
+      const result = await ensureAgentsInstructions(dir, false)
+      expect(result.exists).toBe(true)
+      expect(result.changed).toBe(true)
+
+      const content = await readFile(path, 'utf8')
+      expect(content).toContain('Some notes.')
+      expect(content).toContain(xdocsSkillName)
+      expect(content).toContain('## XDocs Structured Documentation')
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('is idempotent and replaces a tampered section in place', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-agents-'))
+    try {
+      const path = join(dir, 'AGENTS.md')
+      await writeFile(path, `# Project\n\n${xdocsAgentsSection}\n`, 'utf8')
+
+      const unchanged = await ensureAgentsInstructions(dir, false)
+      expect(unchanged.changed).toBe(false)
+
+      await writeFile(path, '# Project\n\n<!-- BEGIN XDOCS — DO NOT EDIT THIS SECTION -->\nTAMPERED\n<!-- END XDOCS -->\n', 'utf8')
+      const restored = await ensureAgentsInstructions(dir, false)
+      expect(restored.changed).toBe(true)
+
+      const content = await readFile(path, 'utf8')
+      expect(content).not.toContain('TAMPERED')
+      expect(content.match(/BEGIN XDOCS/g)?.length).toBe(1)
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('does nothing when AGENTS.md is absent and create is false', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-agents-none-'))
+    try {
+      // Seed a local AGENTS.md so the upward search stops here deterministically.
+      const path = join(dir, 'AGENTS.md')
+      await writeFile(path, `# Local\n\n${xdocsAgentsSection}\n`, 'utf8')
+      const result = await ensureAgentsInstructions(dir, false)
+      expect(result.changed).toBe(false)
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+})
+
+describe('skill bundle', () => {
+  test('exposes the embedded skill with frontmatter', () => {
+    expect(xdocsSkillName).toBe('guiho-as-xdocs')
+    expect(xdocsSkillContent.startsWith('---')).toBe(true)
+    expect(xdocsSkillContent).toContain('name: guiho-as-xdocs')
   })
 })
