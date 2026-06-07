@@ -337,13 +337,14 @@ Automation does nothing outside an xdocs project (no config discovered). `init` 
 
 ## AI Usage Workflow
 
-The intended agent workflow with XDocs:
+Maintaining xdocs files is an automatic responsibility for an agent working in an xdocs project, not something the user has to request. The intended workflow:
 
 1. On entering a project, read `XDOCS.md`, run `xdocs tree`, and run `xdocs scan` to understand the structure and coverage.
 2. On navigating to a module, read that module's xdocs file (frontmatter first, body only if needed) instead of reading every source file.
-3. On modifying code, respect `[ai].mode`: in `prompt` mode announce which xdocs files need updating and wait; in `auto` mode update them immediately.
-4. On creating a module, write a new xdocs file with correct metadata and update the parent's `children`.
-5. On request, use `xdocs generate`, `xdocs merge`, and `xdocs tree` to produce documentation artifacts.
+3. On creating a new module or subdirectory, create that directory's xdocs file (for example `<name>.xdocs.md`) describing its purpose, its files (with their key functions/exports), and its `parent`/`children` links — as part of the same change, without being asked.
+4. On modifying a module (adding, renaming, moving, or removing files, or changing what it does), update its xdocs file and the affected parent/child links so the documentation matches reality.
+5. `[ai].mode` governs only how the agent writes: `prompt` announces the xdocs changes then writes them; `auto` writes immediately. It never makes documentation optional. A code change is not complete until the affected xdocs files are updated and `xdocs tree` is consistent.
+6. On request, use `xdocs generate`, `xdocs merge`, and `xdocs tree` to produce documentation artifacts.
 
 ## Prompts
 
