@@ -1,5 +1,9 @@
 # GUIHO XDocs Changelog
 
+## 0.2.2
+
+- Fix: the published library crashed under Node (`ERR_UNKNOWN_FILE_EXTENSION` for `.md`) because the prompts and the `guiho-as-xdocs` skill were loaded with Bun-only text imports. They are now read from disk at runtime (`readFileSync` relative to `import.meta.url`), so the `xdocs` CLI and the library work under both Node and Bun.
+
 ## 0.2.1
 
 - Clarify the repository model: a repository has exactly one `XDOCS.md` (no frontmatter) that indexes its packages and applications, and each package/application has its own root `.xdocs.md` (with frontmatter and `parent: null`) that tops its tree.
