@@ -1,0 +1,198 @@
+---
+name: guiho-as-xdocs
+description: Use this skill whenever the user works with xdocs (`@guiho/xdocs`) structured documentation. This includes creating, updating, or regenerating `.docs.md` / `.xdocs.md` files, the root `XDOCS.md`, the project tree, scanning documentation coverage, merging docs, or maintaining xdocs metadata and AGENTS.md guidance, even when the user only says "document this module", "update the docs", or "what does this folder do" without naming xdocs.
+---
+
+# GUIHO XDocs
+
+GUIHO XDocs is a deterministic CLI and TypeScript library for **structured documentation of codebases**. It lets an AI agent understand a project without reading every source file: each directory carries a small Markdown file with YAML frontmatter that describes its subject, purpose, files, and place in a parent-child hierarchy.
+
+```text
+source tree -> xdocs files (.docs.md / .xdocs.md) -> tree + metadata -> AI-readable map
+```
+
+Use xdocs for documentation work instead of ad hoc README sprawl or re-reading the whole codebase. The value of xdocs is that the structure (subjects, descriptions, files, parent/child links) is machine-readable and stays close to the code it describes.
+
+## Command Selection
+
+Choose the xdocs command in this order:
+
+1. Use `bun @guiho/xdocs` when the package is installed locally and Bun is available.
+2. Use `xdocs` when a global binary is available.
+3. Use `bunx @guiho/xdocs` when running without installation.
+
+When unsure, run a cheap availability check (`bun @guiho/xdocs --help`, `xdocs --help`, or `bunx @guiho/xdocs --help`) and then reuse the working command consistently. Run `xdocs --help` or `xdocs <command> --help` for command-specific details when needed.
+
+xdocs is a Bun/TypeScript ESM tool. Bun is the recommended runtime. The CLI never bumps versions or mutates `package.json` — it only reads and writes documentation files. (Versioning is a separate concern handled by GUIHO Mirror.)
+
+## Core Concepts
+
+- **xdocs file**: a Markdown file with YAML frontmatter that documents one directory/module. Default extensions are `.docs.md` and `.xdocs.md`. Extensions are configurable in `xdocs.config.toml`.
+- **Root file**: `XDOCS.md` (uppercase, no prefix) at the project root is the entry point and top of the tree.
+- **Tree**: a parent-child **containment** hierarchy (not a dependency graph), assembled from each file's `subject` / `parent` / `children` fields.
+- **AI mode**: `xdocs.config.toml` `[ai].mode` is either `"prompt"` (announce documentation updates and wait for the user) or `"auto"` (update documentation immediately). Always read and respect this mode before writing docs.
+
+### Metadata schema (YAML frontmatter)
+
+Every xdocs file (except the root content body) carries frontmatter with these fields:
+
+| Field         | Type                  | Meaning                                                       |
+| ------------- | --------------------- | ------------------------------------------------------------ |
+| `subject`     | string                | Unique identifier/name of this module in the tree.           |
+| `description` | string                | One-line summary of what the module does.                    |
+| `parent`      | string \| null        | `subject` of the containing module (`null` for the root).    |
+| `children`    | string[]              | `subject`s of directly contained modules.                    |
+| `files`       | map<string,string>    | Filename -> short description of each significant file.      |
+| `tags`        | string[]              | Free-form classification labels.                             |
+| `flags`       | string[]              | Behavioral markers for tools/agents.                         |
+| `status`      | string (optional)     | Lifecycle marker (e.g. `stable`, `draft`, `deprecated`).     |
+
+Keep `subject` values unique across the project, keep `parent`/`children` consistent in both directions, and keep `files` in sync with what is actually on disk.
+
+## Onboarding Workflow (entering a project)
+
+When you start working in a project that uses xdocs:
+
+1. Read the root `XDOCS.md` to learn the project's top-level subject and structure.
+2. Run `<xdocs> tree` to see the module hierarchy.
+3. Run `<xdocs> scan` to see documentation coverage and which directories are missing xdocs files.
+4. Read `xdocs.config.toml` and note `[ai].mode`, the supported `[extensions]`, and `[scan].exclude`.
+5. When you navigate into a module, read that module's xdocs file (frontmatter first, body only if you need more) instead of reading every source file.
+
+## Documentation Workflow (writing and updating)
+
+When the user asks to document a directory, or when you change code that an xdocs file describes:
+
+1. Determine the target directory and whether it already has an xdocs file (`<xdocs> scan` or `<xdocs> list <path>`).
+2. Read the directory's actual files so the documentation reflects reality. Never invent files, modules, or behavior that is not present.
+3. Respect `[ai].mode`:
+   - **prompt mode**: state exactly which xdocs files you would create or change and wait for confirmation before writing.
+   - **auto mode**: create or update the xdocs files immediately, then report what changed.
+4. Write or update the xdocs file with correct frontmatter:
+   - Set `subject` (unique), `description`, and `files` (each real file -> short purpose).
+   - Set `parent` to the containing module's `subject`, and add this `subject` to that parent's `children`.
+   - Use `tags`/`flags`/`status` where useful.
+5. Keep the tree consistent: if you add a module, update its parent's `children`; if you remove one, update both sides.
+6. Validate with `<xdocs> tree` (it reports duplicate subjects, orphans, and missing children) and fix any reported issues.
+
+When generating from scratch, prefer `<xdocs> generate <path>` (one directory) or `<xdocs> generate` (whole project) to produce a starting draft, then refine the content by hand.
+
+## Command-to-Task Mapping
+
+- "Set up xdocs here" -> `<xdocs> init`
+- "What is documented / what is missing" -> `<xdocs> scan`
+- "Show me the structure" -> `<xdocs> tree`
+- "What is in this folder" -> `<xdocs> list <path>`
+- "Draft docs for this module / project" -> `<xdocs> generate [path]`
+- "Give me one combined document" -> `<xdocs> merge [path]`
+- "Give me the AI instructions for writing/updating docs" -> `<xdocs> prompt --name=<write|update|agents|generate>`
+- "Install the xdocs skill / update AGENTS.md" -> `<xdocs> agents install <local|global>` / `<xdocs> agents instructions`
+
+## Safety Rules
+
+- Never fabricate files, modules, descriptions, or relationships. Documentation must match the repository.
+- Never edit generated or build outputs (`library/`, `bundle/`, `bin/`, `*.tgz`). They are ignored and regenerated.
+- In prompt mode, do not write documentation changes before the user confirms.
+- Do not break tree integrity: every `child` must have a matching `parent`, and every `subject` must be unique.
+- Do not silently change a module's `subject` — it is the identity used by `parent`/`children` links across the project.
+- When `<xdocs> tree` or `<xdocs> scan` reports warnings, resolve them rather than ignoring them.
+
+## Configuration Reference
+
+xdocs searches for configuration via `--config <path>`, `./xdocs.config.toml`, or `./config/xdocs.config.toml`.
+
+```toml
+schema = 1
+
+[extensions]
+supported = [".docs.md", ".xdocs.md"]
+
+[ai]
+mode = "prompt"            # "prompt" (announce and wait) or "auto" (update immediately)
+
+[scan]
+exclude = ["node_modules", ".git", "dist", "build", "library", "bin", "bundle"]
+
+[project]
+name = "my-project"
+
+[agents]
+auto_agents_md = true      # keep the xdocs section in AGENTS.md up to date on normal commands
+auto_skill_install = true  # install the guiho-as-xdocs skill globally when missing
+skill_tool = "agents"      # default tool for auto-install: agents (standard) or claude
+```
+
+Agent automation options default to true. Set `auto_agents_md = false` to stop xdocs from touching AGENTS.md, and `auto_skill_install = false` to stop xdocs from installing `guiho-as-xdocs` globally when it is missing.
+
+## CLI Reference
+
+```bash
+xdocs init                     # create XDOCS.md + xdocs.config.toml, update AGENTS.md, install the skill
+xdocs scan                     # report xdocs coverage across the project
+xdocs tree                     # print the module hierarchy
+xdocs list <path>              # list files in a scope with descriptions
+xdocs generate [path]          # draft documentation for a directory or the whole project
+xdocs merge [path]             # merge a directory's xdocs files into one document
+xdocs prompt --name=<name>     # print a ready-made AI prompt (write|update|agents|generate)
+xdocs agents install local     # install guiho-as-xdocs into this project (.agents/skills/...)
+xdocs agents install global    # install guiho-as-xdocs into the user home skills directory
+xdocs agents instructions      # insert/refresh the xdocs section in AGENTS.md
+```
+
+Global flags: `--help`, `--version`, `--cwd <path>`, `--config <path>`, `--format <text|json|markdown>`, `--verbose`. The `agents install` command also accepts `--tool <agents|claude|all>`.
+
+## Agent Skill Installation
+
+xdocs ships this `guiho-as-xdocs` skill. The **standard** target is `AGENTS.md`
+plus `.agents/skills`, which OpenCode, Codex, Jules, and any AGENTS.md-aware tool
+read. A **non-standard** Claude Code target exists and is used only when it is
+explicitly requested (`--tool claude`) or detected (a `.claude` directory or
+`CLAUDE.md` in the project).
+
+| Target                  | Skill location (local)                      |
+| ----------------------- | ------------------------------------------- |
+| **agents** (standard)   | `.agents/skills/guiho-as-xdocs/SKILL.md`    |
+| **claude** (non-standard) | `.claude/skills/guiho-as-xdocs/SKILL.md`  |
+
+`local` scope installs under the current project; `global` scope installs under
+the user home directory (`~/.agents/skills/...`). The small section in `AGENTS.md`
+written by `xdocs agents instructions` is the standard pointer that tells any
+agent to load this skill.
+
+Default to the standard target. Only install or write non-standard files
+(`.claude`, `CLAUDE.md`, etc.) when the user asks for them or when those files
+already exist in the project.
+
+## TypeScript API
+
+When the user wants automation code rather than CLI usage, use the typed API:
+
+```ts
+import { loadConfigOrDefaults, scanProject, buildTree, renderTree } from '@guiho/xdocs'
+
+const config = await loadConfigOrDefaults({ cwd: process.cwd(), format: 'text', verbose: false })
+const scan = await scanProject(config)
+const tree = buildTree(scan.xdocsFiles)
+
+console.log(renderTree(tree))
+```
+
+For agent-skill and AGENTS.md automation:
+
+```ts
+import { installSkill, ensureAgentsInstructions } from '@guiho/xdocs'
+
+await installSkill('agents', 'local', { cwd: process.cwd() })
+await ensureAgentsInstructions(process.cwd(), true)
+```
+
+## Response Style
+
+When reporting an xdocs result, include:
+
+- The command that ran and the target path.
+- Which xdocs files were created or changed, if any.
+- Tree/coverage status (subjects added, orphans or duplicates resolved).
+- The configured AI mode, and — in prompt mode — exactly what you are waiting to write.
+
+Keep the explanation short and operational. The user usually needs to know which docs changed, whether the tree is still consistent, and what (if anything) remains for them to confirm.
