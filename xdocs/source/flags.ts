@@ -9,6 +9,7 @@ const booleanFlags = new Set([
   'help',
   'version',
   'verbose',
+  'global',
 ])
 
 const shortFlagMap: Record<string, string> = {
