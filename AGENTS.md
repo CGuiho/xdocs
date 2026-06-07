@@ -70,15 +70,6 @@
 - The empty `skills/` directory at the repository root is a placeholder; the canonical skill source is the package-internal `xdocs/skills/`.
 - Versioning is handled by `@guiho/mirror` via `xdocs/mirror.config.toml`, not by xdocs itself. Do not confuse xdocs (documentation) with mirror (versioning).
 
-<!-- BEGIN AGENT KANBAN — DO NOT EDIT THIS SECTION -->
-## Agent Kanban
-
-Read `.agentkanban/INSTRUCTION.md` for task workflow rules.
-Read `.agentkanban/memory.md` for project context.
-
-If a task file (`.agentkanban/tasks/**/*.md`) was referenced earlier in this conversation, re-read it before responding and always respond in and at the end the task file.
-<!-- END AGENT KANBAN -->
-
 ## Semantic Project Versioning -- GUIHO Mirror
 
 Invoke the guiho-as-mirror agent skill every time the user wants to bump, tag, release, plan, initialize, configure, or troubleshoot semantic project versioning with GUIHO Mirror.
