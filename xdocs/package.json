@@ -71,7 +71,7 @@
     "yaml": "^2.9.0"
   },
   "devDependencies": {
-    "@guiho/mirror": "^3.0.0",
+    "@guiho/mirror": "^3.1.1",
     "@types/bun": "1.3.14",
     "typescript": "6.0.3"
   }
