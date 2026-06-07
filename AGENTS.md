@@ -19,14 +19,17 @@
 ## CLI Behavior
 
 - The xdocs CLI is a structured documentation tool, not a versioning tool. It does not bump versions or mutate `package.json` versions.
-- Supported commands: `init`, `scan`, `generate`, `prompt`, `merge`, `tree`, `list`.
-- `xdocs init` creates `XDOCS.md`, `xdocs.config.toml`, updates `AGENTS.md`, and installs agent skill files.
+- Supported commands: `init`, `scan`, `generate`, `prompt`, `merge`, `tree`, `list`, `agents`.
+- `xdocs init` creates `XDOCS.md`, `xdocs.config.toml`, updates `AGENTS.md` (the xdocs section pointing AI at the skill), and installs the `guiho-as-xdocs` skill to the standard location (`.agents/skills`); `--tool` and `--global` are supported.
 - `xdocs scan` walks the project tree (respecting `[scan].exclude`) and reports xdocs file coverage.
 - `xdocs generate [path]` generates documentation for a specific directory or the entire project.
 - `xdocs prompt --name=<name>` outputs a ready-made prompt for AI agents. Available prompts: `write`, `update`, `agents`, `generate`. Prompts are selected via `--name` flag, not subcommands.
 - `xdocs merge [path]` merges xdocs files from a directory into a single consolidated document.
 - `xdocs tree` builds and displays the project hierarchy from xdocs metadata.
 - `xdocs list [path]` lists files in a scope with descriptions from xdocs metadata.
+- `xdocs agents install <local|global> [--tool <agents|claude|all>]` installs the `guiho-as-xdocs` skill; `xdocs agents instructions` inserts/refreshes the xdocs section in `AGENTS.md`.
+- Skill install is standard-first: the default `agents` target is `AGENTS.md` + `.agents/skills` (local) / `~/.agents/skills` (global). The non-standard `claude` target (`.claude/skills`) is used only when `--tool` requests it or a `.claude`/`CLAUDE.md` is detected. Codex, Jules, and other AGENTS.md tools read the standard target.
+- Data commands (`scan`, `generate`, `merge`, `tree`, `list`) run config-gated agent automation first: when an `xdocs.config.toml` is present, `[agents].auto_agents_md` keeps the AGENTS.md section fresh and `[agents].auto_skill_install` installs the global skill if missing.
 - Global flags: `--help`, `--version`, `--cwd <path>`, `--config <path>`, `--format <text|json|markdown>`, `--verbose`.
 
 ## Source Structure
@@ -43,15 +46,18 @@
 - `xdocs/source/flags.ts` -- argument/flag parsing utilities
 - `xdocs/source/errors.ts` -- XDocsError class and invariant helper
 - `xdocs/source/types.ts` -- all TypeScript type definitions
-- `xdocs/source/commands/` -- one file per CLI command (`init.ts`, `scan.ts`, `generate.ts`, `prompt.ts`, `merge.ts`, `tree.ts`, `list.ts`)
+- `xdocs/source/agents.ts` -- skill install (local/global, multi-tool), AGENTS.md section, config-gated automation; embeds `skills/guiho-as-xdocs/SKILL.md` via a Bun text import
+- `xdocs/source/commands/` -- one file per CLI command (`init.ts`, `scan.ts`, `generate.ts`, `prompt.ts`, `merge.ts`, `tree.ts`, `list.ts`, `agents.ts`)
 - `xdocs/prompts/` -- Markdown prompt templates (`write.md`, `update.md`, `agents.md`, `generate.md`); imported at build time and embedded in the binary
+- `xdocs/skills/guiho-as-xdocs/SKILL.md` -- the bundled agent skill; shipped via `package.json` `files` and `jsr.json` include, embedded via a Bun text import
 
 ## Key Concepts
 
 - xdocs files use Markdown with YAML frontmatter. Default extensions: `.docs.md`, `.xdocs.md`. The root file is always `XDOCS.md` (uppercase, no prefix).
 - Metadata fields: `subject`, `description`, `parent`, `children`, `files`, `tags`, `flags`, and optional `status`.
 - The tree is a parent-child containment hierarchy, not a dependency graph. Built from `subject`/`parent`/`children` fields.
-- Configuration lives in `xdocs.config.toml`. Sections: `extensions`, `ai`, `scan`, `project`.
+- Configuration lives in `xdocs.config.toml`. Sections: `extensions`, `ai`, `scan`, `project`, `agents`.
+- Agent automation (`[agents]`): `auto_agents_md` (keep the AGENTS.md section fresh), `auto_skill_install` (install the global skill when missing), and `skill_tool` (default install target: `agents` standard, or `claude`). All default on / `agents`.
 - AI mode (`ai.mode`): `"prompt"` (default, AI announces updates and waits) or `"auto"` (AI updates docs automatically).
 - Dependencies: `smol-toml` (TOML parsing), `yaml` (YAML frontmatter parsing).
 
@@ -60,7 +66,8 @@
 - There is no lint or formatter config. Existing TS uses strict `tsconfig.json`, single quotes, and no semicolons; match nearby style.
 - Generated outputs (`xdocs/library/`, `xdocs/bundle/`, `xdocs/bin/`, `*.tgz`) are ignored; do not hand-edit them.
 - Prompt files in `xdocs/prompts/` are imported with `with { type: 'text' }` (Bun text imports). Each prompt `.md` file has its own YAML frontmatter with `name` and `description` fields. Adding a new prompt requires creating the `.md` file and adding an import in `xdocs/source/prompts.ts`.
-- The `skills/` directory at the repository root holds agent skill templates for different AI tools (OpenCode, Claude Code, Codex, Jules). These are generated files, not code packages.
+- The shipped agent skill lives at `xdocs/skills/guiho-as-xdocs/SKILL.md` (inside the package) and is embedded with a Bun text import in `xdocs/source/agents.ts`; it ships via `package.json` `files` and `jsr.json` `publish.include`. `xdocs agents install` writes it into the standard `.agents/skills` directory by default, and into `.claude/skills` only when the non-standard claude target is requested or detected.
+- The empty `skills/` directory at the repository root is a placeholder; the canonical skill source is the package-internal `xdocs/skills/`.
 - Versioning is handled by `@guiho/mirror` via `xdocs/mirror.config.toml`, not by xdocs itself. Do not confuse xdocs (documentation) with mirror (versioning).
 
 <!-- BEGIN AGENT KANBAN — DO NOT EDIT THIS SECTION -->
