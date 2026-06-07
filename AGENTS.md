@@ -50,6 +50,7 @@
 - `xdocs/source/commands/` -- one file per CLI command (`init.ts`, `scan.ts`, `generate.ts`, `prompt.ts`, `merge.ts`, `tree.ts`, `list.ts`, `agents.ts`)
 - `xdocs/prompts/` -- Markdown prompt templates (`write.md`, `update.md`, `agents.md`, `generate.md`); imported at build time and embedded in the binary
 - `xdocs/skills/guiho-as-xdocs/SKILL.md` -- the bundled agent skill; shipped via `package.json` `files` and `jsr.json` include, embedded via a Bun text import
+- `xdocs/DOCS.md` -- canonical full user-facing documentation for `@guiho/xdocs`; update it before every release with the same discipline as the changelog (ships via `package.json` `files`)
 
 ## Key Concepts
 
@@ -77,4 +78,6 @@ Invoke the guiho-as-mirror agent skill every time the user wants to bump, tag, r
 Before editing release docs or changelogs, inspect mirror.config.toml. If [agents].write_changelog is false, skip changelog edits. If it is missing or true, changelog edits are allowed when the project has a changelog.
 
 Use [agents].changelog_path as the changelog file path. If it is missing, use CHANGELOG.md in the project root.
+
+Before publishing a new version, update `xdocs/DOCS.md` -- the canonical full documentation for `@guiho/xdocs` -- to capture every behavior change in the release, written the same way as the changelog. Treat `DOCS.md` as a required release artifact: keep it current with CLI commands and flags, configuration fields, the metadata schema, the TypeScript API, and agent skill behavior. Do not publish when `DOCS.md` is stale relative to the shipping code.
 
