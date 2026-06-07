@@ -1,5 +1,12 @@
 # GUIHO XDocs Changelog
 
+## 0.2.1
+
+- Clarify the repository model: a repository has exactly one `XDOCS.md` (no frontmatter) that indexes its packages and applications, and each package/application has its own root `.xdocs.md` (with frontmatter and `parent: null`) that tops its tree.
+- `xdocs init` now scaffolds `XDOCS.md` as that frontmatter-less repo root index (with `## Packages` / `## Applications` sections).
+- `xdocs scan` reports the root `XDOCS.md` as `[root index]` instead of `[incomplete]`.
+- Update the `guiho-as-xdocs` skill and `DOCS.md` to describe the one-`XDOCS.md`-per-repo model.
+
 ## 0.2.0
 
 - The `guiho-as-xdocs` skill now mandates **automatic xdocs maintenance**: an agent creates or updates a directory's `.xdocs.md` (purpose, files with their key functions/exports, and `parent`/`children` links) whenever it creates or changes a module, as part of the definition of done -- the user no longer has to ask. `[ai].mode` governs how docs are written, not whether.
