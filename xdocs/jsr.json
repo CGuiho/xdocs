@@ -1,6 +1,6 @@
 {
   "name": "@guiho/xdocs",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "exports": "./source/guiho-xdocs.ts",
   "publish": {
     "include": [
