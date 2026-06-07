@@ -1,24 +1,27 @@
 /**
  * @copyright Copyright (c) 2026 GUIHO Technologies as represented by Cristóvão GUIHO. All Rights Reserved.
  *
- * Prompt loader. Each .md file in prompts/ is imported as text at build time
- * so that `bun build --compile` embeds them in the binary. Adding a new prompt
- * requires two steps: create the .md file, then add an import here.
+ * Prompt loader. Prompt `.md` files are read from disk at runtime (relative to
+ * this module via import.meta.url) so the compiled library works under both
+ * Node and Bun. Each `.md` file ships with the package in `prompts/`. Adding a
+ * new prompt requires creating the `.md` file and adding its name to
+ * PROMPT_NAMES.
  */
 
-// @ts-expect-error -- Bun text import, no TS declaration needed
-import writeRaw from '../prompts/write.md' with { type: 'text' }
-// @ts-expect-error -- Bun text import, no TS declaration needed
-import updateRaw from '../prompts/update.md' with { type: 'text' }
-// @ts-expect-error -- Bun text import, no TS declaration needed
-import agentsRaw from '../prompts/agents.md' with { type: 'text' }
-// @ts-expect-error -- Bun text import, no TS declaration needed
-import generateRaw from '../prompts/generate.md' with { type: 'text' }
-
+import { readFileSync } from 'node:fs'
 import { extractFrontmatter } from './metadata.js'
 import type { XDocsPrompt } from './types.js'
 
-const rawFiles: string[] = [writeRaw, updateRaw, agentsRaw, generateRaw]
+const PROMPT_NAMES = ['write', 'update', 'agents', 'generate'] as const
+
+/** Read a prompt file's raw contents, or undefined when it cannot be read. */
+const readPromptFile = (name: string): string | undefined => {
+  try {
+    return readFileSync(new URL(`../prompts/${name}.md`, import.meta.url), 'utf8')
+  } catch {
+    return undefined
+  }
+}
 
 /** Parse a raw prompt file into an XDocsPrompt. */
 const parsePrompt = (raw: string): XDocsPrompt => {
@@ -46,7 +49,9 @@ const parsePrompt = (raw: string): XDocsPrompt => {
 export const prompts: ReadonlyMap<string, XDocsPrompt> = (() => {
   const map = new Map<string, XDocsPrompt>()
 
-  for (const raw of rawFiles) {
+  for (const name of PROMPT_NAMES) {
+    const raw = readPromptFile(name)
+    if (!raw) continue
     const prompt = parsePrompt(raw)
     map.set(prompt.name, prompt)
   }
