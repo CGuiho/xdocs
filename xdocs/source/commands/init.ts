@@ -3,10 +3,12 @@
  */
 
 import { existsSync } from 'node:fs'
-import { readFile, writeFile } from 'node:fs/promises'
-import { resolve } from 'node:path'
+import { writeFile } from 'node:fs/promises'
+import { relative, resolve } from 'node:path'
 import type { XDocsCliOptions, XDocsParsedArgs } from '../types.js'
 import { writeDefaultConfig } from '../config.js'
+import { booleanFlag, stringFlag } from '../flags.js'
+import { ensureAgentsInstructions, findAgentsFile, installSkill, resolveInstallTools, xdocsSkillName } from '../agents.js'
 
 const ROOT_XDOCS_CONTENT = `
 # GUIHO XDocs Documentation
@@ -16,27 +18,8 @@ const ROOT_XDOCS_CONTENT = `
 ## Directories
 `.trim() + '\n'
 
-const AGENTS_XDOCS_BLOCK = `
-<!-- BEGIN XDOCS — DO NOT EDIT THIS SECTION -->
-## XDocs
-
-This project uses xdocs for structured documentation. xdocs files describe
-modules, their purpose, files, and hierarchy.
-
-- Configuration: \`xdocs.config.toml\`
-- Root documentation: \`XDOCS.md\`
-- File extensions: \`.docs.md\`, \`.xdocs.md\`
-
-When modifying code, check the xdocs configuration for AI behavior mode.
-In "prompt" mode, announce documentation updates and wait for confirmation.
-In "auto" mode, update documentation immediately.
-
-Use the xdocs CLI for operations: \`xdocs scan\`, \`xdocs generate\`, \`xdocs tree\`, etc.
-<!-- END XDOCS -->
-`.trim()
-
 /** Run the init command. */
-export const runInit = async (options: XDocsCliOptions, _parsed: XDocsParsedArgs): Promise<void> => {
+export const runInit = async (options: XDocsCliOptions, parsed: XDocsParsedArgs): Promise<void> => {
   const cwd = options.cwd
 
   // 1. Create xdocs.config.toml
@@ -57,19 +40,31 @@ export const runInit = async (options: XDocsCliOptions, _parsed: XDocsParsedArgs
     process.stdout.write(`created: XDOCS.md\n`)
   }
 
-  // 3. Update AGENTS.md
-  const agentsPath = resolve(cwd, 'AGENTS.md')
-  if (existsSync(agentsPath)) {
-    const content = await readFile(agentsPath, 'utf8')
-    if (content.includes('<!-- BEGIN XDOCS')) {
-      process.stdout.write(`exists: AGENTS.md (xdocs section already present)\n`)
-    } else {
-      await writeFile(agentsPath, content.trimEnd() + '\n\n' + AGENTS_XDOCS_BLOCK + '\n', 'utf8')
-      process.stdout.write(`updated: AGENTS.md (added xdocs section)\n`)
-    }
-  } else {
-    await writeFile(agentsPath, '# Agent Instructions\n\n' + AGENTS_XDOCS_BLOCK + '\n', 'utf8')
+  // 3. Update AGENTS.md (announce xdocs + point AI at the guiho-as-xdocs skill)
+  const agentsExisted = findAgentsFile(cwd) !== undefined
+  const agentsResult = await ensureAgentsInstructions(cwd, true)
+  if (!agentsExisted) {
     process.stdout.write(`created: AGENTS.md\n`)
+  } else if (agentsResult.changed) {
+    process.stdout.write(`updated: AGENTS.md (xdocs section)\n`)
+  } else {
+    process.stdout.write(`exists: AGENTS.md (xdocs section already present)\n`)
+  }
+
+  // 4. Install the guiho-as-xdocs agent skill (standard by default; non-standard
+  //    tools only when explicitly requested via --tool or detected in the project)
+  const scope = booleanFlag(parsed.flags, 'global') ? 'global' : 'local'
+  const tools = resolveInstallTools(cwd, stringFlag(parsed.flags, 'tool'))
+  for (const tool of tools) {
+    const result = await installSkill(tool, scope, { cwd })
+    const where = scope === 'local' ? relative(cwd, result.path) || result.path : result.path
+    if (result.installed) {
+      process.stdout.write(`installed: ${xdocsSkillName} skill (${tool}, ${scope}) -> ${where}\n`)
+    } else if (result.updated) {
+      process.stdout.write(`updated: ${xdocsSkillName} skill (${tool}, ${scope})\n`)
+    } else {
+      process.stdout.write(`exists: ${xdocsSkillName} skill (${tool}, ${scope})\n`)
+    }
   }
 
   process.stdout.write(`\nxdocs initialized.\n`)
