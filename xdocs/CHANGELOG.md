@@ -1,1 +1,0 @@
-# GUIHO XDocs Changelog
