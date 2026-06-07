@@ -6,36 +6,28 @@ import { existsSync } from 'node:fs'
 import { writeFile } from 'node:fs/promises'
 import { basename, relative, resolve } from 'node:path'
 import type { XDocsCliOptions, XDocsParsedArgs } from '../types.js'
-import { loadConfigOrDefaults, writeDefaultConfig } from '../config.js'
+import { writeDefaultConfig } from '../config.js'
 import { booleanFlag, stringFlag } from '../flags.js'
-import { ensureAgentsInstructions, findAgentsFile, installSkill, parseAgentTools, resolveInstallTools, xdocsSkillName } from '../agents.js'
+import { ensureAgentsInstructions, findAgentsFile, installSkill, resolveInstallTools, xdocsSkillName } from '../agents.js'
 
 /**
- * Build the root XDOCS.md content. The root is the tree's root NODE: it carries
- * frontmatter like any other xdocs file, with `parent: null`, and every other
- * `.xdocs.md` / `.docs.md` connects up to it through its `parent` chain.
+ * Build the root XDOCS.md content. There is exactly one `XDOCS.md` per
+ * repository, at the repo root. It does NOT use frontmatter; it is a plain
+ * index that lists the repository's packages and applications. Each package or
+ * application has its own root `.xdocs.md` file (with frontmatter) that is the
+ * top of that package's documentation tree.
  */
-export const createRootXDocsContent = (projectName: string): string =>
-  `---
-subject: "${projectName}"
-description: "Root of the ${projectName} documentation tree."
-parent: null
-children: []
-files: {}
-tags: []
-flags: []
----
+const createRootXDocsContent = (projectName: string): string =>
+  `# ${projectName} -- XDocs Root
 
-# ${projectName}
+The single root index for this repository. There is exactly one \`XDOCS.md\` per
+repository and it does not use frontmatter. List the packages and applications
+in the repo below; each one has its own root \`.xdocs.md\` file (with frontmatter)
+that is the top of that package's documentation tree.
 
-Root of the xdocs documentation tree. Every \`.xdocs.md\` and \`.docs.md\` file in
-this repository connects up to this file through its \`parent\` chain: a module's
-\`parent\` is the \`subject\` of the module that contains it, and top-level modules
-use \`${projectName}\` (this file's \`subject\`) as their \`parent\`.
+## Packages
 
-## Files
-
-## Directories
+## Applications
 `
 
 /** Run the init command. */
@@ -56,7 +48,7 @@ export const runInit = async (options: XDocsCliOptions, parsed: XDocsParsedArgs)
   if (existsSync(xdocsPath)) {
     process.stdout.write(`exists: XDOCS.md\n`)
   } else {
-    await writeFile(xdocsPath, ROOT_XDOCS_CONTENT, 'utf8')
+    await writeFile(xdocsPath, createRootXDocsContent(basename(cwd)), 'utf8')
     process.stdout.write(`created: XDOCS.md\n`)
   }
 
