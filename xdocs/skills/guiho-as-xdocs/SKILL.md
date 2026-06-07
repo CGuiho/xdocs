@@ -28,19 +28,20 @@ xdocs is a Bun/TypeScript ESM tool. Bun is the recommended runtime. The CLI neve
 ## Core Concepts
 
 - **xdocs file**: a Markdown file with YAML frontmatter that documents one directory/module. Default extensions are `.docs.md` and `.xdocs.md`. Extensions are configurable in `xdocs.config.toml`.
-- **Root file**: `XDOCS.md` (uppercase, no prefix) at the project root is the entry point and top of the tree.
-- **Tree**: a parent-child **containment** hierarchy (not a dependency graph), assembled from each file's `subject` / `parent` / `children` fields.
+- **Repository root index**: there is exactly one `XDOCS.md` per repository, at the repo root. It has **no frontmatter** — it is a plain index that lists the repository's packages and applications, and it is not itself a tree node.
+- **Package/application root**: each package or application has its own root `.xdocs.md` file (with frontmatter and `parent: null`) that is the top of that package's documentation tree. `XDOCS.md` lists these package roots.
+- **Tree**: a parent-child **containment** hierarchy (not a dependency graph), assembled from each `.xdocs.md` / `.docs.md` file's `subject` / `parent` / `children` fields. A module's `parent` is the `subject` of the module that contains it; a package/application root uses `parent: null`.
 - **AI mode**: `xdocs.config.toml` `[ai].mode` is either `"prompt"` (announce the documentation updates, then write them) or `"auto"` (write immediately). It governs *how* you write docs, not *whether* — documenting a changed module is always required (see Automatic Documentation Maintenance).
 
 ### Metadata schema (YAML frontmatter)
 
-Every xdocs file (except the root content body) carries frontmatter with these fields:
+Every `.xdocs.md` / `.docs.md` file carries frontmatter with these fields. The repository's single `XDOCS.md` is the exception: it has no frontmatter and is just an index.
 
 | Field         | Type                  | Meaning                                                       |
 | ------------- | --------------------- | ------------------------------------------------------------ |
 | `subject`     | string                | Unique identifier/name of this module in the tree.           |
 | `description` | string                | One-line summary of what the module does.                    |
-| `parent`      | string \| null        | `subject` of the containing module (`null` for the root).    |
+| `parent`      | string \| null        | `subject` of the containing module; `null` for a package/application root. |
 | `children`    | string[]              | `subject`s of directly contained modules.                    |
 | `files`       | map<string,string>    | Filename -> short description of each significant file.      |
 | `tags`        | string[]              | Free-form classification labels.                             |
@@ -104,6 +105,8 @@ checks to `verifyPassword()`; sessions are created and validated in `session.ts`
 ```
 
 Then add `auth` to the `children` list of the `src` module's xdocs file so the tree stays consistent.
+
+If the directory you are documenting is the **root of a package or application** (not a sub-module), set `parent: null` instead, and list that package's root `.xdocs.md` in the repository's single `XDOCS.md` index rather than in a parent module's `children`.
 
 ## Onboarding Workflow (entering a project)
 
