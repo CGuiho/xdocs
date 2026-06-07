@@ -4,19 +4,39 @@
 
 import { existsSync } from 'node:fs'
 import { writeFile } from 'node:fs/promises'
-import { relative, resolve } from 'node:path'
+import { basename, relative, resolve } from 'node:path'
 import type { XDocsCliOptions, XDocsParsedArgs } from '../types.js'
-import { writeDefaultConfig } from '../config.js'
+import { loadConfigOrDefaults, writeDefaultConfig } from '../config.js'
 import { booleanFlag, stringFlag } from '../flags.js'
-import { ensureAgentsInstructions, findAgentsFile, installSkill, resolveInstallTools, xdocsSkillName } from '../agents.js'
+import { ensureAgentsInstructions, findAgentsFile, installSkill, parseAgentTools, resolveInstallTools, xdocsSkillName } from '../agents.js'
 
-const ROOT_XDOCS_CONTENT = `
-# GUIHO XDocs Documentation
+/**
+ * Build the root XDOCS.md content. The root is the tree's root NODE: it carries
+ * frontmatter like any other xdocs file, with `parent: null`, and every other
+ * `.xdocs.md` / `.docs.md` connects up to it through its `parent` chain.
+ */
+export const createRootXDocsContent = (projectName: string): string =>
+  `---
+subject: "${projectName}"
+description: "Root of the ${projectName} documentation tree."
+parent: null
+children: []
+files: {}
+tags: []
+flags: []
+---
+
+# ${projectName}
+
+Root of the xdocs documentation tree. Every \`.xdocs.md\` and \`.docs.md\` file in
+this repository connects up to this file through its \`parent\` chain: a module's
+\`parent\` is the \`subject\` of the module that contains it, and top-level modules
+use \`${projectName}\` (this file's \`subject\`) as their \`parent\`.
 
 ## Files
 
 ## Directories
-`.trim() + '\n'
+`
 
 /** Run the init command. */
 export const runInit = async (options: XDocsCliOptions, parsed: XDocsParsedArgs): Promise<void> => {
