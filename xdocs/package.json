@@ -18,6 +18,7 @@
     "README.md",
     "library/",
     "prompts/",
+    "skills/",
     "docs/",
     "jsr.json",
     "CHANGELOG.md",
