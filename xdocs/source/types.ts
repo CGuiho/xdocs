@@ -9,7 +9,17 @@ export type XDocsFormat = 'text' | 'json' | 'markdown'
 export type XDocsAiMode = 'prompt' | 'auto'
 
 /** Command names recognized by the CLI. */
-export type XDocsCommand = 'init' | 'scan' | 'generate' | 'prompt' | 'merge' | 'tree' | 'list'
+export type XDocsCommand = 'init' | 'scan' | 'generate' | 'prompt' | 'merge' | 'tree' | 'list' | 'agents'
+
+/** AI tools the guiho-as-xdocs skill can be installed for.
+ *
+ * `agents` is the standard target (AGENTS.md + .agents/skills) and the default.
+ * `claude` is a non-standard target (.claude/skills) used only when explicitly
+ * requested or auto-detected. */
+export type XDocsAgentTool = 'agents' | 'claude'
+
+/** Scope of an agent-skill installation. */
+export type XDocsSkillScope = 'local' | 'global'
 
 /** Raw configuration as parsed from xdocs.config.toml. */
 export type XDocsRawConfig = Partial<{
@@ -25,6 +35,11 @@ export type XDocsRawConfig = Partial<{
   }>
   project: Partial<{
     name: string
+  }>
+  agents: Partial<{
+    auto_agents_md: boolean
+    auto_skill_install: boolean
+    skill_tool: string
   }>
 }>
 
@@ -45,6 +60,14 @@ export type XDocsConfig = {
   project: {
     name: string
   }
+  agents: XDocsAgentSettings
+}
+
+/** Normalized agent automation settings. */
+export type XDocsAgentSettings = {
+  autoAgentsMd: boolean
+  autoSkillInstall: boolean
+  skillTool: XDocsAgentTool
 }
 
 /** YAML frontmatter metadata from an xdocs file. */
@@ -118,4 +141,27 @@ export type XDocsPrompt = {
   name: string
   description: string
   body: string
+}
+
+/** Result of installing the guiho-as-xdocs skill for one tool/scope. */
+export type XDocsSkillInstallResult = {
+  tool: XDocsAgentTool
+  scope: XDocsSkillScope
+  path: string
+  installed: boolean
+  updated: boolean
+}
+
+/** Result of ensuring the xdocs section exists in AGENTS.md. */
+export type XDocsAgentsInstructionsResult = {
+  path: string
+  exists: boolean
+  changed: boolean
+}
+
+/** Result of the config-gated agent automation that runs on normal commands. */
+export type XDocsAgentAutomationResult = {
+  settings: XDocsAgentSettings
+  agentsMd?: XDocsAgentsInstructionsResult
+  globalSkill?: XDocsSkillInstallResult
 }
