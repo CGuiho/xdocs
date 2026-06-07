@@ -23,19 +23,20 @@ The public package exposes a CLI named `xdocs` and a TypeScript API for discover
 
 ## Core Model
 
-XDocs describes a project as a containment hierarchy of documented modules.
+XDocs describes a repository as a containment hierarchy of documented modules.
 
-- Project: the repository or directory being documented.
+- Project: the repository being documented.
 - xdocs file: a Markdown file with YAML frontmatter that documents one directory/module.
-- Root file: `XDOCS.md` (uppercase, no prefix) at the project root, the top of the tree.
-- Tree: a parent-child containment hierarchy (not a dependency graph) assembled from each file's `subject` / `parent` / `children` fields.
+- Repository root index: exactly one `XDOCS.md` per repository, at the repo root. It has **no frontmatter** and is not a tree node; it is a plain index that lists the repository's packages and applications.
+- Package/application root: each package or application has its own root `.xdocs.md` file (with frontmatter and `parent: null`) that is the top of that package's documentation tree. `XDOCS.md` lists these package roots.
+- Tree: a parent-child containment hierarchy (not a dependency graph) assembled from each `.xdocs.md` / `.docs.md` file's `subject` / `parent` / `children` fields.
 - AI mode: how an agent should behave when documentation needs updating, configured by `[ai].mode`.
 
-The tree is the main mental model. A module's xdocs file names the module (`subject`), points up to its container (`parent`), and lists the modules it contains (`children`). Reading metadata first, and the body only when needed, lets an agent navigate a project cheaply.
+The tree is the main mental model. A module's xdocs file names the module (`subject`), points up to its container (`parent`), and lists the modules it contains (`children`). A package root sets `parent: null`. Reading metadata first, and the body only when needed, lets an agent navigate a project cheaply.
 
 ## xdocs Files and Metadata
 
-An xdocs file is Markdown with a YAML frontmatter block delimited by `---`. The body below the frontmatter is free-form Markdown.
+A module's xdocs file is Markdown with a YAML frontmatter block delimited by `---`. The body below the frontmatter is free-form Markdown. (The repository's single `XDOCS.md` is the one exception — it has no frontmatter and is just an index.)
 
 ```markdown
 ---
@@ -63,7 +64,7 @@ Frontmatter fields:
 | ------------- | ------------------- | ------------------------------------------------------------ |
 | `subject`     | string              | Unique identifier/name of this module in the tree.           |
 | `description` | string              | One-line summary of what the module does.                    |
-| `parent`      | string \| null      | `subject` of the containing module (`null` for the root).    |
+| `parent`      | string \| null      | `subject` of the containing module; `null` for a package/application root. |
 | `children`    | string[]            | `subject`s of directly contained modules.                    |
 | `files`       | map<string,string>  | Filename -> short description of each significant file.       |
 | `tags`        | string[]            | Free-form classification labels.                             |
