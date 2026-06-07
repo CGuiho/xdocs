@@ -46,10 +46,10 @@
 - `xdocs/source/flags.ts` -- argument/flag parsing utilities
 - `xdocs/source/errors.ts` -- XDocsError class and invariant helper
 - `xdocs/source/types.ts` -- all TypeScript type definitions
-- `xdocs/source/agents.ts` -- skill install (local/global, multi-tool), AGENTS.md section, config-gated automation; embeds `skills/guiho-as-xdocs/SKILL.md` via a Bun text import
+- `xdocs/source/agents.ts` -- skill install (local/global, multi-tool), AGENTS.md section, config-gated automation; reads `skills/guiho-as-xdocs/SKILL.md` from disk at runtime (`readFileSync` via `import.meta.url`)
 - `xdocs/source/commands/` -- one file per CLI command (`init.ts`, `scan.ts`, `generate.ts`, `prompt.ts`, `merge.ts`, `tree.ts`, `list.ts`, `agents.ts`)
 - `xdocs/prompts/` -- Markdown prompt templates (`write.md`, `update.md`, `agents.md`, `generate.md`); imported at build time and embedded in the binary
-- `xdocs/skills/guiho-as-xdocs/SKILL.md` -- the bundled agent skill; shipped via `package.json` `files` and `jsr.json` include, embedded via a Bun text import
+- `xdocs/skills/guiho-as-xdocs/SKILL.md` -- the bundled agent skill; shipped via `package.json` `files` and `jsr.json` include, read from disk at runtime
 - `xdocs/DOCS.md` -- canonical full user-facing documentation for `@guiho/xdocs`; update it before every release with the same discipline as the changelog (ships via `package.json` `files`)
 
 ## Key Concepts
@@ -66,8 +66,8 @@
 
 - There is no lint or formatter config. Existing TS uses strict `tsconfig.json`, single quotes, and no semicolons; match nearby style.
 - Generated outputs (`xdocs/library/`, `xdocs/bundle/`, `xdocs/bin/`, `*.tgz`) are ignored; do not hand-edit them.
-- Prompt files in `xdocs/prompts/` are imported with `with { type: 'text' }` (Bun text imports). Each prompt `.md` file has its own YAML frontmatter with `name` and `description` fields. Adding a new prompt requires creating the `.md` file and adding an import in `xdocs/source/prompts.ts`.
-- The shipped agent skill lives at `xdocs/skills/guiho-as-xdocs/SKILL.md` (inside the package) and is embedded with a Bun text import in `xdocs/source/agents.ts`; it ships via `package.json` `files` and `jsr.json` `publish.include`. `xdocs agents install` writes it into the standard `.agents/skills` directory by default, and into `.claude/skills` only when the non-standard claude target is requested or detected.
+- Prompt files in `xdocs/prompts/` are read from disk at runtime (`readFileSync` relative to `import.meta.url`) so the compiled library runs under Node and Bun; they ship via `package.json` `files`. Each prompt `.md` file has YAML frontmatter with `name` and `description`. Adding a new prompt requires creating the `.md` file and adding its name to `PROMPT_NAMES` in `xdocs/source/prompts.ts`.
+- The shipped agent skill lives at `xdocs/skills/guiho-as-xdocs/SKILL.md` (inside the package) and is read from disk at runtime (`readFileSync` relative to `import.meta.url`) in `xdocs/source/agents.ts`; it ships via `package.json` `files` and `jsr.json` `publish.include`. `xdocs agents install` writes it into the standard `.agents/skills` directory by default, and into `.claude/skills` only when the non-standard claude target is requested or detected.
 - The empty `skills/` directory at the repository root is a placeholder; the canonical skill source is the package-internal `xdocs/skills/`.
 - Versioning is handled by `@guiho/mirror` via `xdocs/mirror.config.toml`, not by xdocs itself. Do not confuse xdocs (documentation) with mirror (versioning).
 
