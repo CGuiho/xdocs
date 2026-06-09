@@ -94,9 +94,10 @@ export const xdocsAgentsSection = `${AGENTS_BEGIN_MARKER}
 ## XDocs Structured Documentation
 
 This project uses **xdocs** (\`@guiho/xdocs\`) for structured, machine-readable
-documentation. Each module carries a \`.docs.md\` / \`.xdocs.md\` file with YAML
-frontmatter (\`subject\`, \`description\`, \`parent\`, \`children\`, \`files\`), and the
-root \`XDOCS.md\` is the top of the tree.
+documentation. The repository has one root \`XDOCS.md\` index (no frontmatter),
+and each package/application has a root \`.xdocs.md\` file. Each module carries a
+\`.docs.md\` / \`.xdocs.md\` file with YAML frontmatter (\`subject\`, \`description\`,
+\`parent\`, \`children\`, \`files\`).
 
 **Load the \`${xdocsSkillName}\` agent skill** for any documentation work:
 creating, updating, regenerating, scanning, merging, or navigating xdocs files.
@@ -198,13 +199,25 @@ const upsertAgentsSection = (content: string): string => {
   const end = content.indexOf(AGENTS_END_MARKER)
 
   if (begin !== -1 && end !== -1 && end > begin) {
+    const blockEnd = end + AGENTS_END_MARKER.length
+    const currentBlock = content.slice(begin, blockEnd)
+    if (normalizeAgentsSection(currentBlock) === normalizeAgentsSection(xdocsAgentsSection)) return content
+
     const before = content.slice(0, begin)
-    const after = content.slice(end + AGENTS_END_MARKER.length)
+    const after = content.slice(blockEnd)
     return `${before}${xdocsAgentsSection}${after}`
   }
 
   return `${content.trimEnd()}\n\n${xdocsAgentsSection}\n`
 }
+
+/** Ignore blank-only lines and trailing whitespace when comparing formatted sections. */
+const normalizeAgentsSection = (content: string): string =>
+  content
+    .split(/\r?\n/)
+    .map((line) => line.trimEnd())
+    .filter((line) => line.trim().length > 0)
+    .join('\n')
 
 /** Walk up from cwd to find the nearest AGENTS.md. */
 export const findAgentsFile = (cwd: string): string | undefined => {
