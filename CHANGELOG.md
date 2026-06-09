@@ -1,5 +1,10 @@
 # GUIHO XDocs Changelog
 
+## 0.2.3
+
+- `xdocs agents instructions` and config-gated AGENTS.md automation now tolerate formatter-only blank lines and trailing whitespace inside the managed xdocs block, preserving the user's formatted block when the actual text is unchanged.
+- Update the managed AGENTS.md xdocs block wording to match the current repository model: one root `XDOCS.md` index and package/application root `.xdocs.md` files.
+
 ## 0.2.2
 
 - Fix: the published library crashed under Node (`ERR_UNKNOWN_FILE_EXTENSION` for `.md`) because the prompts and the `guiho-as-xdocs` skill were loaded with Bun-only text imports. They are now read from disk at runtime (`readFileSync` relative to `import.meta.url`), so the `xdocs` CLI and the library work under both Node and Bun.
