@@ -247,6 +247,12 @@ xdocs agents instructions             # insert/refresh the AGENTS.md section
 - `install global`: Writes the skill under the user home skills directory.
 - `instructions`: Creates or refreshes the xdocs section in `AGENTS.md`.
 
+When refreshing the `AGENTS.md` section, XDocs compares the existing section to
+the canonical section while ignoring blank-only lines and trailing whitespace.
+This means Markdown formatters that add blank lines around the section markers do
+not cause repeated rewrites. Real text changes are still replaced with the
+canonical section.
+
 Flags: `--tool <agents|claude|all>`, `--format <text|json>`, `--cwd`.
 
 When `--tool` is omitted, XDocs installs the standard target and adds the Claude target only when a `.claude/` directory or `CLAUDE.md` is detected in the project. Global skill installation uses the user home directory; tests and automation can override that home root with `XDOCS_AGENT_HOME`.
@@ -405,7 +411,7 @@ The API uses the same configuration discovery and validation as the CLI.
 - `source/flags.ts`: argument/flag parsing utilities.
 - `source/errors.ts`: `XDocsError` with stable exit codes and the `invariant` helper.
 - `source/types.ts`: public and internal TypeScript types.
-- `source/agents.ts`: agent skill installation (standard/claude, local/global), AGENTS.md section management, detection, and config-gated automation. Embeds `skills/guiho-as-xdocs/SKILL.md` via a Bun text import.
+- `source/agents.ts`: agent skill installation (standard/claude, local/global), AGENTS.md section management, detection, and config-gated automation. Reads `skills/guiho-as-xdocs/SKILL.md` from disk at runtime relative to `import.meta.url`.
 - `source/commands/*.ts`: one file per CLI command (`init`, `scan`, `generate`, `prompt`, `merge`, `tree`, `list`, `agents`).
 - `prompts/*.md`: prompt templates embedded at build time.
 - `skills/guiho-as-xdocs/SKILL.md`: bundled AI-agent skill installed by `xdocs agents` commands.
