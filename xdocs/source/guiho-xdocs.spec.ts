@@ -692,6 +692,24 @@ describe('ensureAgentsInstructions', () => {
     }
   })
 
+  test('preserves formatter-only blank line changes inside the xdocs section', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-agents-'))
+    try {
+      const path = join(dir, 'AGENTS.md')
+      const formattedSection = xdocsAgentsSection
+        .replace('<!-- BEGIN XDOCS — DO NOT EDIT THIS SECTION -->\n## XDocs', '<!-- BEGIN XDOCS — DO NOT EDIT THIS SECTION -->\n\n## XDocs')
+        .replace('\n<!-- END XDOCS -->', '\n\n<!-- END XDOCS -->')
+      const formattedContent = `# Project\n\n${formattedSection}\n`
+      await writeFile(path, formattedContent, 'utf8')
+
+      const result = await ensureAgentsInstructions(dir, false)
+      expect(result.changed).toBe(false)
+      expect(await readFile(path, 'utf8')).toBe(formattedContent)
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
   test('does nothing when AGENTS.md is absent and create is false', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'xdocs-agents-none-'))
     try {
