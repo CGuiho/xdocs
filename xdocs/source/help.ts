@@ -6,6 +6,9 @@ import { readFileSync } from 'node:fs'
 
 /** Read the package version from package.json. */
 export const readPackageVersion = (): string => {
+  const embedded = globalThis.__XDOCS_EMBEDDED_RESOURCES__?.version
+  if (embedded) return embedded
+
   try {
     const raw = readFileSync(new URL('../package.json', import.meta.url), 'utf8')
     const pkg = JSON.parse(raw) as Record<string, unknown>
