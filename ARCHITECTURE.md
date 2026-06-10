@@ -180,43 +180,29 @@ The root `XDOCS.md` is always discovered regardless of extension configuration.
 
 The CLI is built with **Bun and TypeScript**.
 
-Distribution uses a **compiled binary with a thin JavaScript loader** pattern:
+Distribution is moving toward a **native-binary-first** model:
 
-1. The core CLI is compiled to platform-specific binaries using `bun build --compile` for every supported target. On x64 platforms, Bun provides three variants:
-   - **default** -- standard build, equivalent to modern
-   - **modern** -- targets CPUs from 2013+ (Haswell) with AVX2 instructions, faster
-   - **baseline** -- targets older CPUs (Nehalem, pre-2013), broader compatibility
+1. The core CLI is compiled to platform-specific binaries using `bun build --compile` for the supported release matrix.
 
-   ARM platforms do not have the baseline/modern distinction.
+   | Asset | Bun target |
+   | ----- | ---------- |
+   | `xdocs-linux-x64` | `bun-linux-x64` |
+   | `xdocs-linux-arm64` | `bun-linux-arm64` |
+   | `xdocs-macos-x64` | `bun-darwin-x64` |
+   | `xdocs-macos-arm64` | `bun-darwin-arm64` |
+   | `xdocs-windows-x64.exe` | `bun-windows-x64` |
 
-   Full target matrix:
+   Windows arm64 is intentionally not published until Bun compilation support is reliable for this project.
 
-   | Target                     | OS      | Arch  | Variant  |
-   | -------------------------- | ------- | ----- | -------- |
-   | `bun-darwin-arm64`         | macOS   | ARM64 | --       |
-   | `bun-darwin-x64`           | macOS   | x64   | default  |
-   | `bun-darwin-x64-modern`    | macOS   | x64   | modern   |
-   | `bun-darwin-x64-baseline`  | macOS   | x64   | baseline |
-   | `bun-linux-arm64`          | Linux   | ARM64 | --       |
-   | `bun-linux-x64`            | Linux   | x64   | default  |
-   | `bun-linux-x64-modern`     | Linux   | x64   | modern   |
-   | `bun-linux-x64-baseline`   | Linux   | x64   | baseline |
-   | `bun-windows-arm64`        | Windows | ARM64 | --       |
-   | `bun-windows-x64`          | Windows | x64   | default  |
-   | `bun-windows-x64-modern`   | Windows | x64   | modern   |
-   | `bun-windows-x64-baseline` | Windows | x64   | baseline |
+2. GitHub releases publish the compiled assets. The direct installers (`install.sh`, `install.ps1`) download the matching asset and place it on `PATH`, so users do not need Node.js or Bun at runtime.
 
-   This produces **12 binaries** per release. Users who see `"Illegal instruction"` errors on x64 platforms should use the baseline variant.
-
-2. The npm package contains a thin JavaScript entry point that detects the current platform and architecture, loads the correct binary, and executes it. This allows the CLI to be run via `npx xdocs` or `bunx xdocs` without requiring Bun to be installed, and without forcing users to install a specific binary manually.
-
-3. Users who prefer a standalone binary can download it directly from releases.
+3. The npm package remains available as a package-manager convenience and currently ships the Node-compatible JavaScript CLI fallback plus release binaries generated during the publish workflow. A future optional-package model can remove the JavaScript runtime from package-manager installs entirely.
 
 This approach means:
 
-- No runtime dependency on Bun or Node for end users.
-- Works with `npx`, `bunx`, or direct binary execution.
-- The heavy lifting is in the compiled binary; the JS loader is minimal.
+- Direct-install users run a native `xdocs` binary with no Node or Bun runtime dependency.
+- Package-manager users keep a familiar dependency workflow.
+- Unsupported platforms have a documented manual path: install Bun and run from source/package-manager fallback, or download a compatible release asset manually.
 
 ### 7.2 Commands
 
@@ -399,7 +385,7 @@ The AI workflow with xdocs:
 | Runtime           | Bun                              | Project standard. All-in-one toolkit.                                |
 | File format       | Markdown with YAML frontmatter   | Human-readable, widely supported, parseable.                         |
 | Config format     | TOML                             | Already used in the project (`xdocs.config.toml`).                   |
-| Distribution      | Compiled binary + thin JS loader | Cross-platform without runtime dependencies. Works with npx/bunx.    |
+| Distribution      | Native binary release assets + package-manager fallback | Direct installers run without Node/Bun; package managers remain convenient. |
 | Metadata encoding | YAML frontmatter                 | Standard, supported by every Markdown parser and tool.               |
 | Plugin model      | Standard `AGENTS.md` + `.agents/skills` | One `guiho-as-xdocs` skill bundled in the package. Non-standard targets (Claude `.claude/skills`) are opt-in or auto-detected. |
 | Tree structure    | Hierarchy (parent-child)         | Not a dependency graph. Containment only.                            |
