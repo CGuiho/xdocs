@@ -33,6 +33,9 @@ export const xdocsSkillName = 'guiho-as-xdocs'
  * runtime (relative to this module) so the compiled library works under both
  * Node and Bun. The file ships with the package in `skills/`. */
 export const xdocsSkillContent: string = (() => {
+  const embedded = globalThis.__XDOCS_EMBEDDED_RESOURCES__?.skill
+  if (embedded) return embedded
+
   try {
     return readFileSync(new URL('../skills/guiho-as-xdocs/SKILL.md', import.meta.url), 'utf8')
   } catch {
