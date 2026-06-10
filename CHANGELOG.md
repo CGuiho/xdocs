@@ -1,5 +1,12 @@
 # GUIHO XDocs Changelog
 
+## 0.3.0-alpha.1
+
+- Remove external parser dependencies (`smol-toml`, `yaml`) and use Bun-native `Bun.TOML.parse` and `Bun.YAML.parse` instead.
+- Change the package-manager `xdocs` bin to point at a native binary path and add a `postinstall` downloader that installs the matching GitHub Release binary into `bin/xdocs.exe`; Node.js is used only during install by Node-based package managers, not at `xdocs` runtime.
+- Update build configuration to include Bun types for the library build.
+- Document the native package-manager install path and Bun-native parser behavior.
+
 ## 0.3.0-alpha.0
 
 - Add native-binary-first distribution support for xdocs, including a Bun-powered release binary matrix for Linux x64/arm64, macOS x64/arm64, and Windows x64.
