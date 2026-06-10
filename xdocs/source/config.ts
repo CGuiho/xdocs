@@ -5,7 +5,6 @@
 import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { basename, isAbsolute, resolve } from 'node:path'
-import { parse as parseToml } from 'smol-toml'
 import type { XDocsAgentSettings, XDocsAgentTool, XDocsAiMode, XDocsCliOptions, XDocsConfig, XDocsRawConfig } from './types.js'
 import { XDocsError } from './errors.js'
 
@@ -175,7 +174,7 @@ const readConfigFile = async (path: string): Promise<XDocsRawConfig> => {
   let parsed: unknown
 
   try {
-    parsed = parseToml(content)
+    parsed = Bun.TOML.parse(content)
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     throw new XDocsError(`Invalid TOML in configuration file: ${path}\n${message}`)
