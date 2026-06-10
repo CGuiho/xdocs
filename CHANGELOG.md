@@ -1,5 +1,14 @@
 # GUIHO XDocs Changelog
 
+## 0.3.0-alpha.0
+
+- Add native-binary-first distribution support for xdocs, including a Bun-powered release binary matrix for Linux x64/arm64, macOS x64/arm64, and Windows x64.
+- Add direct installers (`install.sh` and `install.ps1`) so users can install the native `xdocs` binary without requiring Node.js or Bun at runtime.
+- Add a native binary entrypoint that embeds prompts, the `guiho-as-xdocs` skill, and package version metadata so compiled binaries work without adjacent package files.
+- Update CI and the publish workflow to build the release binary matrix and publish native binaries as GitHub Release assets while keeping npm publishing intact.
+- Document the native binary distribution model in `DOCS.md`, `README.md`, `ARCHITECTURE.md`, and `AGENTS.md`.
+- Add xdocs metadata files for the package root, source module, and devops module.
+
 ## 0.2.3
 
 - `xdocs agents instructions` and config-gated AGENTS.md automation now tolerate formatter-only blank lines and trailing whitespace inside the managed xdocs block, preserving the user's formatted block when the actual text is unchanged.
