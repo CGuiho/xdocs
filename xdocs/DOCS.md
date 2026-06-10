@@ -13,13 +13,13 @@ XDocs is a documentation tool, not a versioning tool. It never bumps versions or
 - Package name: `@guiho/xdocs`
 - Source/runtime during development: Bun and TypeScript (ESM)
 - Primary release runtime: compiled native Bun binary assets
-- Package-manager fallback runtime: Node-compatible JavaScript CLI
+- Package-manager install path: Node.js is used only for `postinstall`; the installed `xdocs` command executes the native binary
 - Package type: ESM
 - Library entrypoint: `source/guiho-xdocs.ts`
 - CLI entrypoint: `source/guiho-xdocs-bin.ts`
 - TypeScript build output: `library/` (used by `main` and `types`)
 - Standalone binary output: `bin/xdocs-*` release assets
-- Dependencies: `smol-toml` (TOML config parsing), `yaml` (YAML frontmatter parsing)
+- Runtime parser dependencies: none; xdocs uses Bun-native TOML and YAML parsing
 
 The public package exposes a CLI named `xdocs` and a TypeScript API for discovering xdocs files, parsing metadata, building the hierarchy tree, generating documentation, and installing the agent skill.
 
@@ -93,7 +93,7 @@ curl -fsSL https://raw.githubusercontent.com/CGuiho/xdocs/main/install.sh | sh
 irm https://raw.githubusercontent.com/CGuiho/xdocs/main/install.ps1 | iex
 ```
 
-Install XDocs as a development dependency through a JavaScript package manager:
+Install XDocs as a development dependency through a JavaScript package manager. This uses Node.js during `postinstall` to download the matching native binary, then the installed `xdocs` command executes the native binary:
 
 ```bash
 bun add -d @guiho/xdocs
@@ -105,7 +105,7 @@ Or with npm:
 npm install -D @guiho/xdocs
 ```
 
-Use the direct installer when you want `xdocs` to execute as a native binary. Use the package-manager install when you want project-local dependency management.
+Use the direct installer when you do not want a JavaScript package manager involved. Use the package-manager install when you want project-local dependency management; after installation, `xdocs` still runs as a native binary.
 
 ## Quick Start
 
@@ -502,9 +502,9 @@ Supported release asset matrix:
 - macOS arm64: `xdocs-macos-arm64`
 - Windows x64: `xdocs-windows-x64.exe`
 
-Windows arm64 is intentionally not published until Bun's compilation support is reliable enough for this project. Unsupported platforms should use a documented manual path: install Bun and run from source/package-manager fallback, or download a compatible release asset manually.
+Windows arm64 is intentionally not published until Bun's compilation support is reliable enough for this project. Unsupported platforms should use a documented manual path: install Bun and run from source, or download a compatible release asset manually.
 
-The package-manager library CLI reads the prompt templates and the `guiho-as-xdocs` skill from the package's `prompts/` and `skills/` directories at runtime (via `readFileSync` relative to `import.meta.url`), so the published package works under both Node and Bun. The native binary entrypoint embeds those same resources before importing the CLI, so direct installer binaries do not need adjacent prompt or skill files at runtime.
+The package-manager install path downloads a native binary to `bin/xdocs.exe` during `postinstall`, and the `xdocs` bin entry points to that native binary. The native binary entrypoint embeds prompt templates, the `guiho-as-xdocs` skill, and package version metadata before importing the CLI, so installed binaries do not need adjacent prompt or skill files at runtime.
 
 ## Documentation Requirement Before Publishing
 
