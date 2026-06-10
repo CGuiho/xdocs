@@ -28,7 +28,7 @@ irm https://raw.githubusercontent.com/CGuiho/xdocs/main/install.ps1 | iex
 
 Set `XDOCS_VERSION=0.2.3` (or the full tag `@guiho/xdocs@0.2.3`) before running an installer to pin a specific release instead of installing the latest.
 
-Package-manager install (convenient for JavaScript projects; runs the published package CLI):
+Package-manager install (convenient for JavaScript projects; downloads the matching native binary during `postinstall`, then runs the native binary):
 
 ```bash
 npm install -D @guiho/xdocs
@@ -36,7 +36,7 @@ npm install -D @guiho/xdocs
 bun add -d @guiho/xdocs
 ```
 
-Native release assets are published for Linux x64/arm64, macOS x64/arm64, and Windows x64. Windows arm64 is not published yet.
+Native release assets are published for Linux x64/arm64, macOS x64/arm64, and Windows x64. Windows arm64 is not published yet. Package-manager installs require Node.js only during installation for the `postinstall` downloader; running `xdocs` afterwards executes the native binary.
 
 ### Initializing
 
