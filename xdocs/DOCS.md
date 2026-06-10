@@ -11,12 +11,14 @@ XDocs is a documentation tool, not a versioning tool. It never bumps versions or
 ## Package Overview
 
 - Package name: `@guiho/xdocs`
-- Runtime: Node (>= 18) and Bun (ESM)
+- Source/runtime during development: Bun and TypeScript (ESM)
+- Primary release runtime: compiled native Bun binary assets
+- Package-manager fallback runtime: Node-compatible JavaScript CLI
 - Package type: ESM
 - Library entrypoint: `source/guiho-xdocs.ts`
 - CLI entrypoint: `source/guiho-xdocs-bin.ts`
 - TypeScript build output: `library/` (used by `main` and `types`)
-- Standalone binary output: `bin/xdocs` or `bin/xdocs.exe`
+- Standalone binary output: `bin/xdocs-*` release assets
 - Dependencies: `smol-toml` (TOML config parsing), `yaml` (YAML frontmatter parsing)
 
 The public package exposes a CLI named `xdocs` and a TypeScript API for discovering xdocs files, parsing metadata, building the hierarchy tree, generating documentation, and installing the agent skill.
@@ -81,7 +83,17 @@ Scanning walks the project tree and skips directories listed in `[scan].exclude`
 
 ## Installation
 
-Install XDocs as a development dependency:
+Direct native binary install (no Node.js or Bun required after installation):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/CGuiho/xdocs/main/install.sh | sh
+```
+
+```powershell
+irm https://raw.githubusercontent.com/CGuiho/xdocs/main/install.ps1 | iex
+```
+
+Install XDocs as a development dependency through a JavaScript package manager:
 
 ```bash
 bun add -d @guiho/xdocs
@@ -93,7 +105,7 @@ Or with npm:
 npm install -D @guiho/xdocs
 ```
 
-Use the CLI through the package manager or through the installed `xdocs` binary.
+Use the direct installer when you want `xdocs` to execute as a native binary. Use the package-manager install when you want project-local dependency management.
 
 ## Quick Start
 
@@ -355,7 +367,7 @@ Maintaining xdocs files is an automatic responsibility for an agent working in a
 
 ## Prompts
 
-Prompt templates live in `prompts/*.md` and are embedded at build time via Bun text imports. Each prompt file has its own YAML frontmatter with `name` and `description`. The CLI exposes them through `xdocs prompt --name=<name>`. Available names: `write`, `update`, `agents`, `generate`.
+Prompt templates live in `prompts/*.md` and are read from disk at runtime relative to `import.meta.url`. Each prompt file has its own YAML frontmatter with `name` and `description`. The CLI exposes them through `xdocs prompt --name=<name>`. Available names: `write`, `update`, `agents`, `generate`.
 
 ## TypeScript API
 
@@ -401,12 +413,14 @@ The API uses the same configuration discovery and validation as the CLI.
 
 - `source/guiho-xdocs.ts`: public library export surface.
 - `source/guiho-xdocs-bin.ts`: CLI binary entrypoint.
+- `source/guiho-xdocs-native-bin.ts`: Bun-compiled native binary entrypoint that registers embedded resources before importing the CLI.
+- `source/embedded-resources.ts`: prompt, skill, and package metadata text imports used only for native binary embedding.
 - `source/cli.ts`: argument parsing, command dispatch, config-gated automation, and process-facing error handling.
 - `source/config.ts`: TOML discovery, schema validation, defaulting, default config generation, and agent-settings normalization.
 - `source/discovery.ts`: filesystem scanning and xdocs file matching.
 - `source/metadata.ts`: YAML frontmatter extraction and metadata validation.
 - `source/tree.ts`: tree assembly, integrity checks, and rendering (text, markdown).
-- `source/prompts.ts`: prompt loader (imports `prompts/*.md` as text via Bun).
+- `source/prompts.ts`: prompt loader (reads `prompts/*.md` from disk at runtime relative to `import.meta.url`).
 - `source/help.ts`: help text and version display.
 - `source/flags.ts`: argument/flag parsing utilities.
 - `source/errors.ts`: `XDocsError` with stable exit codes and the `invariant` helper.
@@ -468,13 +482,29 @@ Build the library:
 bun run build
 ```
 
-Compile the standalone binary:
+Compile the host standalone binary:
 
 ```bash
 bun run binary
 ```
 
-The library reads the prompt templates and the `guiho-as-xdocs` skill from the package's `prompts/` and `skills/` directories at runtime (via `readFileSync` relative to `import.meta.url`), so the published package works under both Node and Bun.
+Compile the supported release binary matrix:
+
+```bash
+bun run binaries
+```
+
+Supported release asset matrix:
+
+- Linux x64: `xdocs-linux-x64`
+- Linux arm64: `xdocs-linux-arm64`
+- macOS x64: `xdocs-macos-x64`
+- macOS arm64: `xdocs-macos-arm64`
+- Windows x64: `xdocs-windows-x64.exe`
+
+Windows arm64 is intentionally not published until Bun's compilation support is reliable enough for this project. Unsupported platforms should use a documented manual path: install Bun and run from source/package-manager fallback, or download a compatible release asset manually.
+
+The package-manager library CLI reads the prompt templates and the `guiho-as-xdocs` skill from the package's `prompts/` and `skills/` directories at runtime (via `readFileSync` relative to `import.meta.url`), so the published package works under both Node and Bun. The native binary entrypoint embeds those same resources before importing the CLI, so direct installer binaries do not need adjacent prompt or skill files at runtime.
 
 ## Documentation Requirement Before Publishing
 
@@ -494,10 +524,11 @@ Before publishing a new version:
 4. Run `bun run typecheck`.
 5. Run `bun test`.
 6. Run `bun run build`.
-7. Run `bun run binary` when the CLI binary is part of release validation.
+7. Run `bun run binary` and `bun run binaries` when the CLI binary is part of release validation.
 8. Build the Mirror release plan: `bun x @guiho/mirror version plan <target>`.
 9. Commit release-documentation updates before applying the version bump.
 10. Apply the bump with GUIHO Mirror: `bun x @guiho/mirror version apply <target> --yes`.
+11. Confirm the tag workflow uploads native binary assets to the GitHub Release and publishes the npm package.
 
 Versioning itself is handled by GUIHO Mirror via `mirror.config.toml`; XDocs never edits version fields directly.
 
