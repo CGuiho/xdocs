@@ -16,6 +16,9 @@ const PROMPT_NAMES = ['write', 'update', 'agents', 'generate'] as const
 
 /** Read a prompt file's raw contents, or undefined when it cannot be read. */
 const readPromptFile = (name: string): string | undefined => {
+  const embedded = globalThis.__XDOCS_EMBEDDED_RESOURCES__?.prompts[name]
+  if (embedded) return embedded
+
   try {
     return readFileSync(new URL(`../prompts/${name}.md`, import.meta.url), 'utf8')
   } catch {
