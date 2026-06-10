@@ -9,9 +9,9 @@ files:
   guiho-xdocs-native-bin.ts: Bun-compiled native binary entrypoint that registers embedded resources before importing the CLI.
   embedded-resources.ts: Bun text imports for embedding prompts, the agent skill, and package version into native binaries.
   cli.ts: CLI argument parsing, command dispatch, and config-gated agent automation.
-  config.ts: TOML configuration discovery, validation, defaults, and [agents] settings normalization.
+  config.ts: TOML configuration discovery, Bun-native TOML parsing, validation, defaults, and [agents] settings normalization.
   discovery.ts: Project scanning and xdocs file discovery.
-  metadata.ts: YAML frontmatter extraction and xdocs metadata validation.
+  metadata.ts: YAML frontmatter extraction, Bun-native YAML parsing, and xdocs metadata validation.
   tree.ts: Parent-child hierarchy construction, validation, and rendering.
   prompts.ts: Runtime prompt loader for package-manager/library use; native binaries can use embedded resources.
   agents.ts: Agent skill installation, AGENTS.md section management, tool detection, and automation.
