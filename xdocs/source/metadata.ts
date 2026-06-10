@@ -4,7 +4,6 @@
 
 import { readFile } from 'node:fs/promises'
 import { dirname, relative } from 'node:path'
-import { parse as parseYaml } from 'yaml'
 import type { XDocsFile, XDocsMetadata } from './types.js'
 
 /** Parse an xdocs file from disk into an XDocsFile object. */
@@ -20,7 +19,7 @@ export const parseXDocsFile = async (filePath: string, cwd: string): Promise<XDo
     let parsed: unknown
 
     try {
-      parsed = parseYaml(frontmatter)
+      parsed = Bun.YAML.parse(frontmatter)
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       errors.push(`Invalid YAML frontmatter: ${message}`)
