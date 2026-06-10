@@ -2,6 +2,6 @@
   "extends": "./tsconfig.json",
   "exclude": ["node_modules", "build", "bundle", "library", "source/**/*.spec.ts"],
   "compilerOptions": {
-    "types": ["node"]
+    "types": ["bun", "node"]
   }
 }
