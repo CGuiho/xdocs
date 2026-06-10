@@ -45,7 +45,8 @@
   "scripts": {
     "dev": "bun run --watch source/guiho-xdocs-bin.ts",
     "build": "rm -rf library && tsc -p tsconfig.build.json",
-    "binary": "bun build source/guiho-xdocs-bin.ts --compile --outfile bin/xdocs",
+    "binary": "bun build source/guiho-xdocs-native-bin.ts --compile --outfile bin/xdocs",
+    "binaries": "bun run devops/build-binaries.ts",
     "bundle": "rm -rf bundle && bun build source/guiho-xdocs-bin.ts --outdir bundle --target node --sourcemap=linked",
     "typecheck": "tsc -p . --noEmit",
     "clean": "rm -rf .temp",
