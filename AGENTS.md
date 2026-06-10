@@ -65,7 +65,7 @@
 - Configuration lives in `xdocs.config.toml`. Sections: `extensions`, `ai`, `scan`, `project`, `agents`.
 - Agent automation (`[agents]`): `auto_agents_md` (keep the AGENTS.md section fresh), `auto_skill_install` (install the global skill when missing), and `skill_tool` (default install target: `agents` standard, or `claude`). All default on / `agents`.
 - AI mode (`ai.mode`): `"prompt"` (default, AI announces updates and waits) or `"auto"` (AI updates docs automatically).
-- Dependencies: `smol-toml` (TOML parsing), `yaml` (YAML frontmatter parsing).
+- Runtime parser dependencies: none. xdocs uses Bun-native `Bun.TOML.parse` and `Bun.YAML.parse`.
 
 ## Gotchas
 
