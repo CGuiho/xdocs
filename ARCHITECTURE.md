@@ -196,13 +196,13 @@ Distribution is moving toward a **native-binary-first** model:
 
 2. GitHub releases publish the compiled assets. The direct installers (`install.sh`, `install.ps1`) download the matching asset and place it on `PATH`, so users do not need Node.js or Bun at runtime.
 
-3. The npm package remains available as a package-manager convenience and currently ships the Node-compatible JavaScript CLI fallback plus release binaries generated during the publish workflow. A future optional-package model can remove the JavaScript runtime from package-manager installs entirely.
+3. The npm package remains available as a package-manager convenience. Its `postinstall` step downloads the matching native binary from the GitHub release into `bin/xdocs.exe`, and the package `bin` entry points to that native binary. Node.js is used only during installation by Node-based package managers, not when running `xdocs`.
 
 This approach means:
 
 - Direct-install users run a native `xdocs` binary with no Node or Bun runtime dependency.
 - Package-manager users keep a familiar dependency workflow.
-- Unsupported platforms have a documented manual path: install Bun and run from source/package-manager fallback, or download a compatible release asset manually.
+- Unsupported platforms have a documented manual path: install Bun and run from source, or download a compatible release asset manually.
 
 ### 7.2 Commands
 
@@ -385,7 +385,7 @@ The AI workflow with xdocs:
 | Runtime           | Bun                              | Project standard. All-in-one toolkit.                                |
 | File format       | Markdown with YAML frontmatter   | Human-readable, widely supported, parseable.                         |
 | Config format     | TOML                             | Already used in the project (`xdocs.config.toml`).                   |
-| Distribution      | Native binary release assets + package-manager fallback | Direct installers run without Node/Bun; package managers remain convenient. |
+| Distribution      | Native binary release assets + package-manager native install | Direct installers run without Node/Bun; package-manager installs download a native binary during postinstall. |
 | Metadata encoding | YAML frontmatter                 | Standard, supported by every Markdown parser and tool.               |
 | Plugin model      | Standard `AGENTS.md` + `.agents/skills` | One `guiho-as-xdocs` skill bundled in the package. Non-standard targets (Claude `.claude/skills`) are opt-in or auto-detected. |
 | Tree structure    | Hierarchy (parent-child)         | Not a dependency graph. Containment only.                            |
