@@ -16,11 +16,27 @@ xdocs runs on **Bun** and **Node >= 20**. It ships as a compiled binary, a thin 
 
 ### Installation
 
+Direct native binary install (no Node.js or Bun required after installation):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/CGuiho/xdocs/main/install.sh | sh
+```
+
+```powershell
+irm https://raw.githubusercontent.com/CGuiho/xdocs/main/install.ps1 | iex
+```
+
+Set `XDOCS_VERSION=0.2.3` (or the full tag `@guiho/xdocs@0.2.3`) before running an installer to pin a specific release instead of installing the latest.
+
+Package-manager install (convenient for JavaScript projects; runs the published package CLI):
+
 ```bash
 npm install -D @guiho/xdocs
 # or
 bun add -d @guiho/xdocs
 ```
+
+Native release assets are published for Linux x64/arm64, macOS x64/arm64, and Windows x64. Windows arm64 is not published yet.
 
 ### Initializing
 
@@ -31,7 +47,7 @@ xdocs init
 ```
 
 This creates:
-- `XDOCS.md` -- the root documentation file for the project
+- `XDOCS.md` -- the single frontmatter-less repository index listing packages/applications
 - `xdocs.config.toml` -- configuration with sensible defaults
 - Updates `AGENTS.md` with instructions for AI agents
 - Installs the `guiho-as-xdocs` agent skill (standard `.agents/skills`)
