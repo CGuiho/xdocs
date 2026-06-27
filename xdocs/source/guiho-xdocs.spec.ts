@@ -3,9 +3,10 @@
  */
 
 import { describe, test, expect } from 'bun:test'
-import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
+import { mkdir, mkdtemp, rm, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join, resolve } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { parseArgs, stringFlag, booleanFlag, listFlag } from './flags.js'
 import { extractFrontmatter, validateMetadata } from './metadata.js'
 import { buildTree, renderTree, renderTreeMarkdown, validateTree } from './tree.js'
@@ -16,12 +17,16 @@ import {
   installSkill,
   installSkills,
   isSkillInstalled,
+  legacyXdocsSkillNames,
   parseAgentTools,
+  readSkillVersion,
   resolveInstallTools,
   resolveSkillPath,
+  runAgentAutomation,
   xdocsAgentsSection,
   xdocsSkillContent,
   xdocsSkillName,
+  xdocsSkillVersion,
 } from './agents.js'
 import { XDocsError, invariant } from './errors.js'
 import type { XDocsFile, XDocsRawConfig } from './types.js'
@@ -583,14 +588,14 @@ describe('detectAgentTools', () => {
 describe('resolveSkillPath', () => {
   test('resolves local paths under cwd per tool', () => {
     const cwd = process.cwd()
-    expect(resolveSkillPath('agents', 'local', { cwd })).toBe(resolve(cwd, '.agents/skills/guiho-as-xdocs/SKILL.md'))
-    expect(resolveSkillPath('claude', 'local', { cwd })).toBe(resolve(cwd, '.claude/skills/guiho-as-xdocs/SKILL.md'))
+    expect(resolveSkillPath('agents', 'local', { cwd })).toBe(resolve(cwd, '.agents/skills/guiho-s-xdocs/SKILL.md'))
+    expect(resolveSkillPath('claude', 'local', { cwd })).toBe(resolve(cwd, '.claude/skills/guiho-s-xdocs/SKILL.md'))
   })
 
   test('resolves global paths under the provided home directory', () => {
     const home = resolve(tmpdir(), 'xdocs-home-fixture')
-    expect(resolveSkillPath('agents', 'global', { homeDirectory: home })).toBe(resolve(home, '.agents/skills/guiho-as-xdocs/SKILL.md'))
-    expect(resolveSkillPath('claude', 'global', { homeDirectory: home })).toBe(resolve(home, '.claude/skills/guiho-as-xdocs/SKILL.md'))
+    expect(resolveSkillPath('agents', 'global', { homeDirectory: home })).toBe(resolve(home, '.agents/skills/guiho-s-xdocs/SKILL.md'))
+    expect(resolveSkillPath('claude', 'global', { homeDirectory: home })).toBe(resolve(home, '.claude/skills/guiho-s-xdocs/SKILL.md'))
   })
 })
 
@@ -603,6 +608,8 @@ describe('installSkill', () => {
       const first = await installSkill('agents', 'local', { cwd: dir })
       expect(first.installed).toBe(true)
       expect(first.updated).toBe(false)
+      expect(first.removedLegacyPaths).toEqual([])
+      expect(first.bundledVersion).toBe(xdocsSkillVersion)
       expect(isSkillInstalled('agents', 'local', { cwd: dir })).toBe(true)
 
       const written = await readFile(first.path, 'utf8')
@@ -616,6 +623,44 @@ describe('installSkill', () => {
       const third = await installSkill('agents', 'local', { cwd: dir })
       expect(third.installed).toBe(false)
       expect(third.updated).toBe(true)
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('removes the legacy skill name and installs the canonical skill', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-skill-legacy-'))
+    try {
+      const legacyPath = resolve(dir, '.agents/skills/guiho-as-xdocs/SKILL.md')
+      await mkdir(dirname(legacyPath), { recursive: true })
+      await writeFile(legacyPath, 'legacy content', 'utf8')
+
+      const result = await installSkill('agents', 'local', { cwd: dir })
+
+      expect(result.installed).toBe(true)
+      expect(result.updated).toBe(false)
+      expect(result.removedLegacyPaths).toEqual([legacyPath])
+      expect(existsSync(legacyPath)).toBe(false)
+      expect(await readFile(result.path, 'utf8')).toBe(xdocsSkillContent)
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('replaces an installed canonical skill when version or content differs', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-skill-version-'))
+    try {
+      const path = resolveSkillPath('agents', 'local', { cwd: dir })
+      await mkdir(dirname(path), { recursive: true })
+      await writeFile(path, '---\nname: guiho-s-xdocs\nversion: 0.0.0\n---\n\nOld skill.\n', 'utf8')
+
+      const result = await installSkill('agents', 'local', { cwd: dir })
+
+      expect(result.installed).toBe(false)
+      expect(result.updated).toBe(true)
+      expect(result.previousVersion).toBe('0.0.0')
+      expect(result.bundledVersion).toBe(xdocsSkillVersion)
+      expect(await readFile(result.path, 'utf8')).toBe(xdocsSkillContent)
     } finally {
       await rm(dir, { recursive: true, force: true })
     }
@@ -648,6 +693,36 @@ describe('installSkills', () => {
       }
     } finally {
       await rm(dir, { recursive: true, force: true })
+    }
+  })
+})
+
+describe('runAgentAutomation', () => {
+  test('refreshes the configured global skill and removes legacy installs', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-automation-'))
+    const home = await mkdtemp(join(tmpdir(), 'xdocs-home-'))
+    try {
+      await writeFile(join(dir, 'xdocs.config.toml'), 'schema = 1\n\n[agents]\nauto_agents_md = false\nauto_skill_install = true\nskill_tool = "agents"\n', 'utf8')
+
+      const stalePath = resolve(home, '.agents/skills/guiho-s-xdocs/SKILL.md')
+      const legacyPath = resolve(home, '.agents/skills/guiho-as-xdocs/SKILL.md')
+      await mkdir(dirname(stalePath), { recursive: true })
+      await mkdir(dirname(legacyPath), { recursive: true })
+      await writeFile(stalePath, '---\nname: guiho-s-xdocs\nversion: 0.0.0\n---\n\nOld skill.\n', 'utf8')
+      await writeFile(legacyPath, 'legacy skill', 'utf8')
+
+      const notices: string[] = []
+      const result = await runAgentAutomation({ cwd: dir, homeDirectory: home, format: 'text', verbose: false }, (message) => notices.push(message))
+
+      expect(result.globalSkill?.updated).toBe(true)
+      expect(result.globalSkill?.previousVersion).toBe('0.0.0')
+      expect(result.globalSkill?.removedLegacyPaths).toEqual([legacyPath])
+      expect(await readFile(stalePath, 'utf8')).toBe(xdocsSkillContent)
+      expect(existsSync(legacyPath)).toBe(false)
+      expect(notices.some((message) => message.includes('refreshed globally'))).toBe(true)
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+      await rm(home, { recursive: true, force: true })
     }
   })
 })
@@ -727,8 +802,10 @@ describe('ensureAgentsInstructions', () => {
 
 describe('skill bundle', () => {
   test('exposes the embedded skill with frontmatter', () => {
-    expect(xdocsSkillName).toBe('guiho-as-xdocs')
+    expect(xdocsSkillName).toBe('guiho-s-xdocs')
+    expect(legacyXdocsSkillNames).toContain('guiho-as-xdocs')
     expect(xdocsSkillContent.startsWith('---')).toBe(true)
-    expect(xdocsSkillContent).toContain('name: guiho-as-xdocs')
+    expect(xdocsSkillContent).toContain('name: guiho-s-xdocs')
+    expect(readSkillVersion(xdocsSkillContent)).toBe(xdocsSkillVersion)
   })
 })
