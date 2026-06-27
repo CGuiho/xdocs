@@ -14,7 +14,7 @@ import agentsPrompt from '../prompts/agents.md' with { type: 'text' }
 // @ts-expect-error -- Bun text import for native binary embedding.
 import generatePrompt from '../prompts/generate.md' with { type: 'text' }
 // @ts-expect-error -- Bun text import for native binary embedding.
-import xdocsSkill from '../skills/guiho-as-xdocs/SKILL.md' with { type: 'text' }
+import xdocsSkill from '../skills/guiho-s-xdocs/SKILL.md' with { type: 'text' }
 import packageJson from '../package.json' with { type: 'json' }
 
 export type XDocsEmbeddedResources = {
