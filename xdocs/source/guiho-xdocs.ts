@@ -69,7 +69,9 @@ export {
   installSkill,
   installSkills,
   isSkillInstalled,
+  legacyXdocsSkillNames,
   parseAgentTools,
+  readSkillVersion,
   resolveAgentSettings,
   resolveInstallTools,
   resolveSkillPath,
@@ -79,6 +81,7 @@ export {
   xdocsAgentTools,
   xdocsSkillContent,
   xdocsSkillName,
+  xdocsSkillVersion,
 } from './agents.js'
 
 // CLI
