@@ -5,13 +5,13 @@
  *
  * Two distinct things live here:
  *  1. The small AGENTS.md section that tells any AI agent that xdocs structured
- *     documentation exists and that it should load the guiho-as-xdocs skill.
- *  2. The large guiho-as-xdocs skill file, installed (local or global) into the
+ *     documentation exists and that it should load the guiho-s-xdocs skill.
+ *  2. The large guiho-s-xdocs skill file, installed (local or global) into the
  *     skills directory of one or more AI tools.
  */
 
 import { existsSync, readFileSync } from 'node:fs'
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { dirname, isAbsolute, resolve } from 'node:path'
 import type {
@@ -27,9 +27,12 @@ import { discoverConfig, normalizeAgentSettings } from './config.js'
 import { XDocsError } from './errors.js'
 
 /** Canonical name of the xdocs agent skill. */
-export const xdocsSkillName = 'guiho-as-xdocs'
+export const xdocsSkillName = 'guiho-s-xdocs'
 
-/** Raw contents of the bundled guiho-as-xdocs/SKILL.md, read from disk at
+/** Previous skill names that should be removed during install/refresh. */
+export const legacyXdocsSkillNames: readonly string[] = ['guiho-as-xdocs']
+
+/** Raw contents of the bundled guiho-s-xdocs/SKILL.md, read from disk at
  * runtime (relative to this module) so the compiled library works under both
  * Node and Bun. The file ships with the package in `skills/`. */
 export const xdocsSkillContent: string = (() => {
@@ -37,11 +40,14 @@ export const xdocsSkillContent: string = (() => {
   if (embedded) return embedded
 
   try {
-    return readFileSync(new URL('../skills/guiho-as-xdocs/SKILL.md', import.meta.url), 'utf8')
+    return readFileSync(new URL('../skills/guiho-s-xdocs/SKILL.md', import.meta.url), 'utf8')
   } catch {
     return ''
   }
 })()
+
+/** Version declared by the bundled skill frontmatter. */
+export const xdocsSkillVersion = readSkillVersion(xdocsSkillContent)
 
 /** All AI tools the skill can be installed for. `agents` is the standard. */
 export const xdocsAgentTools: readonly XDocsAgentTool[] = ['agents', 'claude']
@@ -79,7 +85,7 @@ export const resolveInstallTools = (cwd: string, toolFlag: string | undefined): 
 /**
  * Skill directory for each tool, relative to the scope root (project root for
  * `local`, home directory for `global`). The skill is written to
- * `<root>/<dir>/guiho-as-xdocs/SKILL.md`.
+ * `<root>/<dir>/guiho-s-xdocs/SKILL.md`.
  *
  * `agents` is the cross-tool standard (OpenCode, Codex, Jules, and any AGENTS.md
  * tool read it). `claude` is the non-standard Claude Code location.
@@ -129,9 +135,12 @@ type AgentAutomationOptions = XDocsCliOptions & {
 }
 
 /** Resolve the on-disk path of the skill file for a tool and scope. */
-export const resolveSkillPath = (tool: XDocsAgentTool, scope: XDocsSkillScope, options: SkillPathOptions = {}): string => {
+export const resolveSkillPath = (tool: XDocsAgentTool, scope: XDocsSkillScope, options: SkillPathOptions = {}): string =>
+  resolveNamedSkillPath(tool, scope, xdocsSkillName, options)
+
+const resolveNamedSkillPath = (tool: XDocsAgentTool, scope: XDocsSkillScope, skillName: string, options: SkillPathOptions = {}): string => {
   const root = scope === 'local' ? resolve(options.cwd ?? process.cwd()) : resolveAgentHome(options.homeDirectory)
-  return resolve(root, skillDirectories[tool], xdocsSkillName, 'SKILL.md')
+  return resolve(root, skillDirectories[tool], skillName, 'SKILL.md')
 }
 
 /** Whether the skill is already installed for a tool and scope. */
@@ -146,16 +155,32 @@ export const installSkill = async (
 ): Promise<XDocsSkillInstallResult> => {
   const path = resolveSkillPath(tool, scope, options)
   const exists = existsSync(path)
-
-  if (exists && options.overwrite === false) return { tool, scope, path, installed: false, updated: false }
-
   const current = exists ? await readFile(path, 'utf8') : undefined
-  if (current === xdocsSkillContent) return { tool, scope, path, installed: false, updated: false }
+  const previousVersion = current ? readSkillVersion(current) : undefined
+  const bundledVersion = xdocsSkillVersion
 
+  if (exists && options.overwrite === false) {
+    return { tool, scope, path, installed: false, updated: false, removedLegacyPaths: [], previousVersion, bundledVersion }
+  }
+
+  const removedLegacyPaths: string[] = []
+  for (const legacyName of legacyXdocsSkillNames) {
+    const legacyPath = resolveNamedSkillPath(tool, scope, legacyName, options)
+    if (!existsSync(legacyPath)) continue
+
+    await rm(dirname(legacyPath), { recursive: true, force: true })
+    removedLegacyPaths.push(legacyPath)
+  }
+
+  if (current === xdocsSkillContent) {
+    return { tool, scope, path, installed: false, updated: false, removedLegacyPaths, previousVersion, bundledVersion }
+  }
+
+  if (exists) await rm(dirname(path), { recursive: true, force: true })
   await mkdir(dirname(path), { recursive: true })
   await writeFile(path, xdocsSkillContent, 'utf8')
 
-  return { tool, scope, path, installed: !exists, updated: exists }
+  return { tool, scope, path, installed: !exists, updated: exists, removedLegacyPaths, previousVersion, bundledVersion }
 }
 
 /** Install the skill for several tools at once. */
@@ -246,8 +271,8 @@ export const resolveAgentSettings = async (options: XDocsCliOptions): Promise<XD
 /**
  * Config-gated automation run by normal commands. Does nothing outside an xdocs
  * project (no config discovered). When enabled, it keeps the AGENTS.md section
- * fresh (only if AGENTS.md already exists) and installs the global skill for the
- * configured tool when it is missing.
+ * fresh (only if AGENTS.md already exists) and refreshes the global skill for
+ * the configured tool from the bundled package copy.
  */
 export const runAgentAutomation = async (
   options: AgentAutomationOptions,
@@ -263,13 +288,38 @@ export const runAgentAutomation = async (
 
   if (settings.autoAgentsMd) result.agentsMd = await ensureAgentsInstructions(cwd, false)
 
-  if (settings.autoSkillInstall && !isSkillInstalled(settings.skillTool, 'global', { cwd, homeDirectory: options.homeDirectory })) {
-    const path = resolveSkillPath(settings.skillTool, 'global', { cwd, homeDirectory: options.homeDirectory })
-    notify(`notice: ${xdocsSkillName} skill not found globally; xdocs is installing it at ${path}`)
-    result.globalSkill = await installSkill(settings.skillTool, 'global', { cwd, homeDirectory: options.homeDirectory, overwrite: false })
+  if (settings.autoSkillInstall) {
+    const globalSkill = await installSkill(settings.skillTool, 'global', { cwd, homeDirectory: options.homeDirectory })
+    const changed = globalSkill.installed || globalSkill.updated || globalSkill.removedLegacyPaths.length > 0
+    if (changed) notify(`notice: ${xdocsSkillName} skill refreshed globally at ${globalSkill.path}`)
+    result.globalSkill = globalSkill
   }
 
   return result
+}
+
+/** Read a skill version from SKILL.md YAML frontmatter. */
+export function readSkillVersion(content: string): string | undefined {
+  return readSkillFrontmatterValue(content, 'version')
+}
+
+function readSkillFrontmatterValue(content: string, key: string): string | undefined {
+  const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/)
+  if (!match) return undefined
+  const frontmatter = match[1]
+  if (frontmatter === undefined) return undefined
+
+  for (const line of frontmatter.split(/\r?\n/)) {
+    const separator = line.indexOf(':')
+    if (separator === -1) continue
+    if (line.slice(0, separator).trim() !== key) continue
+
+    const value = line.slice(separator + 1).trim()
+    if (!value) return undefined
+    return value.replace(/^['"]|['"]$/g, '')
+  }
+
+  return undefined
 }
 
 const resolveAgentHome = (homeDirectory?: string): string => {
