@@ -1,6 +1,6 @@
 # GUIHO XDocs Changelog
 
-## Unreleased
+## 0.3.0-alpha.2
 
 - Rename the bundled xdocs agent skill from `guiho-as-xdocs` to `guiho-s-xdocs` and add a frontmatter `version` field.
 - Refresh installed skills from the bundled package copy, removing legacy `guiho-as-xdocs` skill directories and replacing stale `guiho-s-xdocs` installs when version or content differs.
