@@ -52,7 +52,7 @@ export const runInit = async (options: XDocsCliOptions, parsed: XDocsParsedArgs)
     process.stdout.write(`created: XDOCS.md\n`)
   }
 
-  // 3. Update AGENTS.md (announce xdocs + point AI at the guiho-as-xdocs skill)
+  // 3. Update AGENTS.md (announce xdocs + point AI at the guiho-s-xdocs skill)
   const agentsExisted = findAgentsFile(cwd) !== undefined
   const agentsResult = await ensureAgentsInstructions(cwd, true)
   if (!agentsExisted) {
@@ -63,7 +63,7 @@ export const runInit = async (options: XDocsCliOptions, parsed: XDocsParsedArgs)
     process.stdout.write(`exists: AGENTS.md (xdocs section already present)\n`)
   }
 
-  // 4. Install the guiho-as-xdocs agent skill (standard by default; non-standard
+  // 4. Install the guiho-s-xdocs agent skill (standard by default; non-standard
   //    tools only when explicitly requested via --tool or detected in the project)
   const scope = booleanFlag(parsed.flags, 'global') ? 'global' : 'local'
   const tools = resolveInstallTools(cwd, stringFlag(parsed.flags, 'tool'))
@@ -72,7 +72,7 @@ export const runInit = async (options: XDocsCliOptions, parsed: XDocsParsedArgs)
     const where = scope === 'local' ? relative(cwd, result.path) || result.path : result.path
     if (result.installed) {
       process.stdout.write(`installed: ${xdocsSkillName} skill (${tool}, ${scope}) -> ${where}\n`)
-    } else if (result.updated) {
+    } else if (result.updated || result.removedLegacyPaths.length > 0) {
       process.stdout.write(`updated: ${xdocsSkillName} skill (${tool}, ${scope})\n`)
     } else {
       process.stdout.write(`exists: ${xdocsSkillName} skill (${tool}, ${scope})\n`)
