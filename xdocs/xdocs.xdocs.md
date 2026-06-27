@@ -6,6 +6,7 @@ children:
   - xdocs-source
   - xdocs-devops
   - xdocs-scripts
+  - xdocs-skills
 files:
   package.json: npm package metadata, CLI bin mapping, build/test scripts, and package publish file list.
   jsr.json: JSR package metadata and publish include list.
