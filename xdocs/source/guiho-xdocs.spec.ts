@@ -741,6 +741,7 @@ describe('ensureAgentsInstructions', () => {
       const content = await readFile(path, 'utf8')
       expect(content).toContain('Some notes.')
       expect(content).toContain(xdocsSkillName)
+      for (const legacyName of legacyXdocsSkillNames) expect(content).not.toContain(legacyName)
       expect(content).toContain('## XDocs Structured Documentation')
     } finally {
       await rm(dir, { recursive: true, force: true })
