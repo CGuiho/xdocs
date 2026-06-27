@@ -29,7 +29,7 @@ export const runAgents = async (options: XDocsCliOptions, parsed: XDocsParsedArg
   throw new XDocsError(`Unknown agents subcommand: "${sub}"\n\n${USAGE}`)
 }
 
-/** Install the guiho-as-xdocs skill for one or more tools. */
+/** Install the guiho-s-xdocs skill for one or more tools. */
 const runInstall = async (options: XDocsCliOptions, parsed: XDocsParsedArgs): Promise<void> => {
   const scope = parseScope(parsed.positionals[1])
   const tools = resolveInstallTools(options.cwd, stringFlag(parsed.flags, 'tool'))
@@ -74,5 +74,8 @@ const formatInstall = (result: XDocsSkillInstallResult): string =>
     `path: ${result.path}`,
     `installed: ${result.installed}`,
     `updated: ${result.updated}`,
+    `bundled_version: ${result.bundledVersion ?? ''}`,
+    `previous_version: ${result.previousVersion ?? ''}`,
+    `removed_legacy: ${result.removedLegacyPaths.join(', ')}`,
     '',
   ].join('\n')
