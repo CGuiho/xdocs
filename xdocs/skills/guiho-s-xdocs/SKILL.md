@@ -1,5 +1,6 @@
 ---
-name: guiho-as-xdocs
+name: guiho-s-xdocs
+version: 0.3.0-alpha.1
 description: Use this skill whenever the user works with xdocs (`@guiho/xdocs`) structured documentation, AND proactively whenever you create a new module or subdirectory or add/change/remove files in a directory of an xdocs project, so you create or update that directory's `.xdocs.md` as part of the change. This includes creating, updating, or regenerating `.docs.md` / `.xdocs.md` files, the root `XDOCS.md`, the project tree, scanning documentation coverage, merging docs, or maintaining xdocs metadata and AGENTS.md guidance, even when the user only says "document this module", "update the docs", or "what does this folder do" without naming xdocs.
 ---
 
@@ -178,11 +179,11 @@ name = "my-project"
 
 [agents]
 auto_agents_md = true      # keep the xdocs section in AGENTS.md up to date on normal commands
-auto_skill_install = true  # install the guiho-as-xdocs skill globally when missing
+auto_skill_install = true  # install or refresh the guiho-s-xdocs skill globally
 skill_tool = "agents"      # default tool for auto-install: agents (standard) or claude
 ```
 
-Agent automation options default to true. Set `auto_agents_md = false` to stop xdocs from touching AGENTS.md, and `auto_skill_install = false` to stop xdocs from installing `guiho-as-xdocs` globally when it is missing.
+Agent automation options default to true. Set `auto_agents_md = false` to stop xdocs from touching AGENTS.md, and `auto_skill_install = false` to stop xdocs from installing or refreshing `guiho-s-xdocs` globally.
 
 ## CLI Reference
 
@@ -194,8 +195,8 @@ xdocs list <path>              # list files in a scope with descriptions
 xdocs generate [path]          # draft documentation for a directory or the whole project
 xdocs merge [path]             # merge a directory's xdocs files into one document
 xdocs prompt --name=<name>     # print a ready-made AI prompt (write|update|agents|generate)
-xdocs agents install local     # install guiho-as-xdocs into this project (.agents/skills/...)
-xdocs agents install global    # install guiho-as-xdocs into the user home skills directory
+xdocs agents install local     # install guiho-s-xdocs into this project (.agents/skills/...)
+xdocs agents install global    # install guiho-s-xdocs into the user home skills directory
 xdocs agents instructions      # insert/refresh the xdocs section in AGENTS.md
 ```
 
@@ -203,7 +204,7 @@ Global flags: `--help`, `--version`, `--cwd <path>`, `--config <path>`, `--forma
 
 ## Agent Skill Installation
 
-xdocs ships this `guiho-as-xdocs` skill. The **standard** target is `AGENTS.md`
+xdocs ships this `guiho-s-xdocs` skill. The **standard** target is `AGENTS.md`
 plus `.agents/skills`, which OpenCode, Codex, Jules, and any AGENTS.md-aware tool
 read. A **non-standard** Claude Code target exists and is used only when it is
 explicitly requested (`--tool claude`) or detected (a `.claude` directory or
@@ -211,8 +212,8 @@ explicitly requested (`--tool claude`) or detected (a `.claude` directory or
 
 | Target                  | Skill location (local)                      |
 | ----------------------- | ------------------------------------------- |
-| **agents** (standard)   | `.agents/skills/guiho-as-xdocs/SKILL.md`    |
-| **claude** (non-standard) | `.claude/skills/guiho-as-xdocs/SKILL.md`  |
+| **agents** (standard)   | `.agents/skills/guiho-s-xdocs/SKILL.md`    |
+| **claude** (non-standard) | `.claude/skills/guiho-s-xdocs/SKILL.md`  |
 
 `local` scope installs under the current project; `global` scope installs under
 the user home directory (`~/.agents/skills/...`). The small section in `AGENTS.md`
