@@ -11,7 +11,7 @@ export type XDocsAiMode = 'prompt' | 'auto'
 /** Command names recognized by the CLI. */
 export type XDocsCommand = 'init' | 'scan' | 'generate' | 'prompt' | 'merge' | 'tree' | 'list' | 'agents'
 
-/** AI tools the guiho-as-xdocs skill can be installed for.
+/** AI tools the guiho-s-xdocs skill can be installed for.
  *
  * `agents` is the standard target (AGENTS.md + .agents/skills) and the default.
  * `claude` is a non-standard target (.claude/skills) used only when explicitly
@@ -143,13 +143,16 @@ export type XDocsPrompt = {
   body: string
 }
 
-/** Result of installing the guiho-as-xdocs skill for one tool/scope. */
+/** Result of installing the guiho-s-xdocs skill for one tool/scope. */
 export type XDocsSkillInstallResult = {
   tool: XDocsAgentTool
   scope: XDocsSkillScope
   path: string
   installed: boolean
   updated: boolean
+  removedLegacyPaths: string[]
+  previousVersion?: string
+  bundledVersion?: string
 }
 
 /** Result of ensuring the xdocs section exists in AGENTS.md. */
