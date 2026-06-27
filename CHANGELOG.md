@@ -1,5 +1,12 @@
 # GUIHO XDocs Changelog
 
+## Unreleased
+
+- Rename the bundled xdocs agent skill from `guiho-as-xdocs` to `guiho-s-xdocs` and add a frontmatter `version` field.
+- Refresh installed skills from the bundled package copy, removing legacy `guiho-as-xdocs` skill directories and replacing stale `guiho-s-xdocs` installs when version or content differs.
+- Keep `[agents].auto_skill_install` defaulted to `true` and run global skill refresh during config-gated command automation.
+- Update the TypeScript API, tests, help text, README, architecture notes, AGENTS guidance, and canonical `DOCS.md` for the renamed skill behavior.
+
 ## 0.3.0-alpha.1
 
 - Remove external parser dependencies (`smol-toml`, `yaml`) and use Bun-native `Bun.TOML.parse` and `Bun.YAML.parse` instead.
