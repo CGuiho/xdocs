@@ -50,7 +50,7 @@ This creates:
 - `XDOCS.md` -- the single frontmatter-less repository index listing packages/applications
 - `xdocs.config.toml` -- configuration with sensible defaults
 - Updates `AGENTS.md` with instructions for AI agents
-- Installs the `guiho-as-xdocs` agent skill (standard `.agents/skills`)
+- Installs the `guiho-s-xdocs` agent skill (standard `.agents/skills`)
 
 ### Typical Workflow
 
@@ -146,7 +146,7 @@ The CLI validates tree integrity: no orphan subjects, no missing parents, no cyc
 
 #### `xdocs init`
 
-Initializes xdocs in a project. Creates the root `XDOCS.md`, the `xdocs.config.toml` configuration, updates `AGENTS.md`, and installs the `guiho-as-xdocs` skill to the standard `.agents/skills` location.
+Initializes xdocs in a project. Creates the root `XDOCS.md`, the `xdocs.config.toml` configuration, updates `AGENTS.md`, and installs or refreshes the `guiho-s-xdocs` skill to the standard `.agents/skills` location.
 
 #### `xdocs scan`
 
@@ -207,7 +207,7 @@ xdocs list ./src/auth
 
 #### `xdocs agents`
 
-Installs the `guiho-as-xdocs` agent skill and maintains the `AGENTS.md` section.
+Installs the `guiho-s-xdocs` agent skill and maintains the `AGENTS.md` section.
 
 ```bash
 xdocs agents install local     # install the skill under the project (.agents/skills)
@@ -261,7 +261,7 @@ name = "my-project"
 [agents]
 # Keep the xdocs section in AGENTS.md fresh on normal commands. Default: true
 auto_agents_md = true
-# Install the standard skill globally when missing. Default: true
+# Install or refresh the standard skill globally from the bundled copy. Default: true
 auto_skill_install = true
 # Default target for skill auto-install: "agents" (standard) or "claude". Default: "agents"
 skill_tool = "agents"
@@ -269,14 +269,14 @@ skill_tool = "agents"
 
 ### Agent Skills
 
-xdocs ships the `guiho-as-xdocs` agent skill that teaches AI tools how to work with xdocs -- when to create, update, or regenerate documentation, how to use the CLI, and how to respect the configured AI behavior mode. The skill is large and loaded on demand; a small section in `AGENTS.md` points the agent at it.
+xdocs ships the `guiho-s-xdocs` agent skill that teaches AI tools how to work with xdocs -- when to create, update, or regenerate documentation, how to use the CLI, and how to respect the configured AI behavior mode. The skill is versioned in its frontmatter, large, and loaded on demand; a small section in `AGENTS.md` points the agent at it.
 
 Installation is **standard-first**:
 
 | Target                    | Location                                            | When installed                                                  |
 | ------------------------- | --------------------------------------------------- | --------------------------------------------------------------- |
-| **agents** (standard)     | `.agents/skills/guiho-as-xdocs/SKILL.md`            | Always (default). Read by OpenCode, Codex, Jules, and any AGENTS.md tool. |
-| **claude** (non-standard) | `.claude/skills/guiho-as-xdocs/SKILL.md`            | When `--tool claude` is given, or a `.claude/` dir or `CLAUDE.md` is detected. |
+| **agents** (standard)     | `.agents/skills/guiho-s-xdocs/SKILL.md`            | Always (default). Read by OpenCode, Codex, Jules, and any AGENTS.md tool. |
+| **claude** (non-standard) | `.claude/skills/guiho-s-xdocs/SKILL.md`            | When `--tool claude` is given, or a `.claude/` dir or `CLAUDE.md` is detected. |
 
 ```bash
 xdocs agents install local     # standard target, under the project
@@ -284,7 +284,7 @@ xdocs agents install global    # standard target, under ~/.agents/skills
 xdocs agents instructions      # insert/refresh the AGENTS.md section
 ```
 
-`xdocs init` runs this automatically for the standard target (`local` scope). `local` scope installs under the project; `global` installs under your home directory. The default is always the standard target -- non-standard files are written only when you ask (`--tool`) or when they are already present.
+`xdocs init` runs this automatically for the standard target (`local` scope). `local` scope installs under the project; `global` installs under your home directory. The default is always the standard target -- non-standard files are written only when you ask (`--tool`) or when they are already present. Installation removes legacy `guiho-as-xdocs` skill directories and replaces `guiho-s-xdocs` when the bundled version or content differs.
 
 ---
 
