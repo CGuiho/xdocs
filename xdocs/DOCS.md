@@ -156,8 +156,8 @@ Initializes XDocs in a project. It:
 
 - Creates `xdocs.config.toml` with defaults (skips if it already exists).
 - Creates the root `XDOCS.md` (skips if it already exists).
-- Updates `AGENTS.md` with the xdocs section that points AI agents at the `guiho-as-xdocs` skill (creates `AGENTS.md` if absent; refreshes the section in place if present).
-- Installs the `guiho-as-xdocs` skill to the standard `.agents/skills` location.
+- Updates `AGENTS.md` with the xdocs section that points AI agents at the `guiho-s-xdocs` skill (creates `AGENTS.md` if absent; refreshes the section in place if present).
+- Installs or refreshes the `guiho-s-xdocs` skill to the standard `.agents/skills` location, removing legacy `guiho-as-xdocs` installs when present.
 
 ```bash
 xdocs init
@@ -245,7 +245,7 @@ Both `--name=value` and `--name value` forms are supported.
 
 ### `xdocs agents`
 
-Installs the `guiho-as-xdocs` agent skill and maintains the `AGENTS.md` instruction section.
+Installs the `guiho-s-xdocs` agent skill and maintains the `AGENTS.md` instruction section.
 
 ```bash
 xdocs agents install local            # install under the project (.agents/skills)
@@ -327,21 +327,23 @@ Optional. When present, must be `1`.
 Agent settings control skill installation and the automation that runs on data commands.
 
 - `auto_agents_md`: Keep the `AGENTS.md` xdocs section fresh on normal commands when `AGENTS.md` already exists. Default: `true`.
-- `auto_skill_install`: Install the standard skill globally when it is missing. Default: `true`.
+- `auto_skill_install`: Install or refresh the configured skill globally from the bundled package copy. Default: `true`.
 - `skill_tool`: Default target for auto-install. Supported values are `agents` (standard) and `claude`. Default: `agents`.
 
 ## Agent Skills and Automation
 
-XDocs ships the `guiho-as-xdocs` skill inside the package at `skills/guiho-as-xdocs/SKILL.md`. The skill is a large, on-demand instruction document; a small section in `AGENTS.md` tells an agent to load it.
+XDocs ships the `guiho-s-xdocs` skill inside the package at `skills/guiho-s-xdocs/SKILL.md`. The skill is a large, on-demand instruction document with a `version` field in its frontmatter; a small section in `AGENTS.md` tells an agent to load it.
 
 Installation is standard-first:
 
 | Target                    | Skill location                              | When installed                                                  |
 | ------------------------- | ------------------------------------------- | --------------------------------------------------------------- |
-| `agents` (standard)       | `.agents/skills/guiho-as-xdocs/SKILL.md`    | Always (default). Read by OpenCode, Codex, Jules, and any AGENTS.md tool. |
-| `claude` (non-standard)   | `.claude/skills/guiho-as-xdocs/SKILL.md`    | Only when requested via `--tool`, or detected (a `.claude/` directory or `CLAUDE.md`). |
+| `agents` (standard)       | `.agents/skills/guiho-s-xdocs/SKILL.md`    | Always (default). Read by OpenCode, Codex, Jules, and any AGENTS.md tool. |
+| `claude` (non-standard)   | `.claude/skills/guiho-s-xdocs/SKILL.md`    | Only when requested via `--tool`, or detected (a `.claude/` directory or `CLAUDE.md`). |
 
 `local` scope installs under the project root; `global` scope installs under the user home directory (`~/.agents/skills/...`).
+
+Skill installation treats the bundled package skill as the source of truth. It removes legacy `guiho-as-xdocs` skill directories for the selected target, compares the installed `guiho-s-xdocs` version/content with the bundled copy, and replaces the installed skill whenever the version or content differs.
 
 The rule is: default to the standard target. Only write non-standard files (`.claude`, `CLAUDE.md`, etc.) when the user asks for them or when those files already exist.
 
@@ -350,7 +352,7 @@ The rule is: default to the standard target. Only write non-standard files (`.cl
 When an `xdocs.config.toml` is present, the data commands (`scan`, `generate`, `merge`, `tree`, `list`) run config-gated agent automation before executing:
 
 - If `auto_agents_md` is true and `AGENTS.md` exists, the xdocs section is kept fresh.
-- If `auto_skill_install` is true and the global skill is missing, XDocs installs it for the configured `skill_tool` and prints a one-line notice to stderr.
+- If `auto_skill_install` is true, XDocs ensures the configured global skill is current from the bundled package copy, removing legacy skill names and printing a one-line notice to stderr when it installs or refreshes anything.
 
 Automation does nothing outside an xdocs project (no config discovered). `init` and `agents` do not run this automation; they manage agent files explicitly.
 
@@ -394,11 +396,12 @@ import { extractFrontmatter, parseXDocsFile, validateMetadata } from '@guiho/xdo
 Agent skill and AGENTS.md automation:
 
 ```ts
-import { installSkill, ensureAgentsInstructions, runAgentAutomation } from '@guiho/xdocs'
+import { installSkill, ensureAgentsInstructions, runAgentAutomation, xdocsSkillVersion } from '@guiho/xdocs'
 
 await installSkill('agents', 'local', { cwd: process.cwd() })
 await ensureAgentsInstructions(process.cwd(), true)
 await runAgentAutomation({ cwd: process.cwd(), format: 'text', verbose: false })
+console.log(xdocsSkillVersion)
 ```
 
 Configuration:
@@ -425,10 +428,10 @@ The API uses the same configuration discovery and validation as the CLI.
 - `source/flags.ts`: argument/flag parsing utilities.
 - `source/errors.ts`: `XDocsError` with stable exit codes and the `invariant` helper.
 - `source/types.ts`: public and internal TypeScript types.
-- `source/agents.ts`: agent skill installation (standard/claude, local/global), AGENTS.md section management, detection, and config-gated automation. Reads `skills/guiho-as-xdocs/SKILL.md` from disk at runtime relative to `import.meta.url`.
+- `source/agents.ts`: agent skill installation (standard/claude, local/global), legacy skill-name removal, version/content refresh, AGENTS.md section management, detection, and config-gated automation. Reads `skills/guiho-s-xdocs/SKILL.md` from disk at runtime relative to `import.meta.url`.
 - `source/commands/*.ts`: one file per CLI command (`init`, `scan`, `generate`, `prompt`, `merge`, `tree`, `list`, `agents`).
 - `prompts/*.md`: prompt templates embedded at build time.
-- `skills/guiho-as-xdocs/SKILL.md`: bundled AI-agent skill installed by `xdocs agents` commands.
+- `skills/guiho-s-xdocs/SKILL.md`: bundled versioned AI-agent skill installed by `xdocs agents` commands.
 
 ## Development Workflow
 
@@ -504,7 +507,7 @@ Supported release asset matrix:
 
 Windows arm64 is intentionally not published until Bun's compilation support is reliable enough for this project. Unsupported platforms should use a documented manual path: install Bun and run from source, or download a compatible release asset manually.
 
-The package-manager install path downloads a native binary to `bin/xdocs.exe` during `postinstall`, and the `xdocs` bin entry points to that native binary. The native binary entrypoint embeds prompt templates, the `guiho-as-xdocs` skill, and package version metadata before importing the CLI, so installed binaries do not need adjacent prompt or skill files at runtime.
+The package-manager install path downloads a native binary to `bin/xdocs.exe` during `postinstall`, and the `xdocs` bin entry points to that native binary. The native binary entrypoint embeds prompt templates, the `guiho-s-xdocs` skill, and package version metadata before importing the CLI, so installed binaries do not need adjacent prompt or skill files at runtime.
 
 ## Documentation Requirement Before Publishing
 
@@ -550,9 +553,9 @@ Run `xdocs tree --verbose`. Resolve duplicate `subject` values, orphaned modules
 
 The standard target is `.agents/skills` (or `~/.agents/skills` for `--global`). The Claude target (`.claude/skills`) is only used with `--tool claude`/`all` or when a `.claude/` directory or `CLAUDE.md` is detected. Use `XDOCS_AGENT_HOME` to redirect the global home in tests.
 
-### A normal command modified AGENTS.md or installed a global skill unexpectedly
+### A normal command modified AGENTS.md or installed/refreshed a global skill unexpectedly
 
-That is the config-gated automation. Set `[agents].auto_agents_md = false` to stop AGENTS.md edits, and `[agents].auto_skill_install = false` to stop global skill installation.
+That is the config-gated automation. Set `[agents].auto_agents_md = false` to stop AGENTS.md edits, and `[agents].auto_skill_install = false` to stop global skill installation and refresh.
 
 ### Prompt not found
 
