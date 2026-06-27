@@ -517,6 +517,7 @@ describe('normalizeConfig agents section', () => {
   test('fills agent defaults when omitted', () => {
     const config = normalizeConfig({ schema: 1 }, '/project')
     expect(config.agents.autoAgentsMd).toBe(true)
+    expect(config.agents.autoSkillInstall).toBe(true)
     expect(config.agents.skillTool).toBe('agents')
   })
 
