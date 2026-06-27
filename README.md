@@ -2,6 +2,8 @@
 
 **Structured documentation system for codebases. Helps AI make sense of projects.**
 
+**npm package:** [@guiho/xdocs](https://www.npmjs.com/package/@guiho/xdocs)
+
 xdocs is a CLI and TypeScript library that places structured documentation files throughout your project so that AI agents (and humans) can navigate, understand, and work within a codebase without reading every file. Each xdocs file describes the directory it lives in -- its purpose, its files, and how it fits into the project hierarchy.
 
 ```text
