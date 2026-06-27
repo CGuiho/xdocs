@@ -4,22 +4,22 @@ description: TypeScript source for the xdocs CLI, library exports, command handl
 parent: xdocs-package
 children: []
 files:
-  guiho-xdocs.ts: Public library export surface for xdocs types and functions.
+  guiho-xdocs.ts: Public library export surface for xdocs types, functions, and skill metadata helpers.
   guiho-xdocs-bin.ts: Node-compatible package-manager CLI entrypoint.
   guiho-xdocs-native-bin.ts: Bun-compiled native binary entrypoint that registers embedded resources before importing the CLI.
-  embedded-resources.ts: Bun text imports for embedding prompts, the agent skill, and package version into native binaries.
+  embedded-resources.ts: Bun text imports for embedding prompts, the versioned agent skill, and package version into native binaries.
   cli.ts: CLI argument parsing, command dispatch, and config-gated agent automation.
   config.ts: TOML configuration discovery, Bun-native TOML parsing, validation, defaults, and [agents] settings normalization.
   discovery.ts: Project scanning and xdocs file discovery.
   metadata.ts: YAML frontmatter extraction, Bun-native YAML parsing, and xdocs metadata validation.
   tree.ts: Parent-child hierarchy construction, validation, and rendering.
   prompts.ts: Runtime prompt loader for package-manager/library use; native binaries can use embedded resources.
-  agents.ts: Agent skill installation, AGENTS.md section management, tool detection, and automation.
+  agents.ts: Versioned agent skill installation, legacy skill-name removal, AGENTS.md section management, tool detection, and automation.
   help.ts: Help text and version display.
   flags.ts: CLI flag parsing utilities.
   errors.ts: XDocsError and invariant helper.
-  types.ts: Public and internal TypeScript type definitions.
-  guiho-xdocs.spec.ts: Bun test suite covering flags, metadata, tree, config, agents, and resource behavior.
+  types.ts: Public and internal TypeScript type definitions, including skill install version and legacy-cleanup result fields.
+  guiho-xdocs.spec.ts: Bun test suite covering flags, metadata, tree, config, agents, skill migration/version refresh, and resource behavior.
 tags:
   - source
   - typescript
@@ -31,4 +31,7 @@ status: stable
 The `source/` directory is the TypeScript implementation for both the package
 manager CLI path and native compiled CLI path. The package-manager entrypoint is
 Node-compatible; the native entrypoint embeds prompt/skill/package resources so
-direct installer binaries do not require adjacent files at runtime.
+direct installer binaries do not require adjacent files at runtime. Agent skill
+installation now treats the bundled `guiho-s-xdocs` skill as source of truth,
+removing legacy `guiho-as-xdocs` installs and replacing stale copies when the
+bundled version or content differs.
