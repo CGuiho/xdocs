@@ -10,7 +10,7 @@ xdocs is a CLI and TypeScript library that places structured documentation files
 codebase -> xdocs files -> AI understands the project
 ```
 
-xdocs runs on **Bun** and **Node >= 20**. It ships as a compiled binary, a thin JS loader for `npx`/`bunx`, and a fully-typed TypeScript library.
+xdocs ships as compiled native binaries, a thin Bun launcher for package-manager and `bunx` execution, and a fully-typed TypeScript library.
 
 ---
 
@@ -30,7 +30,7 @@ irm https://raw.githubusercontent.com/CGuiho/xdocs/main/install.ps1 | iex
 
 Set `XDOCS_VERSION=0.2.3` (or the full tag `@guiho/xdocs@0.2.3`) before running an installer to pin a specific release instead of installing the latest.
 
-Package-manager install (convenient for JavaScript projects; downloads the matching native binary during `postinstall`, then runs the native binary):
+Package-manager install (convenient for JavaScript projects; downloads the matching native binary during `postinstall`, or on first run if the install hook did not run):
 
 ```bash
 npm install -D @guiho/xdocs
@@ -38,7 +38,7 @@ npm install -D @guiho/xdocs
 bun add -d @guiho/xdocs
 ```
 
-Native release assets are published for Linux x64/arm64, macOS x64/arm64, and Windows x64. Windows arm64 is not published yet. Package-manager installs require Node.js only during installation for the `postinstall` downloader; running `xdocs` afterwards executes the native binary.
+Native release assets are published for Linux x64/arm64, macOS x64/arm64, and Windows x64. Windows arm64 is not published yet. Direct installs run without Node.js or Bun at runtime. Package-manager and `bunx` execution use a shipped Bun launcher that ensures the matching native binary is installed, then delegates to it.
 
 ### Initializing
 
