@@ -1,5 +1,11 @@
 # GUIHO XDocs Changelog
 
+## 0.3.0
+
+- Stabilize the 0.3.0 release line, including native binary distribution, direct installers, package-manager native binary installation, and Bun-native TOML/YAML parsing.
+- Ship the renamed `guiho-s-xdocs` agent skill with versioned frontmatter, automatic refresh from the bundled package copy, and legacy `guiho-as-xdocs` cleanup.
+- Refresh README guidance and regression coverage for the stable release.
+
 ## 0.3.0-alpha.2
 
 - Rename the bundled xdocs agent skill from `guiho-as-xdocs` to `guiho-s-xdocs` and add a frontmatter `version` field.
