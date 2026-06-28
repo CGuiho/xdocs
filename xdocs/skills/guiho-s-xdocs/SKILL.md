@@ -183,7 +183,7 @@ auto_skill_install = true  # install or refresh the guiho-s-xdocs skill globally
 skill_tool = "agents"      # default tool for auto-install: agents (standard) or claude
 ```
 
-Agent automation options default to true. A bare `xdocs` invocation and normal data commands run this automation when config is present. Set `auto_agents_md = false` to stop xdocs from touching AGENTS.md, and `auto_skill_install = false` to stop xdocs from installing or refreshing `guiho-s-xdocs` globally.
+Agent automation options default to true. A bare `xdocs` invocation and normal data commands always bootstrap the standard global skill when no config is present; with config, set `auto_agents_md = false` to stop xdocs from touching AGENTS.md, and `auto_skill_install = false` to stop xdocs from installing or refreshing `guiho-s-xdocs` globally.
 
 ## CLI Reference
 
