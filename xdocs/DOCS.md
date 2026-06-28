@@ -324,7 +324,7 @@ Optional. When present, must be `1`.
 
 ### `[agents]`
 
-Agent settings control skill installation and the automation that runs on data commands.
+Agent settings control skill installation and the automation that runs on bare and data commands.
 
 - `auto_agents_md`: Keep the `AGENTS.md` xdocs section fresh on normal commands when `AGENTS.md` already exists. Default: `true`.
 - `auto_skill_install`: Install or refresh the configured skill globally from the bundled package copy. Default: `true`.
@@ -349,12 +349,12 @@ The rule is: default to the standard target. Only write non-standard files (`.cl
 
 ### Automation
 
-When an `xdocs.config.toml` is present, the data commands (`scan`, `generate`, `merge`, `tree`, `list`) run config-gated agent automation before executing:
+When an `xdocs.config.toml` is present, a bare `xdocs` invocation and the data commands (`scan`, `generate`, `merge`, `tree`, `list`) run config-gated agent automation before executing:
 
 - If `auto_agents_md` is true and `AGENTS.md` exists, the xdocs section is kept fresh.
 - If `auto_skill_install` is true, XDocs ensures the configured global skill is current from the bundled package copy, removing legacy skill names and printing a one-line notice to stderr when it installs or refreshes anything.
 
-Automation does nothing outside an xdocs project (no config discovered). `init` and `agents` do not run this automation; they manage agent files explicitly.
+Automation does nothing outside an xdocs project (no config discovered). `--help` and `--version` stay read-only. `init` and `agents` do not run this automation; they manage agent files explicitly.
 
 ## AI Usage Workflow
 
