@@ -1,6 +1,6 @@
 ---
 name: guiho-s-xdocs
-version: 0.3.0-alpha.2
+version: 0.3.0
 description: Use this skill whenever the user works with xdocs (`@guiho/xdocs`) structured documentation, AND proactively whenever you create a new module or subdirectory or add/change/remove files in a directory of an xdocs project, so you create or update that directory's `.xdocs.md` as part of the change. This includes creating, updating, or regenerating `.docs.md` / `.xdocs.md` files, the root `XDOCS.md`, the project tree, scanning documentation coverage, merging docs, or maintaining xdocs metadata and AGENTS.md guidance, even when the user only says "document this module", "update the docs", or "what does this folder do" without naming xdocs.
 ---
 
