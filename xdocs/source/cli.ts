@@ -40,16 +40,17 @@ export const runCli = async (rawArgs: string[] = process.argv.slice(2)): Promise
     return
   }
 
-  if (!parsed.command) {
-    process.stdout.write(showHelp() + '\n')
-    return
-  }
-
-  if (!validCommands.has(parsed.command as XDocsCommand)) {
+  if (parsed.command && !validCommands.has(parsed.command as XDocsCommand)) {
     throw new XDocsError(`Unknown command: ${parsed.command}\n\nRun \`xdocs --help\` for available commands.`)
   }
 
   const options = resolveOptions(parsed.flags)
+
+  if (!parsed.command) {
+    await runAgentAutomation(options, (message) => process.stderr.write(message + '\n'))
+    process.stdout.write(showHelp() + '\n')
+    return
+  }
 
   const command = parsed.command as XDocsCommand
 
