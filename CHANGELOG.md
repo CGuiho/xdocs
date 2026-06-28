@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Fix bare `xdocs` invocations so they run config-gated agent automation before printing help, installing or refreshing the global `guiho-s-xdocs` skill and removing legacy `guiho-as-xdocs` installs when configured.
+- Fix bare `xdocs` invocations so they install or refresh the global `guiho-s-xdocs` skill before printing help, even without `xdocs.config.toml`, and remove legacy `guiho-as-xdocs` installs for that target.
 
 ## 0.3.0
 
