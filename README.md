@@ -261,7 +261,7 @@ exclude = ["node_modules", ".git", "dist", "build", "library", "bin", "bundle"]
 name = "my-project"
 
 [agents]
-# Keep the xdocs section in AGENTS.md fresh on normal commands. Default: true
+# Keep the xdocs section in AGENTS.md fresh on bare and normal commands. Default: true
 auto_agents_md = true
 # Install or refresh the standard skill globally from the bundled copy. Default: true
 auto_skill_install = true
@@ -287,6 +287,8 @@ xdocs agents instructions      # insert/refresh the AGENTS.md section
 ```
 
 `xdocs init` runs this automatically for the standard target (`local` scope). `local` scope installs under the project; `global` installs under your home directory. The default is always the standard target -- non-standard files are written only when you ask (`--tool`) or when they are already present. Installation removes legacy `guiho-as-xdocs` skill directories and replaces `guiho-s-xdocs` when the bundled version or content differs.
+
+When an `xdocs.config.toml` is present, a bare `xdocs` invocation and the normal data commands refresh the configured global skill before doing their usual work. If the legacy `guiho-as-xdocs` skill exists for that global target, xdocs removes it and writes the bundled `guiho-s-xdocs` skill.
 
 ---
 
