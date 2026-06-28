@@ -34,5 +34,6 @@ Node-compatible; the native entrypoint embeds prompt/skill/package resources so
 direct installer binaries do not require adjacent files at runtime. Agent skill
 installation now treats the bundled `guiho-s-xdocs` skill as source of truth,
 removing legacy `guiho-as-xdocs` installs and replacing stale copies when the
-bundled version or content differs. Bare CLI invocations in configured xdocs
-projects also run that global skill refresh before printing help.
+bundled version or content differs. Bare CLI invocations also run that global
+skill refresh before printing help, using standard defaults when no config is
+present.
