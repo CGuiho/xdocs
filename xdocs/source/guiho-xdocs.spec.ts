@@ -754,6 +754,33 @@ describe('runAgentAutomation', () => {
       await rm(home, { recursive: true, force: true })
     }
   })
+
+  test('bootstraps the standard global skill on a bare CLI invocation without config', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-cli-bootstrap-'))
+    const home = await mkdtemp(join(tmpdir(), 'xdocs-cli-bootstrap-home-'))
+    const previousAgentHome = process.env['XDOCS_AGENT_HOME']
+    try {
+      process.env['XDOCS_AGENT_HOME'] = home
+
+      const legacyPath = resolve(home, '.agents/skills/guiho-as-xdocs/SKILL.md')
+      const canonicalPath = resolve(home, '.agents/skills/guiho-s-xdocs/SKILL.md')
+      await mkdir(dirname(legacyPath), { recursive: true })
+      await writeFile(legacyPath, 'legacy skill', 'utf8')
+
+      await runCli(['--cwd', dir])
+
+      expect(await readFile(canonicalPath, 'utf8')).toBe(xdocsSkillContent)
+      expect(existsSync(legacyPath)).toBe(false)
+    } finally {
+      if (previousAgentHome === undefined) {
+        delete process.env['XDOCS_AGENT_HOME']
+      } else {
+        process.env['XDOCS_AGENT_HOME'] = previousAgentHome
+      }
+      await rm(dir, { recursive: true, force: true })
+      await rm(home, { recursive: true, force: true })
+    }
+  })
 })
 
 describe('ensureAgentsInstructions', () => {
