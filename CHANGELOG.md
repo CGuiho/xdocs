@@ -1,5 +1,9 @@
 # GUIHO XDocs Changelog
 
+## Unreleased
+
+- Fix bare `xdocs` invocations so they run config-gated agent automation before printing help, installing or refreshing the global `guiho-s-xdocs` skill and removing legacy `guiho-as-xdocs` installs when configured.
+
 ## 0.3.0
 
 - Stabilize the 0.3.0 release line, including native binary distribution, direct installers, package-manager native binary installation, and Bun-native TOML/YAML parsing.
