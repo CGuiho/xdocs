@@ -5,7 +5,7 @@ parent: xdocs-package
 children: []
 files:
   guiho-xdocs.ts: Public library export surface for xdocs types, functions, and skill metadata helpers.
-  guiho-xdocs-bin.ts: Node-compatible package-manager CLI entrypoint.
+  guiho-xdocs-bin.ts: Node-compatible source CLI entrypoint.
   guiho-xdocs-native-bin.ts: Bun-compiled native binary entrypoint that registers embedded resources before importing the CLI.
   embedded-resources.ts: Bun text imports for embedding prompts, the versioned agent skill, and package version into native binaries.
   cli.ts: CLI argument parsing, command dispatch, and config-gated agent automation for bare and data-command invocations.
@@ -19,7 +19,7 @@ files:
   flags.ts: CLI flag parsing utilities.
   errors.ts: XDocsError and invariant helper.
   types.ts: Public and internal TypeScript type definitions, including skill install version and legacy-cleanup result fields.
-  guiho-xdocs.spec.ts: Bun test suite covering flags, metadata, tree, config, agents, CLI automation, skill migration/version refresh, and resource behavior.
+  guiho-xdocs.spec.ts: Bun test suite covering flags, package metadata, metadata parsing, tree, config, agents, CLI automation, skill migration/version refresh, and resource behavior.
 tags:
   - source
   - typescript
@@ -28,9 +28,9 @@ flags: []
 status: stable
 ---
 
-The `source/` directory is the TypeScript implementation for both the package
-manager CLI path and native compiled CLI path. The package-manager entrypoint is
-Node-compatible; the native entrypoint embeds prompt/skill/package resources so
+The `source/` directory is the TypeScript implementation for both the source CLI
+path and native compiled CLI path. The source CLI entrypoint is Node-compatible;
+the native entrypoint embeds prompt/skill/package resources so
 direct installer binaries do not require adjacent files at runtime. Agent skill
 installation now treats the bundled `guiho-s-xdocs` skill as source of truth,
 removing legacy `guiho-as-xdocs` installs and replacing stale copies when the
