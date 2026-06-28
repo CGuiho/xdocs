@@ -30,7 +30,7 @@
 - `xdocs list [path]` lists files in a scope with descriptions from xdocs metadata.
 - `xdocs agents install <local|global> [--tool <agents|claude|all>]` installs or refreshes the `guiho-s-xdocs` skill; `xdocs agents instructions` inserts/refreshes the xdocs section in `AGENTS.md`.
 - Skill install is standard-first: the default `agents` target is `AGENTS.md` + `.agents/skills` (local) / `~/.agents/skills` (global). The non-standard `claude` target (`.claude/skills`) is used only when `--tool` requests it or a `.claude`/`CLAUDE.md` is detected. Codex, Jules, and other AGENTS.md tools read the standard target.
-- Data commands (`scan`, `generate`, `merge`, `tree`, `list`) run config-gated agent automation first: when an `xdocs.config.toml` is present, `[agents].auto_agents_md` keeps the AGENTS.md section fresh and `[agents].auto_skill_install` installs or refreshes the configured global skill from the bundled copy.
+- A bare `xdocs` invocation and data commands (`scan`, `generate`, `merge`, `tree`, `list`) run config-gated agent automation first: when an `xdocs.config.toml` is present, `[agents].auto_agents_md` keeps the AGENTS.md section fresh and `[agents].auto_skill_install` installs or refreshes the configured global skill from the bundled copy, removing legacy `guiho-as-xdocs` installs for that target.
 - Global flags: `--help`, `--version`, `--cwd <path>`, `--config <path>`, `--format <text|json|markdown>`, `--verbose`.
 
 ## Source Structure
