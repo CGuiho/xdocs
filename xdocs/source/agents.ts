@@ -269,10 +269,9 @@ export const resolveAgentSettings = async (options: XDocsCliOptions): Promise<XD
 }
 
 /**
- * Config-gated automation run by normal commands. Does nothing outside an xdocs
- * project (no config discovered). When enabled, it keeps the AGENTS.md section
- * fresh (only if AGENTS.md already exists) and refreshes the global skill for
- * the configured tool from the bundled package copy.
+ * Agent automation run by bare and data commands. It always bootstraps the
+ * configured global skill from the bundled package copy; when config exists,
+ * it also keeps the AGENTS.md section fresh if enabled and AGENTS.md exists.
  */
 export const runAgentAutomation = async (
   options: AgentAutomationOptions,
@@ -280,13 +279,10 @@ export const runAgentAutomation = async (
 ): Promise<XDocsAgentAutomationResult> => {
   const cwd = resolve(options.cwd)
   const discovered = await discoverConfig(cwd, options.config)
-
-  if (!discovered.raw) return { settings: { ...normalizeAgentSettings(undefined) } }
-
-  const settings = normalizeAgentSettings(discovered.raw.agents)
+  const settings = normalizeAgentSettings(discovered.raw?.agents)
   const result: XDocsAgentAutomationResult = { settings }
 
-  if (settings.autoAgentsMd) result.agentsMd = await ensureAgentsInstructions(cwd, false)
+  if (discovered.raw && settings.autoAgentsMd) result.agentsMd = await ensureAgentsInstructions(cwd, false)
 
   if (settings.autoSkillInstall) {
     const globalSkill = await installSkill(settings.skillTool, 'global', { cwd, homeDirectory: options.homeDirectory })
