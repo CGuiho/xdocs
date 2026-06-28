@@ -288,7 +288,7 @@ xdocs agents instructions      # insert/refresh the AGENTS.md section
 
 `xdocs init` runs this automatically for the standard target (`local` scope). `local` scope installs under the project; `global` installs under your home directory. The default is always the standard target -- non-standard files are written only when you ask (`--tool`) or when they are already present. Installation removes legacy `guiho-as-xdocs` skill directories and replaces `guiho-s-xdocs` when the bundled version or content differs.
 
-When an `xdocs.config.toml` is present, a bare `xdocs` invocation and the normal data commands refresh the configured global skill before doing their usual work. If the legacy `guiho-as-xdocs` skill exists for that global target, xdocs removes it and writes the bundled `guiho-s-xdocs` skill.
+A bare `xdocs` invocation and the normal data commands refresh the global skill before doing their usual work. Without `xdocs.config.toml`, xdocs uses the standard `agents` target; with config, `[agents].skill_tool` can choose the target and `[agents].auto_skill_install = false` can disable the refresh. If the legacy `guiho-as-xdocs` skill exists for that global target, xdocs removes it and writes the bundled `guiho-s-xdocs` skill.
 
 ---
 
