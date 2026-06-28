@@ -11,6 +11,7 @@ import { parseArgs, stringFlag, booleanFlag, listFlag } from './flags.js'
 import { extractFrontmatter, validateMetadata } from './metadata.js'
 import { buildTree, renderTree, renderTreeMarkdown, validateTree } from './tree.js'
 import { normalizeConfig, defaultConfig, normalizeAgentSettings } from './config.js'
+import { runCli } from './cli.js'
 import {
   detectAgentTools,
   ensureAgentsInstructions,
@@ -721,6 +722,34 @@ describe('runAgentAutomation', () => {
       expect(existsSync(legacyPath)).toBe(false)
       expect(notices.some((message) => message.includes('refreshed globally'))).toBe(true)
     } finally {
+      await rm(dir, { recursive: true, force: true })
+      await rm(home, { recursive: true, force: true })
+    }
+  })
+
+  test('runs on a bare CLI invocation in an xdocs project', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-cli-automation-'))
+    const home = await mkdtemp(join(tmpdir(), 'xdocs-cli-home-'))
+    const previousAgentHome = process.env['XDOCS_AGENT_HOME']
+    try {
+      process.env['XDOCS_AGENT_HOME'] = home
+      await writeFile(join(dir, 'xdocs.config.toml'), 'schema = 1\n\n[agents]\nauto_agents_md = false\nauto_skill_install = true\nskill_tool = "agents"\n', 'utf8')
+
+      const legacyPath = resolve(home, '.agents/skills/guiho-as-xdocs/SKILL.md')
+      const canonicalPath = resolve(home, '.agents/skills/guiho-s-xdocs/SKILL.md')
+      await mkdir(dirname(legacyPath), { recursive: true })
+      await writeFile(legacyPath, 'legacy skill', 'utf8')
+
+      await runCli(['--cwd', dir])
+
+      expect(await readFile(canonicalPath, 'utf8')).toBe(xdocsSkillContent)
+      expect(existsSync(legacyPath)).toBe(false)
+    } finally {
+      if (previousAgentHome === undefined) {
+        delete process.env['XDOCS_AGENT_HOME']
+      } else {
+        process.env['XDOCS_AGENT_HOME'] = previousAgentHome
+      }
       await rm(dir, { recursive: true, force: true })
       await rm(home, { recursive: true, force: true })
     }
