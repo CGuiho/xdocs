@@ -196,12 +196,12 @@ Distribution is moving toward a **native-binary-first** model:
 
 2. GitHub releases publish the compiled assets. The direct installers (`install.sh`, `install.ps1`) download the matching asset and place it on `PATH`, so users do not need Node.js or Bun at runtime.
 
-3. The npm package remains available as a package-manager convenience. Its `postinstall` step downloads the matching native binary from the GitHub release into `bin/xdocs.exe`, and the package `bin` entry points to that native binary. Node.js is used only during installation by Node-based package managers, not when running `xdocs`.
+3. The npm package remains available as a package-manager convenience. Its package `bin` points to the shipped Bun launcher at `scripts/xdocs-bin.ts`; `postinstall` and the launcher's first-run fallback use `scripts/install-package.ts` to download the matching GitHub Release native binary into `vendor/xdocs` or `vendor/xdocs.exe`, then delegate to that binary.
 
 This approach means:
 
 - Direct-install users run a native `xdocs` binary with no Node or Bun runtime dependency.
-- Package-manager users keep a familiar dependency workflow.
+- Package-manager and `bunx` users keep a familiar dependency workflow, with Bun running the small launcher.
 - Unsupported platforms have a documented manual path: install Bun and run from source, or download a compatible release asset manually.
 
 ### 7.2 Commands
