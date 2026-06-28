@@ -349,12 +349,13 @@ The rule is: default to the standard target. Only write non-standard files (`.cl
 
 ### Automation
 
-When an `xdocs.config.toml` is present, a bare `xdocs` invocation and the data commands (`scan`, `generate`, `merge`, `tree`, `list`) run config-gated agent automation before executing:
+Bare `xdocs` invocations and the data commands (`scan`, `generate`, `merge`, `tree`, `list`) run agent automation before executing:
 
-- If `auto_agents_md` is true and `AGENTS.md` exists, the xdocs section is kept fresh.
-- If `auto_skill_install` is true, XDocs ensures the configured global skill is current from the bundled package copy, removing legacy skill names and printing a one-line notice to stderr when it installs or refreshes anything.
+- XDocs always bootstraps the global skill with default settings when no config is present, using the standard `agents` target.
+- When `xdocs.config.toml` is present and `auto_agents_md` is true, the xdocs section is kept fresh if `AGENTS.md` exists.
+- When config is present and `auto_skill_install` is true, XDocs ensures the configured global skill is current from the bundled package copy, removing legacy skill names and printing a one-line notice to stderr when it installs or refreshes anything.
 
-Automation does nothing outside an xdocs project (no config discovered). `--help` and `--version` stay read-only. `init` and `agents` do not run this automation; they manage agent files explicitly.
+`--help` and `--version` stay read-only. `init` and `agents` do not run this automation; they manage agent files explicitly.
 
 ## AI Usage Workflow
 
