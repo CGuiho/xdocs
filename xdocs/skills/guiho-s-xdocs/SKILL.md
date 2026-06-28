@@ -178,12 +178,12 @@ exclude = ["node_modules", ".git", "dist", "build", "library", "bin", "bundle"]
 name = "my-project"
 
 [agents]
-auto_agents_md = true      # keep the xdocs section in AGENTS.md up to date on normal commands
+auto_agents_md = true      # keep the xdocs section in AGENTS.md up to date on bare and normal commands
 auto_skill_install = true  # install or refresh the guiho-s-xdocs skill globally
 skill_tool = "agents"      # default tool for auto-install: agents (standard) or claude
 ```
 
-Agent automation options default to true. Set `auto_agents_md = false` to stop xdocs from touching AGENTS.md, and `auto_skill_install = false` to stop xdocs from installing or refreshing `guiho-s-xdocs` globally.
+Agent automation options default to true. A bare `xdocs` invocation and normal data commands run this automation when config is present. Set `auto_agents_md = false` to stop xdocs from touching AGENTS.md, and `auto_skill_install = false` to stop xdocs from installing or refreshing `guiho-s-xdocs` globally.
 
 ## CLI Reference
 
