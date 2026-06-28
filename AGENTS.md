@@ -39,6 +39,8 @@
 - `xdocs/source/guiho-xdocs-bin.ts` -- CLI entrypoint
 - `xdocs/source/guiho-xdocs-native-bin.ts` -- Bun-compiled native binary entrypoint; registers embedded prompt/skill/package resources before importing the CLI
 - `xdocs/source/embedded-resources.ts` -- Bun text imports used only for native binary embedding
+- `xdocs/scripts/xdocs-bin.ts` -- shipped Bun launcher used as the package `bin`; installs the native binary on first run when needed
+- `xdocs/scripts/install-package.ts` -- package-manager install helper that downloads or copies the matching native binary into `xdocs/vendor/`
 - `xdocs/source/cli.ts` -- CLI argument parsing and command dispatch
 - `xdocs/source/config.ts` -- TOML config loading, validation, and defaults
 - `xdocs/source/discovery.ts` -- filesystem scanning and xdocs file matching
