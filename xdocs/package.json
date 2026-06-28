@@ -12,7 +12,7 @@
     }
   },
   "bin": {
-    "xdocs": "./bin/xdocs.exe"
+    "xdocs": "scripts/xdocs-bin.ts"
   },
   "files": [
     "README.md",
@@ -49,7 +49,7 @@
     "binary": "bun build source/guiho-xdocs-native-bin.ts --compile --outfile bin/xdocs",
     "binaries": "bun run devops/build-binaries.ts",
     "bundle": "rm -rf bundle && bun build source/guiho-xdocs-bin.ts --outdir bundle --target node --sourcemap=linked",
-    "postinstall": "node ./scripts/install-native.cjs",
+    "postinstall": "bun run scripts/install-package.ts",
     "typecheck": "tsc -p . --noEmit",
     "clean": "rm -rf .temp",
     "clean-build": "rm -rf build library bundle bin",
