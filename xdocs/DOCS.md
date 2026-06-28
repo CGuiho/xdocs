@@ -13,7 +13,7 @@ XDocs is a documentation tool, not a versioning tool. It never bumps versions or
 - Package name: `@guiho/xdocs`
 - Source/runtime during development: Bun and TypeScript (ESM)
 - Primary release runtime: compiled native Bun binary assets
-- Package-manager install path: Node.js is used only for `postinstall`; the installed `xdocs` command executes the native binary
+- Package-manager install path: the shipped Bun launcher runs `postinstall` or first-run native binary installation, then executes the native binary
 - Package type: ESM
 - Library entrypoint: `source/guiho-xdocs.ts`
 - CLI entrypoint: `source/guiho-xdocs-bin.ts`
@@ -93,7 +93,7 @@ curl -fsSL https://raw.githubusercontent.com/CGuiho/xdocs/main/install.sh | sh
 irm https://raw.githubusercontent.com/CGuiho/xdocs/main/install.ps1 | iex
 ```
 
-Install XDocs as a development dependency through a JavaScript package manager. This uses Node.js during `postinstall` to download the matching native binary, then the installed `xdocs` command executes the native binary:
+Install XDocs as a development dependency through a JavaScript package manager. Package-manager execution uses the shipped Bun launcher, which downloads the matching native binary during `postinstall` or on first run if the install hook did not run, then executes the native binary:
 
 ```bash
 bun add -d @guiho/xdocs
@@ -105,7 +105,7 @@ Or with npm:
 npm install -D @guiho/xdocs
 ```
 
-Use the direct installer when you do not want a JavaScript package manager involved. Use the package-manager install when you want project-local dependency management; after installation, `xdocs` still runs as a native binary.
+Use the direct installer when you do not want a JavaScript package manager or Bun involved at runtime. Use the package-manager install when you want project-local dependency management or `bunx` execution; the shipped Bun launcher ensures the native binary exists and delegates to it.
 
 ## Quick Start
 
@@ -508,7 +508,7 @@ Supported release asset matrix:
 
 Windows arm64 is intentionally not published until Bun's compilation support is reliable enough for this project. Unsupported platforms should use a documented manual path: install Bun and run from source, or download a compatible release asset manually.
 
-The package-manager install path downloads a native binary to `bin/xdocs.exe` during `postinstall`, and the `xdocs` bin entry points to that native binary. The native binary entrypoint embeds prompt templates, the `guiho-s-xdocs` skill, and package version metadata before importing the CLI, so installed binaries do not need adjacent prompt or skill files at runtime.
+The package-manager install path ships `scripts/xdocs-bin.ts` as the package `bin`. That launcher calls `scripts/install-package.ts` during first run if `vendor/xdocs` or `vendor/xdocs.exe` is missing. The install helper downloads the matching GitHub Release asset, or copies a bundled asset when present. The native binary entrypoint embeds prompt templates, the `guiho-s-xdocs` skill, and package version metadata before importing the CLI, so installed binaries do not need adjacent prompt or skill files at runtime.
 
 ## Documentation Requirement Before Publishing
 
