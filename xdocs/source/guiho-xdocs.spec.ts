@@ -163,6 +163,22 @@ describe('flag helpers', () => {
   })
 })
 
+describe('package metadata', () => {
+  test('ships a Bun launcher bin for remote package execution', async () => {
+    const packageJson = JSON.parse(await readFile(resolve(process.cwd(), 'package.json'), 'utf8')) as {
+      bin?: Record<string, string>
+      files?: string[]
+      scripts?: Record<string, string>
+    }
+
+    expect(packageJson.bin?.['xdocs']).toBe('scripts/xdocs-bin.ts')
+    expect(packageJson.files).toContain('scripts/')
+    expect(packageJson.scripts?.['postinstall']).toBe('bun run scripts/install-package.ts')
+    expect(existsSync(resolve(process.cwd(), 'scripts/xdocs-bin.ts'))).toBe(true)
+    expect(existsSync(resolve(process.cwd(), 'scripts/install-package.ts'))).toBe(true)
+  })
+})
+
 // ---------------------------------------------------------------------------
 // metadata.ts
 // ---------------------------------------------------------------------------
