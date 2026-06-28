@@ -1,6 +1,6 @@
 # GUIHO XDocs Changelog
 
-## Unreleased
+## 0.3.1
 
 - Fix bare `xdocs` invocations so they install or refresh the global `guiho-s-xdocs` skill before printing help, even without `xdocs.config.toml`, and remove legacy `guiho-as-xdocs` installs for that target.
 - Change the package-manager `xdocs` bin to a shipped Bun launcher (`scripts/xdocs-bin.ts`) that installs the native binary on first run when needed, matching GUIHO Mirror's `bun x` behavior.
