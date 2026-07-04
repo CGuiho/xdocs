@@ -1,4 +1,4 @@
-# Repository Notes
+﻿# Repository Notes
 
 - `xdocs` is almost always written lowercase (CLI, code, text). Only capitalize as `XDocs` when used in a title or heading.
 - The real package lives in `xdocs/`; run package commands there unless editing root docs or `devops/`.
@@ -85,3 +85,47 @@ Before editing release docs or changelogs, inspect mirror.config.toml. If [agent
 Use [agents].changelog_path as the changelog file path. If it is missing, use CHANGELOG.md in the project root.
 
 Before publishing a new version, update `xdocs/DOCS.md` -- the canonical full documentation for `@guiho/xdocs` -- to capture every behavior change in the release, written the same way as the changelog. Treat `DOCS.md` as a required release artifact: keep it current with CLI commands and flags, configuration fields, the metadata schema, the TypeScript API, and agent skill behavior. Do not publish when `DOCS.md` is stale relative to the shipping code.
+
+## GUIHO Project
+
+### Identity
+
+| Field | Value |
+| --- | --- |
+| GUIHO Project ID | g0000 observed in current GUIHO runtime artifacts; confirm before using as a formal registry ID |
+| GUIHO Subject ID | TBD - formal subject ID for this component is not declared yet |
+| GUIHO Subject Name | XDocs |
+| Project Family | guiho |
+| Repository Directory | C:\GUIHO\xdocs |
+| Repository Kind | shared package |
+| Parent Project | GUIHO Root (C:\GUIHO\guiho) |
+| Parent Component | GUIHO Root |
+
+### Component Purpose
+
+Structured documentation package and CLI for @guiho/xdocs.
+
+### Parent Context
+
+- Parent AGENTS: [../guiho/AGENTS.md](../guiho/AGENTS.md)
+- Parent TODO: [../guiho/TODO.md](../guiho/TODO.md)
+- Local TODO: [./TODO.md](./TODO.md)
+
+For the full project map, sibling components, package index, service index,
+project-wide TODOs, and cross-repository coordination rules, read the parent
+repository's AGENTS.md GUIHO Project section.
+
+### Local Scope
+
+- Kind: shared package
+- Work directory: .
+- Primary skills: guiho-s-xdocs, guiho-s-0015-bun
+- Baseline checks: package-local typecheck/test scripts when present
+
+### Coordination Rules
+
+- This repository is a child of C:\GUIHO\guiho.
+- Keep component-specific implementation tasks in the local TODO file.
+- Keep cross-component planning and parent delegation in the parent TODO file.
+- Read this component's existing local instructions before editing source code.
+- Do not publish, deploy, run migrations, rotate secrets, or mutate production resources without explicit user approval.
