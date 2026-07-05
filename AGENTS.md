@@ -22,10 +22,10 @@
 - The xdocs CLI is a structured documentation tool, not a versioning tool. It does not bump versions or mutate `package.json` versions.
 - Supported commands: `init`, `scan`, `generate`, `prompt`, `merge`, `tree`, `list`, `agents`.
 - `xdocs init` creates `XDOCS.md`, `xdocs.config.toml`, updates `AGENTS.md` (the xdocs section pointing AI at the skill), and installs or refreshes the `guiho-s-xdocs` skill to the standard location (`.agents/skills`); `--tool` and `--global` are supported.
-- `xdocs scan` walks the project tree (respecting `[scan].exclude`) and reports xdocs file coverage.
+- `xdocs scan` walks the project tree (respecting `[scan].exclude`) and reports named `*.xdocs.md` descriptor coverage plus same-directory Markdown companion-document coverage.
 - `xdocs generate [path]` generates documentation for a specific directory or the entire project.
 - `xdocs prompt --name=<name>` outputs a ready-made prompt for AI agents. Available prompts: `write`, `update`, `agents`, `generate`. Prompts are selected via `--name` flag, not subcommands.
-- `xdocs merge [path]` merges xdocs files from a directory into a single consolidated document.
+- `xdocs merge [path]` merges xdocs descriptors from a directory into a single consolidated document.
 - `xdocs tree` builds and displays the project hierarchy from xdocs metadata.
 - `xdocs list [path]` lists files in a scope with descriptions from xdocs metadata.
 - `xdocs agents install <local|global> [--tool <agents|claude|all>]` installs or refreshes the `guiho-s-xdocs` skill; `xdocs agents instructions` inserts/refreshes the xdocs section in `AGENTS.md`.
@@ -43,7 +43,7 @@
 - `xdocs/scripts/install-package.ts` -- package-manager install helper that downloads or copies the matching native binary into `xdocs/vendor/`
 - `xdocs/source/cli.ts` -- CLI argument parsing and command dispatch
 - `xdocs/source/config.ts` -- TOML config loading, validation, and defaults
-- `xdocs/source/discovery.ts` -- filesystem scanning and xdocs file matching
+- `xdocs/source/discovery.ts` -- filesystem scanning, xdocs descriptor matching, companion Markdown discovery, and descriptor/document validation
 - `xdocs/source/metadata.ts` -- YAML frontmatter parsing and validation
 - `xdocs/source/tree.ts` -- tree assembly, integrity checks, and rendering
 - `xdocs/source/prompts.ts` -- prompt loader (reads `.md` files from disk at runtime via `import.meta.url`)
@@ -59,7 +59,7 @@
 
 ## Key Concepts
 
-- xdocs files use Markdown with YAML frontmatter. Default extensions: `.docs.md`, `.xdocs.md`. The root file is always `XDOCS.md` (uppercase, no prefix).
+- xdocs descriptors use Markdown with YAML frontmatter and must be named `*.xdocs.md`; `.docs.md` is not supported and `.xdocs.md` by itself is invalid. Same-directory plain `*.md` files are companion documents listed in the descriptor's `documents` metadata. The root file is always `XDOCS.md` (uppercase, no prefix, no frontmatter).
 - Metadata fields: `subject`, `description`, `parent`, `children`, `files`, `tags`, `flags`, and optional `status`.
 - The tree is a parent-child containment hierarchy, not a dependency graph. Built from `subject`/`parent`/`children` fields.
 - Configuration lives in `xdocs.config.toml`. Sections: `extensions`, `ai`, `scan`, `project`, `agents`.
