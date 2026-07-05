@@ -26,19 +26,20 @@ This is especially true in modular applications. A modular application has domai
 
 ### The Solution
 
-xdocs code solves this by placing xdocs files throughout the project. Each xdocs file describes the directory it lives in, acting as a self-contained map of that module. Instead of opening every file to understand a directory, you read its xdocs file.
+xdocs code solves this by placing named `*.xdocs.md` descriptors throughout the project. Each descriptor describes the directory it lives in, acting as a self-contained map of that module. Instead of opening every file to understand a directory, you read its descriptor metadata first.
 
-### What an xdocs File Describes
+### What an xdocs Descriptor Describes
 
-An xdocs file for a directory/module covers:
+An xdocs descriptor for a directory/module covers:
 
 - **Purpose** -- what this directory/module is and why it exists
 - **Files** -- the files in this directory and what each one does
+- **Documents** -- same-directory plain Markdown companion documents and what each one explains
 - **Subdirectories** -- the child directories and what they contain
 - **Parent** -- which directory this is a subdirectory of (what is above in the hierarchy)
 - **Hierarchy** -- how this module fits into the broader project structure (what is above and what is below)
 
-The key insight: a directory represents a module. The xdocs file is the documentation of that module.
+The key insight: a directory represents a module. The xdocs descriptor is the structured map of that module.
 
 ### How It Works
 
@@ -58,41 +59,38 @@ project/
       ...files...
 ```
 
-With xdocs, each of these directories would have an xdocs file that makes the structure self-describing. To understand the whole project, you read the xdocs files. To understand a single module, you read its xdocs file. You never need to open individual source files just to understand what a module does or how the project is organized.
+With xdocs, each of these directories would have one named `*.xdocs.md` descriptor that makes the structure self-describing. To understand the whole project, you read the descriptors. To understand a single module, you read its descriptor and then any listed companion Markdown documents that are relevant. You never need to open individual source files just to understand what a module does or how the project is organized.
 
 ### The Goal
 
-The primary goal of xdocs code is to **help AI make sense of the codebase and use it effectively**. The xdocs files are the structured context that AI agents need to navigate, understand, and work within a project without guessing or reading everything.
+The primary goal of xdocs code is to **help AI make sense of the codebase and use it effectively**. The xdocs descriptors are the structured context that AI agents need to navigate, understand, and work within a project without guessing or reading everything.
 
 ### File Format
 
-xdocs files are Markdown. A file is recognized as an xdocs file if it ends with one of the configured extensions. The default extensions are:
+xdocs descriptors are Markdown files with YAML frontmatter. A descriptor must be a named file ending in `.xdocs.md`, such as `authentication.xdocs.md`. A file named only `.xdocs.md` is invalid.
 
-- `.docs.md`
-- `.xdocs.md`
-
-Extensions are configurable. The user may add or replace extensions in the configuration. For example, a user could configure `.md` to target every Markdown file, or even `.txt` files. The defaults above cover the typical case.
+Same-directory plain `*.md` files are companion documents. They are listed in the descriptor's `documents` metadata map.
 
 ### Who Writes xdocs Files
 
-xdocs files are written by AI. When AI writes or modifies code, it also writes or updates the corresponding xdocs documentation. The human does not need to manually maintain these files.
+xdocs descriptors are written by AI. When AI writes or modifies code or same-directory Markdown documents, it also writes or updates the corresponding xdocs descriptor. The human does not need to manually maintain these files.
 
 ### Configuration
 
 xdocs is configurable through an `xdocs.config.toml` file at the project root. The configuration controls:
 
-- **Extensions** -- which file extensions are recognized as xdocs files (default: `.docs.md`, `.xdocs.md`)
+- **Descriptor suffix** -- the only supported descriptor suffix is `.xdocs.md`
 - **AI behavior** -- how the AI handles documentation updates when the codebase changes. Two modes:
   - **Prompt mode** -- the AI detects that documentation needs to be generated or updated, announces it to the user, and waits for the user to prompt it to proceed
   - **Auto mode** -- the AI automatically updates documentation whenever there is a change or a new addition that requires it, without waiting for user confirmation
 
 ### Discovery
 
-xdocs files are discovered by scanning every directory and subdirectory in the project for files matching the configured extensions. There is no registry or manifest. The filesystem is the source of truth.
+xdocs descriptors are discovered by scanning every directory and subdirectory in the project for named files ending in `.xdocs.md`. Companion Markdown documents are discovered from same-directory plain `*.md` files and validated against the descriptor's `documents` map. There is no registry or manifest. The filesystem is the source of truth.
 
-### References Between xdocs Files
+### References Between xdocs Descriptors
 
-xdocs files reference each other. This is fundamental to the system. Each file knows its parent and its children, and through these references, the full project structure is navigable.
+xdocs descriptors reference each other. This is fundamental to the system. Each descriptor knows its parent and its children, and through these references, the full project structure is navigable.
 
 ### The Tree
 
@@ -102,14 +100,14 @@ Files in a project are not thrown randomly into directories. Every module serves
 
 The tree represents **hierarchy, not connections**. It shows containment: this is inside this, which is inside this, which is inside this. It is a parent-child structure, not a graph of relationships or dependencies.
 
-The tree is generated from the xdocs files and their references to each other. It provides a complete, navigable view of the project's module hierarchy from root to leaf.
+The tree is generated from the xdocs descriptors and their references to each other. It provides a complete, navigable view of the project's module hierarchy from root to leaf.
 
 ### What xdocs Delivers
 
 xdocs ships three things:
 
 1. **A CLI** -- a cross-platform command-line tool with actions for initializing configuration, scanning the project, generating the tree, and other operations. The CLI must work on macOS, Linux, and Windows.
-2. **Agent skills** -- documentation and instructions that teach AI agents how to work with xdocs, when to use the CLI, and how to maintain xdocs files as part of their workflow.
+2. **Agent skills** -- documentation and instructions that teach AI agents how to work with xdocs, when to use the CLI, and how to maintain xdocs descriptors as part of their workflow.
 3. **Plugins** -- native integrations for AI coding tools so that xdocs works seamlessly within each tool's ecosystem. Target plugins:
    - Claude Code
    - OpenAI Codex
@@ -131,13 +129,13 @@ Initializes xdocs in a project. This command:
 
 #### `xdocs scan`
 
-Scans every directory and subdirectory in the project for files matching the configured extensions. Reports what xdocs files exist, where they are, and which directories are missing documentation.
+Scans every directory and subdirectory in the project for named `*.xdocs.md` descriptors and same-directory plain Markdown companion documents. Reports what descriptors exist, where they are, and which directories are missing documentation.
 
 #### `xdocs generate`
 
 Generates documentation. This is a versatile command that works at different scopes:
 
-- **Directory/module scope** -- when run on a directory, it scans all the files in that directory and its subdirectories, then generates a comprehensive xdocs file describing the whole module. The generated file includes information about the files, their purpose, and the submodules contained within.
+- **Directory/module scope** -- when run on a directory, it scans descriptors, files, companion documents, and subdirectories, then generates a comprehensive document describing the whole module.
 - **Project scope** -- when run at the project level, it scans the entire project and generates a single `.md` file with the complete description of everything: all modules, all files, the full hierarchy, and how it all fits together.
 
 The generate command produces a complete, self-contained document for whatever scope it targets.
@@ -149,7 +147,7 @@ Outputs ready-made prompts for AI agents. Each prompt is tailored to a specific 
 Prompts include (not exhaustive):
 
 - **Write documentation** -- instructs the AI on how to scan a directory and write xdocs documentation for it
-- **Update documentation** -- instructs the AI to update existing xdocs files after code has changed
+- **Update documentation** -- instructs the AI to update existing xdocs descriptors after code or document changes
 - **Update AGENTS.md** -- instructs the AI to update the AGENTS.md file with xdocs instructions
 - **Generate full docs** -- instructs the AI to generate comprehensive documentation for a specific domain or the whole project
 
@@ -157,7 +155,7 @@ There will be many prompts, one for each individual task. The prompt command is 
 
 #### `xdocs merge`
 
-Merges xdocs files from a specific domain or directory into a single file. Given a domain, it takes all the xdocs files within it and produces one consolidated document with everything merged together.
+Merges xdocs descriptors from a specific domain or directory into a single file. Given a domain, it takes all the xdocs descriptors within it and produces one consolidated document with everything merged together.
 
 #### `xdocs tree`
 
@@ -165,7 +163,7 @@ Generates a tree view of the project hierarchy. Similar to merge, but instead of
 
 #### `xdocs list`
 
-Lists the files that exist in a given scope with an explanation of what each file is for. For example, running it on a directory would produce a list of every file with a short description of its purpose. This is useful as a quick inventory, similar to what you would put in an `lnms.txt` or a file manifest.
+Lists the files and companion Markdown documents that exist in a given scope with an explanation of what each entry is for. This is useful as a quick inventory, similar to what you would put in an `lnms.txt` or a file manifest.
 
 #### More commands
 
