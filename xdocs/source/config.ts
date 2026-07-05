@@ -8,7 +8,7 @@ import { basename, isAbsolute, resolve } from 'node:path'
 import type { XDocsAgentSettings, XDocsAgentTool, XDocsAiMode, XDocsCliOptions, XDocsConfig, XDocsRawConfig } from './types.js'
 import { XDocsError } from './errors.js'
 
-const DEFAULT_EXTENSIONS = ['.docs.md', '.xdocs.md']
+const DEFAULT_EXTENSIONS = ['.xdocs.md']
 const DEFAULT_EXCLUDE = ['node_modules', '.git', 'dist', 'build', 'library', 'bin', 'bundle']
 const DEFAULT_AI_MODE: XDocsAiMode = 'prompt'
 const CONFIG_FILENAME = 'xdocs.config.toml'
@@ -100,6 +100,10 @@ export const normalizeConfig = (raw: XDocsRawConfig, cwd: string, configPath?: s
   if (!Array.isArray(extensions) || extensions.some((ext) => typeof ext !== 'string')) {
     throw new XDocsError('Invalid extensions.supported. Expected an array of strings.')
   }
+  const normalizedExtensions = extensions.map((ext) => ext.toLowerCase())
+  if (normalizedExtensions.length !== 1 || normalizedExtensions[0] !== '.xdocs.md') {
+    throw new XDocsError('Invalid extensions.supported. xdocs supports only named "*.xdocs.md" descriptor files.')
+  }
 
   const exclude = raw.scan?.exclude ?? DEFAULT_EXCLUDE
   if (!Array.isArray(exclude) || exclude.some((dir) => typeof dir !== 'string')) {
@@ -110,7 +114,7 @@ export const normalizeConfig = (raw: XDocsRawConfig, cwd: string, configPath?: s
     schema: 1,
     cwd,
     configPath,
-    extensions: { supported: extensions },
+    extensions: { supported: DEFAULT_EXTENSIONS },
     ai: { mode: (aiMode as XDocsAiMode) ?? DEFAULT_AI_MODE },
     scan: { exclude },
     project: { name: raw.project?.name ?? basename(cwd) },
@@ -136,7 +140,7 @@ export const createDefaultConfigContent = (cwd: string): string => {
   return `schema = 1
 
 [extensions]
-supported = [".docs.md", ".xdocs.md"]
+supported = [".xdocs.md"]
 
 [ai]
 mode = "prompt"
