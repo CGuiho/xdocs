@@ -15,26 +15,31 @@ export const runScan = async (options: XDocsCliOptions, _parsed: XDocsParsedArgs
     process.stdout.write(JSON.stringify({
       totalFiles: result.totalFiles,
       totalDirectories: result.totalDirectories,
+      totalMarkdownDocuments: result.totalMarkdownDocuments,
       coveredDirectories: result.coveredDirectories,
       uncoveredDirectories: result.uncoveredDirectories,
       xdocsFiles: result.xdocsFiles.map((f) => ({
         path: f.relativePath,
         valid: f.valid,
         subject: f.metadata?.subject ?? null,
+        documents: f.metadata?.documents ?? null,
+        discoveredDocuments: f.documents.map((document) => document.relativePath),
         errors: f.errors,
       })),
+      markdownDocuments: result.markdownDocuments.map((document) => document.relativePath),
       uncoveredPaths: result.uncoveredPaths,
     }, null, 2) + '\n')
     return
   }
 
   process.stdout.write(`\nxdocs scan\n\n`)
-  process.stdout.write(`extensions: ${config.extensions.supported.join(', ')}\n`)
+  process.stdout.write(`descriptor extension: ${config.extensions.supported.join(', ')}\n`)
   process.stdout.write(`total files scanned: ${result.totalFiles}\n`)
   process.stdout.write(`total directories: ${result.totalDirectories}\n`)
+  process.stdout.write(`markdown documents found: ${result.totalMarkdownDocuments}\n`)
   process.stdout.write(`covered directories: ${result.coveredDirectories}\n`)
   process.stdout.write(`uncovered directories: ${result.uncoveredDirectories}\n`)
-  process.stdout.write(`xdocs files found: ${result.xdocsFiles.length}\n`)
+  process.stdout.write(`xdocs descriptors found: ${result.xdocsFiles.length}\n`)
 
   if (result.xdocsFiles.length > 0) {
     process.stdout.write(`\nfiles:\n`)
@@ -47,6 +52,12 @@ export const runScan = async (options: XDocsCliOptions, _parsed: XDocsParsedArgs
       if (options.verbose && file.errors.length > 0) {
         for (const error of file.errors) {
           process.stdout.write(`    error: ${error}\n`)
+        }
+      }
+
+      if (options.verbose && file.documents.length > 0) {
+        for (const document of file.documents) {
+          process.stdout.write(`    document: ${document.name}\n`)
         }
       }
     }
