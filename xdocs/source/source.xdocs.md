@@ -2,7 +2,8 @@
 subject: xdocs-source
 description: TypeScript source for the xdocs CLI, library exports, command handlers, metadata parsing, tree building, and agent automation.
 parent: xdocs-package
-children: []
+children:
+  - xdocs-commands
 files:
   guiho-xdocs.ts: Public library export surface for xdocs types, functions, and skill metadata helpers.
   guiho-xdocs-bin.ts: Node-compatible source CLI entrypoint.
@@ -10,8 +11,8 @@ files:
   embedded-resources.ts: Bun text imports for embedding prompts, the versioned agent skill, and package version into native binaries.
   cli.ts: CLI argument parsing, command dispatch, and config-gated agent automation for bare and data-command invocations.
   config.ts: TOML configuration discovery, Bun-native TOML parsing, validation, defaults, and [agents] settings normalization.
-  discovery.ts: Project scanning and xdocs file discovery.
-  metadata.ts: YAML frontmatter extraction, Bun-native YAML parsing, and xdocs metadata validation.
+  discovery.ts: Project scanning, named xdocs descriptor discovery, sibling Markdown document discovery, and descriptor/document validation.
+  metadata.ts: YAML frontmatter extraction, Bun-native YAML parsing, xdocs metadata validation, and nameless descriptor rejection.
   tree.ts: Parent-child hierarchy construction, validation, and rendering.
   prompts.ts: Runtime prompt loader for package-manager/library use; native binaries can use embedded resources.
   agents.ts: Versioned agent skill installation, legacy skill-name removal, AGENTS.md section management, tool detection, and automation.
@@ -19,7 +20,8 @@ files:
   flags.ts: CLI flag parsing utilities.
   errors.ts: XDocsError and invariant helper.
   types.ts: Public and internal TypeScript type definitions, including skill install version and legacy-cleanup result fields.
-  guiho-xdocs.spec.ts: Bun test suite covering flags, package metadata, metadata parsing, tree, config, agents, CLI automation, skill migration/version refresh, and resource behavior.
+  guiho-xdocs.spec.ts: Bun test suite covering flags, package metadata, metadata parsing, descriptor/document discovery, tree, config, agents, CLI automation, skill migration/version refresh, and resource behavior.
+documents: {}
 tags:
   - source
   - typescript
