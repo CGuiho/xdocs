@@ -13,7 +13,7 @@
   - [DESCRIPTION.md](DESCRIPTION.md): The full description of the project.
 
 ## Directories
-  - [xdocs/](xdocs/): The actual package directory for `@guiho/xdocs`. Its package-root xdocs file is [xdocs/xdocs.xdocs.md](xdocs/xdocs.xdocs.md).
+  - [xdocs/](xdocs/): The actual package directory for `@guiho/xdocs`. Its package-root xdocs descriptor is [xdocs/xdocs.xdocs.md](xdocs/xdocs.xdocs.md).
   - [docs/](docs/): Documentation directory (currently empty, reserved for future use).
   - [devops/](devops/): DevOps configuration and tooling.
   - [.github/](.github/): GitHub-specific configuration (workflows, issue templates, etc.).
