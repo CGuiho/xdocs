@@ -2,9 +2,10 @@
 subject: xdocs-skills
 description: Bundled AI-agent skills shipped with @guiho/xdocs and installed by the xdocs agents commands.
 parent: xdocs-package
-children: []
-files:
-  guiho-s-xdocs/SKILL.md: Versioned xdocs workflow skill installed into .agents/skills or .claude/skills; replaces legacy guiho-as-xdocs installs when refreshed.
+children:
+  - xdocs-guiho-s-xdocs-skill
+files: {}
+documents: {}
 tags:
   - skills
   - agents
