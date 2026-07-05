@@ -17,6 +17,7 @@ export type {
   XDocsConfig,
   XDocsFile,
   XDocsFormat,
+  XDocsMarkdownDocument,
   XDocsMetadata,
   XDocsParsedArgs,
   XDocsPrompt,
@@ -47,7 +48,7 @@ export {
 } from './config.js'
 
 // Discovery
-export { isXDocsFile, listDirectoryFiles, scanDirectory, scanProject } from './discovery.js'
+export { isPlainMarkdownDocument, isXDocsDescriptorFile, isXDocsFile, listDirectoryFiles, scanDirectory, scanProject } from './discovery.js'
 
 // Metadata
 export { extractFrontmatter, parseXDocsFile, validateMetadata } from './metadata.js'
