@@ -30,7 +30,7 @@ const listFlags = new Set([
  * - Long flags with value: `--name=write` or `--name write`
  * - Long boolean flags: `--verbose`
  * - Short flags: `-h`, `-v`
- * - List values as comma-separated: `--extensions=.docs.md,.xdocs.md`
+ * - List values as comma-separated: `--extensions=.xdocs.md,.custom.md`
  * - Positional arguments after the command
  */
 export const parseArgs = (rawArgs: string[]): XDocsParsedArgs => {
