@@ -1,5 +1,13 @@
 # GUIHO XDocs Changelog
 
+## 0.4.0-alpha.0
+
+- Change the documentation model to one named `*.xdocs.md` descriptor per documented directory, with `XDOCS.md` reserved as the frontmatter-less repository index.
+- Add first-class same-directory Markdown companion documents through the required `documents` metadata map, and validate descriptor/document alignment during scan.
+- Reject nameless `.xdocs.md` descriptors, reject non-`.xdocs.md` descriptor extensions, and flag multiple descriptors in one directory.
+- Update `scan`, `list`, `generate`, and `merge` output to surface both implementation files and companion Markdown documents.
+- Refresh the bundled `guiho-s-xdocs` skill, prompt templates, README, architecture notes, AGENTS guidance, canonical `DOCS.md`, and package xdocs descriptors for the new model.
+
 ## 0.3.1
 
 - Fix bare `xdocs` invocations so they install or refresh the global `guiho-s-xdocs` skill before printing help, even without `xdocs.config.toml`, and remove legacy `guiho-as-xdocs` installs for that target.
