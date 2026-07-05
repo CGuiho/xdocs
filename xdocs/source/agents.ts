@@ -104,18 +104,20 @@ export const xdocsAgentsSection = `${AGENTS_BEGIN_MARKER}
 
 This project uses **xdocs** (\`@guiho/xdocs\`) for structured, machine-readable
 documentation. The repository has one root \`XDOCS.md\` index (no frontmatter),
-and each package/application has a root \`.xdocs.md\` file. Each module carries a
-\`.docs.md\` / \`.xdocs.md\` file with YAML frontmatter (\`subject\`, \`description\`,
-\`parent\`, \`children\`, \`files\`).
+and each package/application has a root named \`*.xdocs.md\` descriptor file. Each
+documented module has exactly one named \`*.xdocs.md\` descriptor in its directory
+with YAML frontmatter (\`subject\`, \`description\`, \`parent\`, \`children\`,
+\`files\`, \`documents\`). Same-directory plain \`*.md\` files are companion
+documents and must be listed in the descriptor's \`documents\` metadata map.
 
 **Load the \`${xdocsSkillName}\` agent skill** for any documentation work:
-creating, updating, regenerating, scanning, merging, or navigating xdocs files.
+creating, updating, regenerating, scanning, merging, or navigating xdocs descriptors.
 The skill holds the full workflow, metadata schema, and CLI reference.
 
 Before changing documentation, read \`xdocs.config.toml\` and respect \`[ai].mode\`:
 
-- **prompt** — announce which xdocs files need updating and wait for confirmation.
-- **auto** — update the relevant xdocs files immediately.
+- **prompt** — announce which xdocs descriptors need updating and wait for confirmation.
+- **auto** — update the relevant xdocs descriptors immediately.
 
 Use the xdocs CLI for operations: \`xdocs scan\`, \`xdocs tree\`, \`xdocs generate\`,
 \`xdocs list\`, \`xdocs merge\`.
