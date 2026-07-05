@@ -6,6 +6,7 @@ children: []
 files:
   xdocs-bin.ts: Shipped Bun launcher used as the package bin; installs the native binary on first run when needed and delegates to it.
   install-package.ts: Package-manager install helper that downloads or copies the matching GitHub Release native binary into vendor/xdocs or vendor/xdocs.exe.
+documents: {}
 tags:
   - install
   - native-binary
