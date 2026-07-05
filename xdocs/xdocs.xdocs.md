@@ -7,13 +7,17 @@ children:
   - xdocs-devops
   - xdocs-scripts
   - xdocs-skills
+  - xdocs-prompts
+  - xdocs-docs
 files:
   package.json: npm package metadata, CLI bin mapping, build/test scripts, and package publish file list.
   jsr.json: JSR package metadata and publish include list.
   tsconfig.json: Strict TypeScript settings for source development.
   tsconfig.build.json: Build-specific TypeScript settings for library output, including Bun and Node types.
   mirror.config.toml: GUIHO Mirror release/versioning configuration for package.json, jsr.json, and Git tag outputs.
+documents:
   DOCS.md: Canonical full documentation for @guiho/xdocs; release artifact updated before publishing.
+  LICENSE.md: Package license document shipped with @guiho/xdocs.
 tags:
   - package
   - cli
