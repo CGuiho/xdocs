@@ -21,7 +21,7 @@ export const runMerge = async (options: XDocsCliOptions, parsed: XDocsParsedArgs
   )
 
   if (relevantFiles.length === 0) {
-    process.stdout.write('No xdocs files found in the specified path.\n')
+    process.stdout.write('No xdocs descriptors found in the specified path.\n')
     return
   }
 
@@ -38,6 +38,15 @@ export const runMerge = async (options: XDocsCliOptions, parsed: XDocsParsedArgs
       if (fileEntries.length > 0) {
         lines.push('## Files', '')
         for (const [name, desc] of fileEntries) {
+          lines.push(`- \`${name}\`: ${desc}`)
+        }
+        lines.push('')
+      }
+
+      const documentEntries = Object.entries(file.metadata.documents)
+      if (documentEntries.length > 0) {
+        lines.push('## Documents', '')
+        for (const [name, desc] of documentEntries) {
           lines.push(`- \`${name}\`: ${desc}`)
         }
         lines.push('')
