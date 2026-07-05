@@ -4,10 +4,10 @@
 
 **npm package:** [@guiho/xdocs](https://www.npmjs.com/package/@guiho/xdocs)
 
-xdocs is a CLI and TypeScript library that places structured documentation files throughout your project so that AI agents (and humans) can navigate, understand, and work within a codebase without reading every file. Each xdocs file describes the directory it lives in -- its purpose, its files, and how it fits into the project hierarchy.
+xdocs is a CLI and TypeScript library that places named `*.xdocs.md` descriptors throughout your project so that AI agents (and humans) can navigate, understand, and work within a codebase without reading every file. Each descriptor describes the directory it lives in -- its purpose, its files, its companion Markdown documents, and how it fits into the project hierarchy.
 
 ```text
-codebase -> xdocs files -> AI understands the project
+codebase -> named *.xdocs.md descriptors + companion *.md documents -> AI understands the project
 ```
 
 xdocs ships as compiled native binaries, a thin Bun launcher for package-manager and `bunx` execution, and a fully-typed TypeScript library.
@@ -57,7 +57,7 @@ This creates:
 ### Typical Workflow
 
 ```bash
-# Scan the project for existing xdocs files
+# Scan the project for xdocs descriptors and companion Markdown documents
 xdocs scan
 
 # Generate documentation for a specific module
@@ -80,11 +80,11 @@ When AI works on a codebase, most of the structural knowledge lives in the head 
 
 ### The Solution
 
-xdocs solves this by placing documentation files throughout the project. Each xdocs file describes the directory it lives in, acting as a self-contained map of that module. Instead of opening every file to understand a directory, the AI reads its xdocs file.
+xdocs solves this by placing named descriptors throughout the project. Each `*.xdocs.md` descriptor describes the directory it lives in, acting as a self-contained map of that module. Instead of opening every file to understand a directory, the AI reads descriptor frontmatter first and opens listed companion documents only when relevant.
 
 ### File Format
 
-xdocs files are Markdown with YAML frontmatter. A file is recognized as an xdocs file if it ends with one of the configured extensions (default: `.docs.md`, `.xdocs.md`).
+xdocs descriptors are Markdown files with YAML frontmatter and a required name before the `.xdocs.md` suffix, such as `authentication.xdocs.md`. A file named only `.xdocs.md` is invalid. Same-directory plain `*.md` files are companion documents and must be listed in `documents`.
 
 ```markdown
 ---
@@ -99,6 +99,8 @@ files:
   authenticate.ts: Validates credentials and returns a session token.
   register.ts: Creates a new user account with email verification.
   session.ts: Manages session creation, validation, and expiration.
+documents:
+  authentication-implementation.md: Detailed implementation notes and decisions.
 tags: []
 flags: []
 ---
@@ -117,13 +119,14 @@ The authentication module handles all identity verification flows...
 | `parent`      | `string \| null`      | Yes      | The parent subject in the hierarchy. `null` for the root.     |
 | `children`    | `string[]`            | Yes      | Child subjects (submodules) contained within this module.     |
 | `files`       | `map<string, string>` | Yes      | Files in this directory. Key = filename, value = description. |
+| `documents`   | `map<string, string>` | Yes      | Same-directory plain Markdown documents. Key = filename, value = description. |
 | `tags`        | `string[]`            | Yes      | Tags for categorization and search.                           |
 | `flags`       | `string[]`            | Yes      | Flags for marking attributes or states.                       |
 | `status`      | `string`              | No       | Module status (e.g., `active`, `deprecated`, `experimental`). |
 
 ### The Tree
 
-xdocs files form a hierarchy through their `subject`, `parent`, and `children` fields. The tree represents containment -- not dependencies -- and is computed by scanning all xdocs files.
+xdocs descriptors form a hierarchy through their `subject`, `parent`, and `children` fields. The tree represents containment -- not dependencies -- and is computed by scanning all named `*.xdocs.md` descriptors.
 
 ```
 project (root)
@@ -152,7 +155,7 @@ Initializes xdocs in a project. Creates the root `XDOCS.md`, the `xdocs.config.t
 
 #### `xdocs scan`
 
-Scans the project for xdocs files. Reports which directories have coverage and which are missing documentation.
+Scans the project for named `*.xdocs.md` descriptors and sibling plain Markdown companion documents. Reports descriptor validity, directory coverage, and companion-document coverage.
 
 ```bash
 xdocs scan
@@ -176,15 +179,15 @@ xdocs generate
 Outputs a ready-made prompt for AI agents. Each prompt is a self-contained instruction for a specific xdocs task. Prompts are selected by the `--name` flag, not by subcommand.
 
 ```bash
-xdocs prompt --name=write      # How to write xdocs documentation
-xdocs prompt --name=update     # How to update existing xdocs files
+xdocs prompt --name=write      # How to write a named xdocs descriptor
+xdocs prompt --name=update     # How to update existing xdocs descriptors
 xdocs prompt --name=agents     # How to update AGENTS.md
 xdocs prompt --name=generate   # How to generate comprehensive docs
 ```
 
 #### `xdocs merge [path]`
 
-Merges xdocs files from a directory into a single consolidated document.
+Merges xdocs descriptors from a directory into a single consolidated document.
 
 ```bash
 xdocs merge ./src/domain
@@ -201,7 +204,7 @@ xdocs tree --format markdown --output tree.md
 
 #### `xdocs list [path]`
 
-Lists files in a scope with descriptions pulled from xdocs metadata.
+Lists implementation files and companion Markdown documents in a scope with descriptions pulled from xdocs metadata.
 
 ```bash
 xdocs list ./src/auth
@@ -240,9 +243,8 @@ xdocs looks for configuration at `./xdocs.config.toml`, `./config/xdocs.config.t
 schema = 1
 
 [extensions]
-# File extensions recognized as xdocs files.
-# Default: [".docs.md", ".xdocs.md"]
-supported = [".docs.md", ".xdocs.md"]
+# Descriptor suffix recognized by xdocs. Only ".xdocs.md" is supported.
+supported = [".xdocs.md"]
 
 [ai]
 # How the AI handles documentation updates.
@@ -311,16 +313,19 @@ const configOrDefaults = await loadConfigOrDefaults({ cwd: process.cwd(), format
 ### Discovery and Scanning
 
 ```ts
-import { scanProject, scanDirectory, isXDocsFile } from '@guiho/xdocs'
+import { scanProject, scanDirectory, isPlainMarkdownDocument, isXDocsDescriptorFile, isXDocsFile } from '@guiho/xdocs'
 
 // Scan the entire project
 const result = await scanProject(config)
 console.log(result.totalFiles)           // Total files found
 console.log(result.xdocsFiles)           // Array of XDocsFile objects
+console.log(result.markdownDocuments)    // Companion Markdown documents found
 console.log(result.uncoveredPaths)       // Directories without xdocs coverage
 
-// Check if a file is an xdocs file
-isXDocsFile('auth.xdocs.md', ['.docs.md', '.xdocs.md'])  // true
+// Check descriptor and companion document files
+isXDocsFile('auth.xdocs.md')                 // true
+isXDocsDescriptorFile('auth.xdocs.md')       // true
+isPlainMarkdownDocument('auth-notes.md')     // true
 ```
 
 ### Metadata Parsing
@@ -328,7 +333,7 @@ isXDocsFile('auth.xdocs.md', ['.docs.md', '.xdocs.md'])  // true
 ```ts
 import { parseXDocsFile, extractFrontmatter, validateMetadata } from '@guiho/xdocs'
 
-// Parse an xdocs file from disk
+// Parse an xdocs descriptor from disk
 const file = await parseXDocsFile('/path/to/auth.xdocs.md', process.cwd())
 console.log(file.metadata?.subject)       // "authentication"
 console.log(file.metadata?.description)   // "Handles user login..."
