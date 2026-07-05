@@ -5,6 +5,7 @@ parent: xdocs-package
 children: []
 files:
   build-binaries.ts: Bun-native release binary matrix builder for Linux x64/arm64, macOS x64/arm64, and Windows x64 assets.
+documents: {}
 tags:
   - devops
   - release
