@@ -29,12 +29,12 @@ Usage: xdocs <command> [options]
 
 Commands:
   init                  Initialize xdocs in a project
-  scan                  Scan the project for xdocs files
+  scan                  Scan for xdocs descriptors and Markdown documents
   generate [path]       Generate documentation for a directory or the project
   prompt                Output a ready-made prompt for AI
-  merge [path]          Merge xdocs files from a directory into one file
+  merge [path]          Merge xdocs descriptors from a directory into one file
   tree                  Display the project hierarchy tree
-  list [path]           List files with descriptions
+  list [path]           List documented files and documents
   agents                Install the guiho-s-xdocs skill and AGENTS.md instructions
 
 Global Flags:
@@ -87,12 +87,13 @@ Flags:
 `.trim(),
 
   scan: `
-xdocs scan - Scan the project for xdocs files
+xdocs scan - Scan the project for xdocs descriptors
 
 Usage: xdocs scan
 
-Walks every directory and subdirectory (respecting exclude rules),
-matches files against configured extensions, and reports coverage.
+Walks every directory and subdirectory (respecting exclude rules), finds named
+*.xdocs.md descriptor files, and reports plain sibling *.md documents that those
+descriptors must list in their documents metadata.
 
 Flags:
   --format <format>       Output format: text, json (default: text)
@@ -106,7 +107,7 @@ xdocs generate - Generate documentation
 
 Usage: xdocs generate [path]
 
-When a path is given, generates an xdocs file for that directory/module.
+When a path is given, generates documentation for that directory/module.
 When no path is given, generates documentation for the entire project.
 
 Flags:
@@ -129,7 +130,7 @@ a specific xdocs task. Both flag styles are supported:
 
 Available prompts:
   write                   How to scan a directory and write xdocs documentation
-  update                  How to update existing xdocs files after code changes
+  update                  How to update existing xdocs descriptors after code changes
   agents                  How to update AGENTS.md with xdocs instructions
   generate                How to generate comprehensive documentation
 
@@ -140,12 +141,12 @@ Flags:
 `.trim(),
 
   merge: `
-xdocs merge - Merge xdocs files into a single file
+xdocs merge - Merge xdocs descriptors into a single file
 
 Usage: xdocs merge [path]
 
-Takes all xdocs files within the given directory and produces
-one consolidated Markdown document.
+Takes all xdocs descriptor files within the given directory and produces
+one consolidated Markdown document, including listed companion documents.
 
 Flags:
   --output <path>         Output file path (default: stdout)
@@ -159,7 +160,7 @@ xdocs tree - Display the project hierarchy tree
 
 Usage: xdocs tree
 
-Scans all xdocs files, reads their metadata, and assembles the
+Scans all xdocs descriptors, reads their metadata, and assembles the
 parent-child hierarchy. Shows modules only, not individual files.
 
 Flags:
@@ -171,12 +172,12 @@ Flags:
 `.trim(),
 
   list: `
-xdocs list - List files with descriptions
+xdocs list - List documented files and documents
 
 Usage: xdocs list [path]
 
-Lists every file in the given scope with a short description
-of its purpose, pulled from xdocs metadata.
+Lists every source file and companion Markdown document in the given scope with
+a short description pulled from xdocs metadata.
 
 Flags:
   --format <format>       Output format: text, json (default: text)
