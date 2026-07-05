@@ -3,13 +3,17 @@
  */
 
 import { readFile } from 'node:fs/promises'
-import { dirname, relative } from 'node:path'
+import { basename, dirname, relative } from 'node:path'
 import type { XDocsFile, XDocsMetadata } from './types.js'
 
-/** Parse an xdocs file from disk into an XDocsFile object. */
+/** Parse an xdocs descriptor from disk into an XDocsFile object. */
 export const parseXDocsFile = async (filePath: string, cwd: string): Promise<XDocsFile> => {
   const content = await readFile(filePath, 'utf8')
   const errors: string[] = []
+
+  if (basename(filePath).toLowerCase() === '.xdocs.md') {
+    errors.push('Invalid xdocs descriptor filename. Use a named file such as "authentication.xdocs.md"; ".xdocs.md" is only the extension.')
+  }
 
   const { frontmatter, body } = extractFrontmatter(content)
 
@@ -40,6 +44,7 @@ export const parseXDocsFile = async (filePath: string, cwd: string): Promise<XDo
     relativePath: relative(cwd, filePath),
     directory: dirname(filePath),
     metadata,
+    documents: [],
     body,
     valid: metadata !== null && errors.length === 0,
     errors,
@@ -93,8 +98,12 @@ export const validateMetadata = (parsed: unknown): { valid: true, metadata: XDoc
     errors.push('Invalid "children" field. All entries must be strings.')
   }
 
-  if (typeof record['files'] !== 'object' || record['files'] === null || Array.isArray(record['files'])) {
+  if (!isStringMap(record['files'])) {
     errors.push('Missing or invalid "files" field. Expected an object mapping filenames to descriptions.')
+  }
+
+  if (!isStringMap(record['documents'])) {
+    errors.push('Missing or invalid "documents" field. Expected an object mapping sibling Markdown filenames to descriptions.')
   }
 
   if (!Array.isArray(record['tags'])) {
@@ -122,9 +131,18 @@ export const validateMetadata = (parsed: unknown): { valid: true, metadata: XDoc
       parent: (record['parent'] as string | null) ?? null,
       children: record['children'] as string[],
       files: record['files'] as Record<string, string>,
+      documents: record['documents'] as Record<string, string>,
       tags: record['tags'] as string[],
       flags: record['flags'] as string[],
       status: typeof record['status'] === 'string' ? record['status'] : undefined,
     },
   }
+}
+
+const isStringMap = (value: unknown): value is Record<string, string> => {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false
+
+  return Object.entries(value).every(
+    ([key, description]) => typeof key === 'string' && typeof description === 'string',
+  )
 }
