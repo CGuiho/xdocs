@@ -1,9 +1,9 @@
 # GUIHO XDocs Documentation -- @guiho/xdocs
 
-GUIHO XDocs is a deterministic CLI and TypeScript library for structured documentation of codebases. Each directory carries a small Markdown file with YAML frontmatter that describes its subject, purpose, files, and place in a parent-child hierarchy, so an AI agent (or a human) can understand a project without reading every source file.
+GUIHO XDocs is a deterministic CLI and TypeScript library for structured documentation of codebases. Each documented directory carries exactly one named `*.xdocs.md` descriptor with YAML frontmatter that describes its subject, purpose, files, companion Markdown documents, and place in a parent-child hierarchy, so an AI agent (or a human) can understand a project without reading every source file.
 
 ```text
-source tree -> xdocs files (.docs.md / .xdocs.md) -> tree + metadata -> AI-readable map
+source tree -> named *.xdocs.md descriptors + companion *.md documents -> tree + metadata -> AI-readable map
 ```
 
 XDocs is a documentation tool, not a versioning tool. It never bumps versions or mutates `package.json` version fields. Versioning for this project is handled separately by GUIHO Mirror.
@@ -21,24 +21,25 @@ XDocs is a documentation tool, not a versioning tool. It never bumps versions or
 - Standalone binary output: `bin/xdocs-*` release assets
 - Runtime parser dependencies: none; xdocs uses Bun-native TOML and YAML parsing
 
-The public package exposes a CLI named `xdocs` and a TypeScript API for discovering xdocs files, parsing metadata, building the hierarchy tree, generating documentation, and installing the agent skill.
+The public package exposes a CLI named `xdocs` and a TypeScript API for discovering xdocs descriptors and companion Markdown documents, parsing metadata, building the hierarchy tree, generating documentation, and installing the agent skill.
 
 ## Core Model
 
 XDocs describes a repository as a containment hierarchy of documented modules.
 
 - Project: the repository being documented.
-- xdocs file: a Markdown file with YAML frontmatter that documents one directory/module.
+- xdocs descriptor: a named Markdown file ending in `.xdocs.md` with YAML frontmatter that documents one directory/module. A file named only `.xdocs.md` is invalid.
+- Companion document: a same-directory plain Markdown file ending in `.md` but not `.xdocs.md` and not `XDOCS.md`. Companion documents are listed in the descriptor's `documents` metadata map.
 - Repository root index: exactly one `XDOCS.md` per repository, at the repo root. It has **no frontmatter** and is not a tree node; it is a plain index that lists the repository's packages and applications.
 - Package/application root: each package or application has its own root `.xdocs.md` file (with frontmatter and `parent: null`) that is the top of that package's documentation tree. `XDOCS.md` lists these package roots.
-- Tree: a parent-child containment hierarchy (not a dependency graph) assembled from each `.xdocs.md` / `.docs.md` file's `subject` / `parent` / `children` fields.
+- Tree: a parent-child containment hierarchy (not a dependency graph) assembled from each `.xdocs.md` descriptor's `subject` / `parent` / `children` fields.
 - AI mode: how an agent should behave when documentation needs updating, configured by `[ai].mode`.
 
-The tree is the main mental model. A module's xdocs file names the module (`subject`), points up to its container (`parent`), and lists the modules it contains (`children`). A package root sets `parent: null`. Reading metadata first, and the body only when needed, lets an agent navigate a project cheaply.
+The tree is the main mental model. A module's xdocs descriptor names the module (`subject`), points up to its container (`parent`), lists the modules it contains (`children`), and lists sibling companion documents (`documents`). A package root sets `parent: null`. Reading metadata first, and companion documents only when relevant, lets an agent navigate a project cheaply.
 
-## xdocs Files and Metadata
+## xdocs Descriptors and Metadata
 
-A module's xdocs file is Markdown with a YAML frontmatter block delimited by `---`. The body below the frontmatter is free-form Markdown. (The repository's single `XDOCS.md` is the one exception — it has no frontmatter and is just an index.)
+A module's xdocs descriptor is Markdown with a YAML frontmatter block delimited by `---`. The body below the frontmatter is free-form Markdown. The repository's single `XDOCS.md` is the one exception: it has no frontmatter and is just an index.
 
 ```markdown
 ---
@@ -51,6 +52,8 @@ children:
 files:
   login.ts: Email/password login handler.
   session.ts: Session creation and validation.
+documents:
+  authentication-implementation.md: Detailed implementation notes and decisions.
 tags:
   - security
 flags: []
@@ -69,15 +72,18 @@ Frontmatter fields:
 | `parent`      | string \| null      | `subject` of the containing module; `null` for a package/application root. |
 | `children`    | string[]            | `subject`s of directly contained modules.                    |
 | `files`       | map<string,string>  | Filename -> short description of each significant file.       |
+| `documents`   | map<string,string>  | Same-directory plain Markdown filename -> short description.  |
 | `tags`        | string[]            | Free-form classification labels.                             |
 | `flags`       | string[]            | Behavioral markers for tools/agents.                         |
 | `status`      | string (optional)   | Lifecycle marker, for example `stable`, `draft`, `deprecated`. |
 
-Keep `subject` values unique across the project, keep `parent`/`children` consistent in both directions, and keep `files` in sync with what is on disk.
+Keep `subject` values unique across the project, keep `parent`/`children` consistent in both directions, keep `files` in sync with implementation/configuration files, and keep `documents` in sync with same-directory plain Markdown files.
 
 ## File Discovery and Extensions
 
-XDocs discovers documentation files by extension. The default recognized extensions are `.docs.md` and `.xdocs.md`, configurable in `[extensions].supported`. The root `XDOCS.md` is always recognized.
+XDocs discovers module descriptors by the fixed `.xdocs.md` suffix. Descriptors must be named, for example `authentication.xdocs.md`; `.xdocs.md` by itself is invalid. The root `XDOCS.md` is always recognized only as the repository index.
+
+XDocs also discovers same-directory plain Markdown documents ending in `.md` that are not `*.xdocs.md` and not `XDOCS.md`. Each plain Markdown companion document must be listed in the containing directory descriptor's `documents` metadata map.
 
 Scanning walks the project tree and skips directories listed in `[scan].exclude`. The default exclusions are `node_modules`, `.git`, `dist`, `build`, `library`, `bin`, and `bundle`.
 
@@ -169,7 +175,7 @@ Flags: `--tool <agents|claude|all>`, `--global`, `--cwd`, `--verbose`.
 
 ### `xdocs scan`
 
-Walks every directory (respecting `[scan].exclude`), matches files against the configured extensions, and reports coverage: total files, total directories, covered vs uncovered directories, and the discovered xdocs files with validity status. Use `--verbose` to list per-file errors and uncovered directories.
+Walks every directory (respecting `[scan].exclude`), finds named `*.xdocs.md` descriptors and sibling plain `*.md` companion documents, and reports coverage: total files, total directories, companion-document count, covered vs uncovered directories, and discovered xdocs descriptors with validity status. Use `--verbose` to list per-file errors, discovered companion documents, and uncovered directories.
 
 ```bash
 xdocs scan
@@ -180,7 +186,7 @@ Flags: `--format <text|json>`, `--cwd`, `--config`, `--verbose`.
 
 ### `xdocs generate [path]`
 
-Generates Markdown documentation. With no path, it produces a project-level document containing the hierarchy and a section per module. With a path, it produces a module-level document for that directory. Output goes to stdout unless `--output <path>` is given.
+Generates Markdown documentation. With no path, it produces a project-level document containing the hierarchy and a section per module, including both files and companion documents. With a path, it produces a module-level document for that directory. Output goes to stdout unless `--output <path>` is given.
 
 ```bash
 xdocs generate                       # whole project to stdout
@@ -192,7 +198,7 @@ Flags: `--output <path>`, `--cwd`, `--config`, `--verbose`.
 
 ### `xdocs merge [path]`
 
-Concatenates all xdocs files within a directory into a single Markdown document, each section prefixed with a `<!-- source: ... -->` marker. Output goes to stdout unless `--output <path>` is given.
+Concatenates all xdocs descriptors within a directory into a single Markdown document, each section prefixed with a `<!-- source: ... -->` marker and including both `files` and `documents` metadata. Output goes to stdout unless `--output <path>` is given.
 
 ```bash
 xdocs merge ./src/domain
@@ -203,7 +209,7 @@ Flags: `--output <path>`, `--cwd`, `--config`, `--verbose`.
 
 ### `xdocs tree`
 
-Scans all xdocs files, reads their metadata, and assembles the parent-child hierarchy (modules only, not individual files). With `--verbose`, tree integrity warnings and errors (duplicate subjects, orphans, missing children) are printed to stderr.
+Scans all xdocs descriptors, reads their metadata, and assembles the parent-child hierarchy (modules only, not individual files or companion documents). With `--verbose`, tree integrity warnings and errors (duplicate subjects, orphans, missing children) are printed to stderr.
 
 ```bash
 xdocs tree
@@ -215,7 +221,7 @@ Flags: `--format <text|markdown|json>`, `--output <path>`, `--cwd`, `--config`, 
 
 ### `xdocs list [path]`
 
-Lists every documented file in a scope with a short description pulled from the `files` metadata field.
+Lists every documented implementation file and companion Markdown document in a scope with short descriptions pulled from the `files` and `documents` metadata fields. JSON entries include a `kind` field with `file` or `document`.
 
 ```bash
 xdocs list
@@ -231,8 +237,8 @@ Outputs a ready-made, self-contained instruction prompt for an AI agent. The pro
 
 Available prompts:
 
-- `write`: Scan a directory and write xdocs documentation.
-- `update`: Update existing xdocs files after code changes.
+- `write`: Scan a directory and write a named xdocs descriptor.
+- `update`: Update existing xdocs descriptors after code or document changes.
 - `agents`: Update `AGENTS.md` with xdocs instructions.
 - `generate`: Generate comprehensive documentation.
 
@@ -285,7 +291,7 @@ Full configuration example:
 schema = 1
 
 [extensions]
-supported = [".docs.md", ".xdocs.md"]
+supported = [".xdocs.md"]
 
 [ai]
 mode = "prompt"
@@ -308,7 +314,7 @@ Optional. When present, must be `1`.
 
 ### `[extensions]`
 
-- `supported`: Array of file extensions recognized as xdocs files. Default: `[".docs.md", ".xdocs.md"]`.
+- `supported`: Compatibility field for descriptor suffixes. The only supported value is `[".xdocs.md"]`; other extensions are rejected.
 
 ### `[ai]`
 
@@ -359,13 +365,13 @@ Bare `xdocs` invocations and the data commands (`scan`, `generate`, `merge`, `tr
 
 ## AI Usage Workflow
 
-Maintaining xdocs files is an automatic responsibility for an agent working in an xdocs project, not something the user has to request. The intended workflow:
+Maintaining xdocs descriptors is an automatic responsibility for an agent working in an xdocs project, not something the user has to request. The intended workflow:
 
 1. On entering a project, read `XDOCS.md`, run `xdocs tree`, and run `xdocs scan` to understand the structure and coverage.
-2. On navigating to a module, read that module's xdocs file (frontmatter first, body only if needed) instead of reading every source file.
-3. On creating a new module or subdirectory, create that directory's xdocs file (for example `<name>.xdocs.md`) describing its purpose, its files (with their key functions/exports), and its `parent`/`children` links — as part of the same change, without being asked.
-4. On modifying a module (adding, renaming, moving, or removing files, or changing what it does), update its xdocs file and the affected parent/child links so the documentation matches reality.
-5. `[ai].mode` governs only how the agent writes: `prompt` announces the xdocs changes then writes them; `auto` writes immediately. It never makes documentation optional. A code change is not complete until the affected xdocs files are updated and `xdocs tree` is consistent.
+2. On navigating to a module, read that module's named `*.xdocs.md` descriptor frontmatter first. Use `documents` to decide which companion Markdown files to open, instead of reading every source file.
+3. On creating a new module or subdirectory, create that directory's named xdocs descriptor (for example `authentication.xdocs.md`) describing its purpose, its files (with their key functions/exports), its companion `documents`, and its `parent`/`children` links -- as part of the same change, without being asked.
+4. On modifying a module (adding, renaming, moving, or removing files or sibling Markdown documents, or changing what it does), update its xdocs descriptor and the affected parent/child links so the documentation matches reality.
+5. `[ai].mode` governs only how the agent writes: `prompt` announces the xdocs changes then writes them; `auto` writes immediately. It never makes documentation optional. A code change is not complete until the affected xdocs descriptors are updated and `xdocs tree` is consistent.
 6. On request, use `xdocs generate`, `xdocs merge`, and `xdocs tree` to produce documentation artifacts.
 
 ## Prompts
@@ -421,8 +427,8 @@ The API uses the same configuration discovery and validation as the CLI.
 - `source/embedded-resources.ts`: prompt, skill, and package metadata text imports used only for native binary embedding.
 - `source/cli.ts`: argument parsing, command dispatch, config-gated automation, and process-facing error handling.
 - `source/config.ts`: TOML discovery, schema validation, defaulting, default config generation, and agent-settings normalization.
-- `source/discovery.ts`: filesystem scanning and xdocs file matching.
-- `source/metadata.ts`: YAML frontmatter extraction and metadata validation.
+- `source/discovery.ts`: filesystem scanning, xdocs descriptor matching, companion Markdown discovery, and descriptor/document validation.
+- `source/metadata.ts`: YAML frontmatter extraction, metadata validation, and nameless descriptor rejection.
 - `source/tree.ts`: tree assembly, integrity checks, and rendering (text, markdown).
 - `source/prompts.ts`: prompt loader (reads `prompts/*.md` from disk at runtime relative to `import.meta.url`).
 - `source/help.ts`: help text and version display.
@@ -544,7 +550,7 @@ Run `xdocs init` from the project root, or pass `--config <path>`.
 
 ### A directory shows as uncovered
 
-Add an xdocs file (`.docs.md` or `.xdocs.md`) to the directory, or adjust `[extensions].supported`. Confirm the directory is not in `[scan].exclude`.
+Add one named xdocs descriptor such as `authentication.xdocs.md` to the directory and list same-directory plain Markdown files in `documents`. Confirm the directory is not in `[scan].exclude`.
 
 ### Tree warnings or errors
 
