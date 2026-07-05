@@ -70,24 +70,34 @@ export type XDocsAgentSettings = {
   skillTool: XDocsAgentTool
 }
 
-/** YAML frontmatter metadata from an xdocs file. */
+/** YAML frontmatter metadata from an xdocs descriptor. */
 export type XDocsMetadata = {
   subject: string
   description: string
   parent: string | null
   children: string[]
   files: Record<string, string>
+  documents: Record<string, string>
   tags: string[]
   flags: string[]
   status?: string
 }
 
-/** A discovered xdocs file with its path and parsed metadata. */
+/** A sibling Markdown document listed by a module descriptor. */
+export type XDocsMarkdownDocument = {
+  path: string
+  relativePath: string
+  directory: string
+  name: string
+}
+
+/** A discovered xdocs descriptor with its path and parsed metadata. */
 export type XDocsFile = {
   path: string
   relativePath: string
   directory: string
   metadata: XDocsMetadata | null
+  documents: XDocsMarkdownDocument[]
   body: string
   valid: boolean
   errors: string[]
@@ -127,9 +137,11 @@ export type XDocsCliOptions = {
 export type XDocsScanResult = {
   totalFiles: number
   totalDirectories: number
+  totalMarkdownDocuments: number
   coveredDirectories: number
   uncoveredDirectories: number
   xdocsFiles: XDocsFile[]
+  markdownDocuments: XDocsMarkdownDocument[]
   uncoveredPaths: string[]
 }
 
