@@ -4,7 +4,7 @@
 
 import type { XDocsFile, XDocsTreeNode, XDocsTreeValidation } from './types.js'
 
-/** Build a hierarchy tree from a list of xdocs files. */
+/** Build a hierarchy tree from a list of xdocs descriptors. */
 export const buildTree = (files: XDocsFile[]): XDocsTreeNode => {
   const nodeMap = new Map<string, XDocsTreeNode>()
 
@@ -56,7 +56,7 @@ export const buildTree = (files: XDocsFile[]): XDocsTreeNode => {
   if (!root) {
     root = {
       subject: '(root)',
-      description: 'No root xdocs file found.',
+      description: 'No root xdocs descriptor found.',
       path: null,
       children: [...nodeMap.values()].filter(
         (node) => !files.some(
