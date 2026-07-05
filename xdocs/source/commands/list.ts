@@ -17,14 +17,24 @@ export const runList = async (options: XDocsCliOptions, parsed: XDocsParsedArgs)
     (f) => f.path.startsWith(targetPath),
   )
 
-  // Collect all files with descriptions from metadata
-  const fileList: Array<{ file: string, description: string, source: string }> = []
+  // Collect all source files and Markdown companion documents from metadata.
+  const fileList: Array<{ kind: 'file' | 'document', file: string, description: string, source: string }> = []
 
   for (const xdocsFile of relevantFiles) {
     if (!xdocsFile.metadata) continue
 
     for (const [fileName, description] of Object.entries(xdocsFile.metadata.files)) {
       fileList.push({
+        kind: 'file',
+        file: fileName,
+        description,
+        source: xdocsFile.relativePath,
+      })
+    }
+
+    for (const [fileName, description] of Object.entries(xdocsFile.metadata.documents)) {
+      fileList.push({
+        kind: 'document',
         file: fileName,
         description,
         source: xdocsFile.relativePath,
@@ -39,15 +49,16 @@ export const runList = async (options: XDocsCliOptions, parsed: XDocsParsedArgs)
 
   if (fileList.length === 0) {
     const scope = targetPath === options.cwd ? 'project' : relative(options.cwd, targetPath)
-    process.stdout.write(`No documented files found in ${scope}.\n`)
+    process.stdout.write(`No documented files or documents found in ${scope}.\n`)
     return
   }
 
   const scope = targetPath === options.cwd ? 'project' : relative(options.cwd, targetPath)
-  process.stdout.write(`\nfiles in ${scope}:\n\n`)
+  process.stdout.write(`\nentries in ${scope}:\n\n`)
 
   for (const entry of fileList) {
-    process.stdout.write(`  ${entry.file}: ${entry.description}\n`)
+    const label = entry.kind === 'document' ? 'document' : 'file'
+    process.stdout.write(`  ${label} ${entry.file}: ${entry.description}\n`)
   }
 
   process.stdout.write('\n')
