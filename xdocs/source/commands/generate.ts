@@ -5,7 +5,7 @@
 import { readdir } from 'node:fs/promises'
 import { relative, resolve } from 'node:path'
 import { writeFile } from 'node:fs/promises'
-import type { XDocsCliOptions, XDocsParsedArgs } from '../types.js'
+import type { XDocsCliOptions, XDocsFile, XDocsParsedArgs } from '../types.js'
 import { loadConfigOrDefaults } from '../config.js'
 import { scanProject } from '../discovery.js'
 import { buildTree, renderTree } from '../tree.js'
@@ -42,7 +42,7 @@ export const runGenerate = async (options: XDocsCliOptions, parsed: XDocsParsedA
 }
 
 /** Generate a project-level documentation file. */
-const generateProjectDoc = async (projectName: string, xdocsFiles: { path: string, relativePath: string, metadata: { subject: string, description: string, children: string[], files: Record<string, string> } | null, body: string }[], _cwd: string): Promise<string> => {
+const generateProjectDoc = async (projectName: string, xdocsFiles: XDocsFile[], _cwd: string): Promise<string> => {
   const lines: string[] = [
     `# ${projectName}`,
     '',
@@ -53,7 +53,7 @@ const generateProjectDoc = async (projectName: string, xdocsFiles: { path: strin
   ]
 
   // Tree
-  const tree = buildTree(xdocsFiles as Parameters<typeof buildTree>[0])
+  const tree = buildTree(xdocsFiles)
   lines.push('## Hierarchy', '', '```')
   lines.push(renderTree(tree))
   lines.push('```', '')
@@ -76,6 +76,15 @@ const generateProjectDoc = async (projectName: string, xdocsFiles: { path: strin
       lines.push('')
     }
 
+    const documentEntries = Object.entries(file.metadata.documents)
+    if (documentEntries.length > 0) {
+      lines.push('Documents:', '')
+      for (const [name, desc] of documentEntries) {
+        lines.push(`- \`${name}\`: ${desc}`)
+      }
+      lines.push('')
+    }
+
     if (file.body.trim()) {
       lines.push(file.body.trim(), '')
     }
@@ -85,7 +94,7 @@ const generateProjectDoc = async (projectName: string, xdocsFiles: { path: strin
 }
 
 /** Generate a module-level documentation file. */
-const generateModuleDoc = async (moduleName: string, xdocsFiles: { relativePath: string, metadata: { subject: string, description: string, children: string[], files: Record<string, string> } | null, body: string }[], _cwd: string, targetPath: string): Promise<string> => {
+const generateModuleDoc = async (moduleName: string, xdocsFiles: XDocsFile[], _cwd: string, targetPath: string): Promise<string> => {
   const lines: string[] = [
     `# ${moduleName}`,
     '',
@@ -115,6 +124,15 @@ const generateModuleDoc = async (moduleName: string, xdocsFiles: { relativePath:
         lines.push('')
       }
 
+      const documentEntries = Object.entries(file.metadata.documents)
+      if (documentEntries.length > 0) {
+        lines.push('### Documents', '')
+        for (const [name, desc] of documentEntries) {
+          lines.push(`- \`${name}\`: ${desc}`)
+        }
+        lines.push('')
+      }
+
       if (file.metadata.children.length > 0) {
         lines.push('### Submodules', '')
         for (const child of file.metadata.children) {
@@ -128,7 +146,7 @@ const generateModuleDoc = async (moduleName: string, xdocsFiles: { relativePath:
       }
     }
   } else {
-    lines.push(`No xdocs files found in this directory.`, '')
+    lines.push(`No xdocs descriptors found in this directory.`, '')
     lines.push('### Directory contents', '')
     for (const entry of dirEntries) {
       lines.push(`- \`${entry}\``)
