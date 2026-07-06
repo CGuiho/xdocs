@@ -34,6 +34,10 @@ export const runMerge = async (options: XDocsCliOptions, parsed: XDocsParsedArgs
       lines.push(`# ${file.metadata.subject}`, '')
       lines.push(file.metadata.description, '')
 
+      if (file.metadata.keywords.length > 0) {
+        lines.push(`Keywords: ${file.metadata.keywords.map((keyword) => `\`${keyword}\``).join(', ')}`, '')
+      }
+
       const fileEntries = Object.entries(file.metadata.files)
       if (fileEntries.length > 0) {
         lines.push('## Files', '')
