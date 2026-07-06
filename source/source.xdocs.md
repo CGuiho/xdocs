@@ -12,20 +12,25 @@ files:
   cli.ts: CLI argument parsing, command dispatch, and config-gated agent automation for bare and data-command invocations.
   config.ts: TOML configuration discovery, Bun-native TOML parsing, validation, defaults, and [agents] settings normalization.
   discovery.ts: Project scanning, named xdocs descriptor discovery, sibling Markdown document discovery, and descriptor/document validation.
-  metadata.ts: YAML frontmatter extraction, Bun-native YAML parsing, xdocs metadata validation, and nameless descriptor rejection.
+  metadata.ts: YAML frontmatter extraction, Bun-native YAML parsing, xdocs metadata validation including required keywords, and nameless descriptor rejection.
   tree.ts: Parent-child hierarchy construction, validation, and rendering.
   prompts.ts: Runtime prompt loader for package-manager/library use; native binaries can use embedded resources.
   agents.ts: Versioned agent skill installation, legacy skill-name removal, AGENTS.md section management, tool detection, and automation.
   help.ts: Help text and version display.
   flags.ts: CLI flag parsing utilities.
   errors.ts: XDocsError and invariant helper.
-  types.ts: Public and internal TypeScript type definitions, including skill install version and legacy-cleanup result fields.
+  types.ts: Public and internal TypeScript type definitions, including xdocs metadata keywords, skill install version, and legacy-cleanup result fields.
   guiho-xdocs.spec.ts: Bun test suite covering flags, package metadata, metadata parsing, descriptor/document discovery, tree, config, agents, CLI automation, skill migration/version refresh, and resource behavior.
 documents: {}
 tags:
   - source
   - typescript
   - cli
+keywords:
+  - TypeScript
+  - CLI
+  - metadata parsing
+  - agent automation
 flags: []
 status: stable
 ---
