@@ -1,7 +1,22 @@
 ---
 name: guiho-s-xdocs
 version: 0.4.0
+purpose: Teach AI agents how to maintain xdocs descriptor files, companion Markdown documents, metadata, and tree integrity.
 description: Use this skill whenever the user works with xdocs (`@guiho/xdocs`) structured documentation, AND proactively whenever you create a new module or subdirectory or add/change/remove files in a directory of an xdocs project, so you create or update that directory's named `*.xdocs.md` descriptor as part of the change. This includes creating, updating, or regenerating `*.xdocs.md` descriptor files, companion Markdown documents, the root `XDOCS.md`, the project tree, scanning documentation coverage, merging docs, or maintaining xdocs metadata and AGENTS.md guidance, even when the user only says "document this module", "update the docs", or "what does this folder do" without naming xdocs.
+created: 2026-07-06
+flags:
+  - automatic-documentation-maintenance
+  - companion-document-metadata
+tags:
+  - xdocs
+  - documentation
+  - agents
+keywords:
+  - xdocs
+  - structured documentation
+  - companion documents
+  - agent workflow
+owner: xdocs-guiho-s-xdocs-skill
 ---
 
 # GUIHO XDocs
@@ -29,7 +44,7 @@ xdocs is a Bun/TypeScript ESM tool. Bun is the recommended runtime. The CLI neve
 ## Core Concepts
 
 - **xdocs descriptor**: a named Markdown file ending in `.xdocs.md` with YAML frontmatter that documents one directory/module. There is exactly one descriptor per documented directory. The file must have a name such as `authentication.xdocs.md`; a file named only `.xdocs.md` is invalid.
-- **Companion document**: a same-directory plain Markdown file ending in `.md` but not `.xdocs.md` and not `XDOCS.md`. Every companion document must be listed in the descriptor's `documents` metadata map.
+- **Companion document**: a same-directory plain Markdown file ending in `.md` but not `.xdocs.md` and not `XDOCS.md`. Every companion document must be listed in the descriptor's `documents` metadata map, and ordinary companion documents should carry their own YAML frontmatter with `name`, `purpose`, `description`, `created`, `flags`, `tags`, `keywords`, and `owner`.
 - **Repository root index**: there is exactly one `XDOCS.md` per repository, at the repo root. It has **no frontmatter** — it is a plain index that lists the repository's packages and applications, and it is not itself a tree node.
 - **Package/application root**: each package or application has its own root `.xdocs.md` file (with frontmatter and `parent: null`) that is the top of that package's documentation tree. `XDOCS.md` lists these package roots.
 - **Tree**: a parent-child **containment** hierarchy (not a dependency graph), assembled from each `.xdocs.md` descriptor's `subject` / `parent` / `children` fields. A module's `parent` is the `subject` of the module that contains it; a package/application root uses `parent: null`.
@@ -48,10 +63,52 @@ Every `*.xdocs.md` descriptor carries frontmatter with these fields. The reposit
 | `files`       | map<string,string>    | Filename -> short description of each significant file.      |
 | `documents`   | map<string,string>    | Same-directory plain Markdown filename -> short description. |
 | `tags`        | string[]              | Free-form classification labels.                             |
+| `keywords`    | string[]              | Search terms and concepts agents can use to match requests.  |
 | `flags`       | string[]              | Behavioral markers for tools/agents.                         |
 | `status`      | string (optional)     | Lifecycle marker (e.g. `stable`, `draft`, `deprecated`).     |
 
 Keep `subject` values unique across the project, keep `parent`/`children` consistent in both directions, keep `files` in sync with implementation files, and keep `documents` in sync with same-directory plain Markdown files.
+
+### Companion document metadata (YAML frontmatter)
+
+Ordinary same-directory companion Markdown documents also use YAML frontmatter.
+This metadata makes the document useful before an agent reads the whole body.
+The `owner` field must be the `subject` of the same-directory xdocs descriptor
+that owns the document.
+
+```yaml
+---
+name: authentication-implementation
+purpose: Explain the implementation details and decisions behind authentication.
+description: Detailed notes for login, password verification, and session behavior.
+created: 2026-07-06
+flags: []
+tags:
+  - security
+keywords:
+  - login
+  - password verification
+  - sessions
+owner: auth
+---
+```
+
+Companion document fields:
+
+| Field         | Type       | Meaning                                                        |
+| ------------- | ---------- | -------------------------------------------------------------- |
+| `name`        | string     | Stable document name or title.                                 |
+| `purpose`     | string     | Why this document exists and what question it answers.         |
+| `description` | string     | One-line summary of the document's contents.                   |
+| `created`     | string     | Creation date in `YYYY-MM-DD` format.                          |
+| `flags`       | string[]   | Behavioral markers for tools/agents.                           |
+| `tags`        | string[]   | Free-form classification labels.                               |
+| `keywords`    | string[]   | Search terms and concepts agents can use to match requests.    |
+| `owner`       | string     | Owning xdocs descriptor `subject` in the same directory.        |
+
+Special-purpose Markdown files that already have a required host schema, such
+as prompt templates or `SKILL.md`, must preserve their required host fields.
+When compatible, add the companion metadata fields as well.
 
 ## Automatic Documentation Maintenance (core responsibility)
 
@@ -80,6 +137,8 @@ Maintaining xdocs descriptors is an **automatic, built-in responsibility — not
 - `children` — the `subject`s of the modules contained inside this one.
 
 Every descriptor also includes `documents`, a map from each same-directory plain Markdown filename to the purpose of that companion document.
+Each ordinary companion document listed there should include its own frontmatter
+with `owner` equal to this descriptor's `subject`.
 
 **Do not wait to be asked.** After you finish creating or modifying a module or directory, create or update its xdocs descriptor as part of the same change. A code change that adds or alters a module is **not complete** until its xdocs descriptor, companion-document list, and affected parent/child links are updated.
 
@@ -105,12 +164,40 @@ documents:
   authentication-implementation.md: Companion notes that explain implementation details and decisions.
 tags:
   - security
+keywords:
+  - authentication
+  - login
+  - sessions
 flags: []
 status: stable
 ---
 
 Auth validates credentials and issues sessions. `login()` delegates password
 checks to `verifyPassword()`; sessions are created and validated in `session.ts`.
+```
+
+Then create or update `src/auth/authentication-implementation.md` with
+companion-document frontmatter:
+
+```markdown
+---
+name: authentication-implementation
+purpose: Explain authentication implementation details and decisions.
+description: Detailed notes for login, password verification, and session behavior.
+created: 2026-07-06
+flags: []
+tags:
+  - security
+keywords:
+  - authentication
+  - password verification
+  - session lifecycle
+owner: auth
+---
+
+# Authentication Implementation
+
+Describe the implementation details that are too long for `auth.xdocs.md`.
 ```
 
 Then add `auth` to the `children` list of the `src` module's xdocs descriptor so the tree stays consistent.
@@ -139,8 +226,10 @@ Follow this whenever the automatic trigger above fires, or when the user asks to
 4. Write or update the xdocs descriptor with correct frontmatter:
    - Set `subject` (unique), `description` (the module's purpose), and `files` (each real implementation/configuration file -> short purpose, including key functions/exports).
    - Set `documents` to every same-directory plain Markdown file -> short purpose. Use `{}` when there are no companion documents.
+   - Set `keywords` to search terms and concepts that should help agents match user requests to the module.
+   - For each ordinary companion document, add or update frontmatter with `name`, `purpose`, `description`, `created`, `flags`, `tags`, `keywords`, and `owner`; set `owner` to the descriptor's `subject`.
    - Set `parent` to the containing module's `subject`, and add this `subject` to that parent's `children`.
-   - Use `tags`/`flags`/`status` where useful.
+   - Use `tags`/`keywords`/`flags`/`status` where useful.
 5. Keep the tree consistent: if you add a module, update its parent's `children`; if you remove one, update both sides.
 6. Validate with `<xdocs> tree` (it reports duplicate subjects, orphans, and missing children) and fix any reported issues.
 
@@ -160,6 +249,7 @@ When generating from scratch, prefer `<xdocs> generate <path>` (one directory) o
 ## Safety Rules
 
 - Never leave a new or changed module undocumented. Creating or updating its xdocs descriptor is part of finishing the work, not a separate request the user must make.
+- Never leave an ordinary companion Markdown document without useful frontmatter; it should identify its `owner`, purpose, tags, keywords, and flags.
 - Never fabricate files, modules, descriptions, or relationships. Documentation must match the repository.
 - Never edit generated or build outputs (`library/`, `bundle/`, `bin/`, `*.tgz`). They are ignored and regenerated.
 - In prompt mode, announce the xdocs changes you will make and honor a pending confirmation — but still treat documenting the change as required, never optional.
