@@ -3,6 +3,10 @@ name: xdocs Document Model
 purpose: Record the descriptor-plus-companion-document model for future xdocs implementation work.
 description: Explains how named xdocs descriptors, root XDOCS.md, and same-directory Markdown companion documents work together for AI navigation.
 created: 2026-07-05
+keywords:
+  - xdocs descriptors
+  - companion documents
+  - AI navigation
 ---
 
 # xdocs Document Model
@@ -34,6 +38,10 @@ documents:
   authentication-implementation.md: Detailed implementation notes and decisions.
 tags:
   - security
+keywords:
+  - authentication
+  - sessions
+  - implementation notes
 flags: []
 status: stable
 ---
@@ -43,6 +51,10 @@ status: stable
 only for same-directory plain `*.md` files that are not `*.xdocs.md` descriptors
 and not `XDOCS.md`.
 
+`keywords` is for search terms and concepts an agent can use to match a user
+request to the right descriptor. Companion Markdown documents use the same idea
+in their own frontmatter.
+
 ## AI Workflow
 
 Agents should use `xdocs scan` to locate named `*.xdocs.md` descriptors, read
@@ -51,7 +63,7 @@ Markdown files are worth opening. When a user asks about a module, the agent can
 find the relevant module by descriptor metadata before reading source files.
 
 When changing a directory, an agent must update the directory descriptor so the
-`files`, `documents`, `parent`, and `children` fields match disk. If a sibling
+`files`, `documents`, `keywords`, `parent`, and `children` fields match disk. If a sibling
 plain Markdown file is added, renamed, or removed, the descriptor's `documents`
 map changes in the same unit of work.
 
