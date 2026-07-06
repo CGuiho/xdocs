@@ -1,6 +1,10 @@
 ---
 name: generate
 description: Generate comprehensive documentation for a domain or entire project.
+keywords:
+  - generate documentation
+  - comprehensive docs
+  - project summary
 ---
 
 # xdocs: Generate Comprehensive Documentation
@@ -18,6 +22,7 @@ You are an AI assistant tasked with generating comprehensive documentation for a
    - How modules relate to each other
    - What each file does
    - Which companion Markdown documents belong to each module
+   - Which keywords identify each module and companion document
 4. Generate a single comprehensive Markdown document that includes:
    - Project or domain overview
    - Complete hierarchy tree
