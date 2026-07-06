@@ -60,7 +60,7 @@
 ## Key Concepts
 
 - xdocs descriptors use Markdown with YAML frontmatter and must be named `*.xdocs.md`; `.docs.md` is not supported and `.xdocs.md` by itself is invalid. Same-directory plain `*.md` files are companion documents listed in the descriptor's `documents` metadata. The root file is always `XDOCS.md` (uppercase, no prefix, no frontmatter).
-- Metadata fields: `subject`, `description`, `parent`, `children`, `files`, `tags`, `flags`, and optional `status`.
+- Metadata fields: `subject`, `description`, `parent`, `children`, `files`, `documents`, `tags`, `keywords`, `flags`, and optional `status`.
 - The tree is a parent-child containment hierarchy, not a dependency graph. Built from `subject`/`parent`/`children` fields.
 - Configuration lives in `xdocs.config.toml`. Sections: `extensions`, `ai`, `scan`, `project`, `agents`.
 - Agent automation (`[agents]`): `auto_agents_md` (keep the AGENTS.md section fresh), `auto_skill_install` (install or refresh the configured global skill from the bundled copy), and `skill_tool` (default install target: `agents` standard, or `claude`). All default on / `agents`.
