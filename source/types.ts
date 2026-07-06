@@ -79,6 +79,7 @@ export type XDocsMetadata = {
   files: Record<string, string>
   documents: Record<string, string>
   tags: string[]
+  keywords: string[]
   flags: string[]
   status?: string
 }
