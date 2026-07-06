@@ -13,6 +13,10 @@ tags:
   - prompts
   - ai
   - documentation
+keywords:
+  - prompts
+  - AI instructions
+  - documentation generation
 flags: []
 status: stable
 ---
