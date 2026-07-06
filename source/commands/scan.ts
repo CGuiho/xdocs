@@ -22,6 +22,7 @@ export const runScan = async (options: XDocsCliOptions, _parsed: XDocsParsedArgs
         path: f.relativePath,
         valid: f.valid,
         subject: f.metadata?.subject ?? null,
+        keywords: f.metadata?.keywords ?? null,
         documents: f.metadata?.documents ?? null,
         discoveredDocuments: f.documents.map((document) => document.relativePath),
         errors: f.errors,
