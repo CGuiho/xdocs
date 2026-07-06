@@ -11,6 +11,10 @@ tags:
   - install
   - native-binary
   - package-manager
+keywords:
+  - package launcher
+  - native binary
+  - vendor install
 flags: []
 status: stable
 ---
