@@ -10,6 +10,10 @@ tags:
   - devops
   - release
   - binary
+keywords:
+  - release
+  - binary build
+  - native assets
 flags: []
 status: stable
 ---
