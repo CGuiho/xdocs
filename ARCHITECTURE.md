@@ -31,6 +31,10 @@ Same-directory plain Markdown files ending in `.md` are companion documents. The
 
 For example, `authentication.xdocs.md` can list `authentication-implementation.md` as a companion document. Agents read the descriptor frontmatter first, then open companion documents only when relevant.
 
+Ordinary companion Markdown documents also use YAML frontmatter with `name`,
+`purpose`, `description`, `created`, `flags`, `tags`, `keywords`, and `owner`.
+The `owner` is the `subject` of the same-directory xdocs descriptor.
+
 ## 3. File Structure
 
 An xdocs descriptor has two parts: **metadata** (strict) and **body** (flexible).
@@ -56,6 +60,10 @@ files:
 documents:
   authentication-implementation.md: Detailed implementation notes and decisions.
 tags: []
+keywords:
+  - authentication
+  - login
+  - sessions
 flags: []
 ---
 ```
@@ -71,6 +79,7 @@ flags: []
 | `files`       | `map<string, string>` | The files in this directory. Each key is a filename, each value is a short description of what that file does.                                                                 |
 | `documents`   | `map<string, string>` | Same-directory plain Markdown companion documents. Each key is a filename, each value describes the document.                                                                 |
 | `tags`        | `string[]`            | A list of tags for categorization and search. Most of the time this will be empty (`[]`).                                                                                      |
+| `keywords`    | `string[]`            | Search terms and concepts agents can use to match user requests to this module.                                                                                                |
 | `flags`       | `string[]`            | A list of flags for marking attributes or states. Most of the time this will be empty (`[]`).                                                                                  |
 
 #### Optional Metadata Fields
@@ -229,7 +238,7 @@ Scans the project for xdocs descriptors and companion Markdown documents.
 
 Generates documentation at a given scope.
 
-- **Directory/module scope** (`xdocs generate ./path/to/module`): scans descriptors, files, and companion documents within the target, then generates a comprehensive module document from metadata and body content.
+- **Directory/module scope** (`xdocs generate ./path/to/module`): scans descriptors, keywords, files, and companion documents within the target, then generates a comprehensive module document from metadata and body content.
 - **Project scope** (`xdocs generate` or `xdocs generate .`): scans the entire project, generates a single `.md` file with the complete description of all modules, files, hierarchy, and relationships.
 
 The CLI assembles the structure; the AI organizes and writes the content.
@@ -322,7 +331,7 @@ The AI workflow with xdocs:
 3. **On modifying code**: based on the configured AI mode:
    - **Prompt mode**: the AI announces that xdocs descriptors need updating and waits for the user.
    - **Auto mode**: the AI updates the relevant xdocs descriptors immediately.
-4. **On creating new modules**: the AI creates a named xdocs descriptor with proper metadata (`subject`, `parent`, `children`, `files`, `documents`, `description`).
+4. **On creating new modules**: the AI creates a named xdocs descriptor with proper metadata (`subject`, `parent`, `children`, `files`, `documents`, `description`, `keywords`).
 5. **On request**: the AI uses CLI commands (`xdocs generate`, `xdocs merge`, `xdocs tree`, etc.) to produce documentation artifacts.
 
 ## 10. Repository Structure
