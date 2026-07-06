@@ -1,6 +1,10 @@
 ---
 name: update
 description: Update existing xdocs descriptors after code or document changes.
+keywords:
+  - update descriptor
+  - synchronize metadata
+  - documentation maintenance
 ---
 
 # xdocs: Update Documentation
@@ -20,8 +24,9 @@ You are an AI assistant tasked with updating existing xdocs documentation after 
    d. Check if sibling plain `*.md` documents were added or removed, and keep
       the `documents` metadata map exact.
    e. Update the description if the module's purpose has changed.
-   f. Update children if subdirectories were added or removed.
-   g. Update the body content if significant changes occurred.
+   f. Update `keywords` if the module's searchable concepts changed.
+   g. Update children if subdirectories were added or removed.
+   h. Update the body content if significant changes occurred.
 4. Preserve the existing structure and style of the xdocs descriptor.
 5. Do not remove information that is still accurate.
 
@@ -33,5 +38,6 @@ You are an AI assistant tasked with updating existing xdocs documentation after 
 - [ ] Removed Markdown documents are no longer listed
 - [ ] File descriptions are accurate
 - [ ] Module description reflects current state
+- [ ] Keywords reflect current searchable concepts
 - [ ] Children list matches actual subdirectories
 - [ ] Parent reference is still correct
