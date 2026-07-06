@@ -6,6 +6,7 @@
 - Add first-class same-directory Markdown companion documents through the required `documents` metadata map, and validate descriptor/document alignment during scan.
 - Reject nameless `.xdocs.md` descriptors, reject non-`.xdocs.md` descriptor extensions, and flag multiple descriptors in one directory.
 - Update `scan`, `list`, `generate`, and `merge` output to surface both implementation files and companion Markdown documents.
+- Add required `keywords` metadata to xdocs descriptors, surface descriptor keywords in scan/generate/merge output, and document companion Markdown `keywords` frontmatter.
 - Refresh the bundled `guiho-s-xdocs` skill, prompt templates, README, architecture notes, AGENTS guidance, canonical `DOCS.md`, and package xdocs descriptors for the new model.
 
 ## 0.3.1
