@@ -1,6 +1,10 @@
 ---
 name: write
 description: Scan a directory and write a new named xdocs descriptor for it.
+keywords:
+  - write descriptor
+  - xdocs metadata
+  - module documentation
 ---
 
 # xdocs: Write Documentation
@@ -20,6 +24,7 @@ You are an AI assistant tasked with writing xdocs documentation for a directory/
    - files: Map of filename to short description for each file
    - documents: Map of same-directory plain Markdown filename to short description
    - tags: Relevant tags (empty array if none)
+   - keywords: Search terms and concepts that should help agents match requests
    - flags: Relevant flags (empty array if none)
 5. Write a Markdown body below the frontmatter with:
    - An overview section explaining the module in more detail
@@ -47,6 +52,7 @@ files:
 documents:
   implementation-notes.md: What this companion document explains.
 tags: []
+keywords: []
 flags: []
 ---
 ```
