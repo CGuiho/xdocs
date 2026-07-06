@@ -226,6 +226,7 @@ describe('validateMetadata', () => {
     files: { 'auth.ts': 'Main auth logic' },
     documents: { 'auth-flow.md': 'Authentication flow notes' },
     tags: ['security'],
+    keywords: ['auth', 'login'],
     flags: [],
   }
 
@@ -235,6 +236,7 @@ describe('validateMetadata', () => {
     expect(result.metadata).not.toBeNull()
     expect(result.metadata?.subject).toBe('auth')
     expect(result.metadata?.children).toEqual(['login', 'register'])
+    expect(result.metadata?.keywords).toEqual(['auth', 'login'])
   })
 
   test('rejects non-object input', () => {
@@ -283,6 +285,12 @@ describe('validateMetadata', () => {
     expect(result.errors.some((e) => e.includes('tags'))).toBe(true)
   })
 
+  test('rejects non-array keywords', () => {
+    const result = validateMetadata({ ...validMeta, keywords: 'not-array' })
+    expect(result.valid).toBe(false)
+    expect(result.errors.some((e) => e.includes('keywords'))).toBe(true)
+  })
+
   test('rejects non-array flags field', () => {
     const result = validateMetadata({ ...validMeta, flags: 'not-array' })
     expect(result.valid).toBe(false)
@@ -328,6 +336,7 @@ children: []
 files: {}
 ${documentsYaml}
 tags: []
+keywords: []
 flags: []
 ---
 
@@ -454,6 +463,7 @@ const makeFile = (subject: string, parent: string | null, children: string[] = [
     files: {},
     documents: {},
     tags: [],
+    keywords: [],
     flags: [],
   },
   documents: [],
