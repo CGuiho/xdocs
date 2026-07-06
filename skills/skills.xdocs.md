@@ -10,6 +10,10 @@ tags:
   - skills
   - agents
   - documentation
+keywords:
+  - agent skills
+  - bundled skill
+  - skill installation
 flags: []
 status: stable
 ---
