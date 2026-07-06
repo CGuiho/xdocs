@@ -22,6 +22,11 @@ tags:
   - package
   - cli
   - documentation
+keywords:
+  - xdocs
+  - cli
+  - structured documentation
+  - native binary
 flags: []
 status: stable
 ---
