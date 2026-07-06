@@ -112,6 +112,12 @@ export const validateMetadata = (parsed: unknown): { valid: true, metadata: XDoc
     errors.push('Invalid "tags" field. All entries must be strings.')
   }
 
+  if (!Array.isArray(record['keywords'])) {
+    errors.push('Missing or invalid "keywords" field. Expected an array of strings.')
+  } else if (record['keywords'].some((keyword: unknown) => typeof keyword !== 'string')) {
+    errors.push('Invalid "keywords" field. All entries must be strings.')
+  }
+
   if (!Array.isArray(record['flags'])) {
     errors.push('Missing or invalid "flags" field. Expected an array of strings.')
   } else if (record['flags'].some((flag: unknown) => typeof flag !== 'string')) {
@@ -133,6 +139,7 @@ export const validateMetadata = (parsed: unknown): { valid: true, metadata: XDoc
       files: record['files'] as Record<string, string>,
       documents: record['documents'] as Record<string, string>,
       tags: record['tags'] as string[],
+      keywords: record['keywords'] as string[],
       flags: record['flags'] as string[],
       status: typeof record['status'] === 'string' ? record['status'] : undefined,
     },
