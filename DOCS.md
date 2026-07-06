@@ -56,6 +56,10 @@ documents:
   authentication-implementation.md: Detailed implementation notes and decisions.
 tags:
   - security
+keywords:
+  - authentication
+  - login
+  - sessions
 flags: []
 status: stable
 ---
@@ -74,16 +78,39 @@ Frontmatter fields:
 | `files`       | map<string,string>  | Filename -> short description of each significant file.       |
 | `documents`   | map<string,string>  | Same-directory plain Markdown filename -> short description.  |
 | `tags`        | string[]            | Free-form classification labels.                             |
+| `keywords`    | string[]            | Search terms and concepts agents can use to match requests.  |
 | `flags`       | string[]            | Behavioral markers for tools/agents.                         |
 | `status`      | string (optional)   | Lifecycle marker, for example `stable`, `draft`, `deprecated`. |
 
-Keep `subject` values unique across the project, keep `parent`/`children` consistent in both directions, keep `files` in sync with implementation/configuration files, and keep `documents` in sync with same-directory plain Markdown files.
+Keep `subject` values unique across the project, keep `parent`/`children` consistent in both directions, keep `files` in sync with implementation/configuration files, keep `documents` in sync with same-directory plain Markdown files, and keep `keywords` useful for search/matching.
 
 ## File Discovery and Extensions
 
 XDocs discovers module descriptors by the fixed `.xdocs.md` suffix. Descriptors must be named, for example `authentication.xdocs.md`; `.xdocs.md` by itself is invalid. The root `XDOCS.md` is always recognized only as the repository index.
 
 XDocs also discovers same-directory plain Markdown documents ending in `.md` that are not `*.xdocs.md` and not `XDOCS.md`. Each plain Markdown companion document must be listed in the containing directory descriptor's `documents` metadata map.
+
+Ordinary companion Markdown documents should also have YAML frontmatter so agents
+can decide whether to read the body. The standard companion fields are `name`,
+`purpose`, `description`, `created`, `flags`, `tags`, `keywords`, and `owner`.
+The `owner` value is the owning descriptor's `subject`.
+
+```markdown
+---
+name: authentication-implementation
+purpose: Explain authentication implementation details and decisions.
+description: Detailed notes for login, password verification, and session behavior.
+created: 2026-07-06
+flags: []
+tags:
+  - security
+keywords:
+  - authentication
+  - password verification
+  - session lifecycle
+owner: auth
+---
+```
 
 Scanning walks the project tree and skips directories listed in `[scan].exclude`. The default exclusions are `node_modules`, `.git`, `dist`, `build`, `library`, `bin`, and `bundle`.
 
@@ -175,7 +202,7 @@ Flags: `--tool <agents|claude|all>`, `--global`, `--cwd`, `--verbose`.
 
 ### `xdocs scan`
 
-Walks every directory (respecting `[scan].exclude`), finds named `*.xdocs.md` descriptors and sibling plain `*.md` companion documents, and reports coverage: total files, total directories, companion-document count, covered vs uncovered directories, and discovered xdocs descriptors with validity status. Use `--verbose` to list per-file errors, discovered companion documents, and uncovered directories.
+Walks every directory (respecting `[scan].exclude`), finds named `*.xdocs.md` descriptors and sibling plain `*.md` companion documents, and reports coverage: total files, total directories, companion-document count, covered vs uncovered directories, and discovered xdocs descriptors with validity status. JSON output includes descriptor keywords. Use `--verbose` to list per-file errors, discovered companion documents, and uncovered directories.
 
 ```bash
 xdocs scan
@@ -186,7 +213,7 @@ Flags: `--format <text|json>`, `--cwd`, `--config`, `--verbose`.
 
 ### `xdocs generate [path]`
 
-Generates Markdown documentation. With no path, it produces a project-level document containing the hierarchy and a section per module, including both files and companion documents. With a path, it produces a module-level document for that directory. Output goes to stdout unless `--output <path>` is given.
+Generates Markdown documentation. With no path, it produces a project-level document containing the hierarchy and a section per module, including keywords, files, and companion documents. With a path, it produces a module-level document for that directory. Output goes to stdout unless `--output <path>` is given.
 
 ```bash
 xdocs generate                       # whole project to stdout
@@ -198,7 +225,7 @@ Flags: `--output <path>`, `--cwd`, `--config`, `--verbose`.
 
 ### `xdocs merge [path]`
 
-Concatenates all xdocs descriptors within a directory into a single Markdown document, each section prefixed with a `<!-- source: ... -->` marker and including both `files` and `documents` metadata. Output goes to stdout unless `--output <path>` is given.
+Concatenates all xdocs descriptors within a directory into a single Markdown document, each section prefixed with a `<!-- source: ... -->` marker and including keywords plus both `files` and `documents` metadata. Output goes to stdout unless `--output <path>` is given.
 
 ```bash
 xdocs merge ./src/domain
@@ -369,8 +396,8 @@ Maintaining xdocs descriptors is an automatic responsibility for an agent workin
 
 1. On entering a project, read `XDOCS.md`, run `xdocs tree`, and run `xdocs scan` to understand the structure and coverage.
 2. On navigating to a module, read that module's named `*.xdocs.md` descriptor frontmatter first. Use `documents` to decide which companion Markdown files to open, instead of reading every source file.
-3. On creating a new module or subdirectory, create that directory's named xdocs descriptor (for example `authentication.xdocs.md`) describing its purpose, its files (with their key functions/exports), its companion `documents`, and its `parent`/`children` links -- as part of the same change, without being asked.
-4. On modifying a module (adding, renaming, moving, or removing files or sibling Markdown documents, or changing what it does), update its xdocs descriptor and the affected parent/child links so the documentation matches reality.
+3. On creating a new module or subdirectory, create that directory's named xdocs descriptor (for example `authentication.xdocs.md`) describing its purpose, searchable `keywords`, its files (with their key functions/exports), its companion `documents`, and its `parent`/`children` links -- as part of the same change, without being asked.
+4. On modifying a module (adding, renaming, moving, or removing files or sibling Markdown documents, or changing what it does), update its xdocs descriptor, companion document frontmatter, and the affected parent/child links so the documentation matches reality.
 5. `[ai].mode` governs only how the agent writes: `prompt` announces the xdocs changes then writes them; `auto` writes immediately. It never makes documentation optional. A code change is not complete until the affected xdocs descriptors are updated and `xdocs tree` is consistent.
 6. On request, use `xdocs generate`, `xdocs merge`, and `xdocs tree` to produce documentation artifacts.
 
