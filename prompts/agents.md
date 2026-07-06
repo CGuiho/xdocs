@@ -1,6 +1,10 @@
 ---
 name: agents
 description: Update AGENTS.md with xdocs instructions for AI agents.
+keywords:
+  - AGENTS.md
+  - agent instructions
+  - xdocs skill
 ---
 
 # xdocs: Update AGENTS.md
@@ -20,4 +24,5 @@ You are an AI assistant tasked with updating the AGENTS.md file to include xdocs
    - Maintain xdocs descriptors and companion-document metadata when modifying code
    - Use only named `*.xdocs.md` descriptors, never nameless `.xdocs.md` files
    - List every same-directory plain `*.md` companion document in the descriptor's `documents` metadata map
+   - Maintain `keywords` in both descriptor and companion Markdown frontmatter
    - Follow the metadata schema for frontmatter
