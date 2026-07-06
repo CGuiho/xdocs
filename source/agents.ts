@@ -107,8 +107,10 @@ documentation. The repository has one root \`XDOCS.md\` index (no frontmatter),
 and each package/application has a root named \`*.xdocs.md\` descriptor file. Each
 documented module has exactly one named \`*.xdocs.md\` descriptor in its directory
 with YAML frontmatter (\`subject\`, \`description\`, \`parent\`, \`children\`,
-\`files\`, \`documents\`). Same-directory plain \`*.md\` files are companion
-documents and must be listed in the descriptor's \`documents\` metadata map.
+\`files\`, \`documents\`, \`tags\`, \`keywords\`, \`flags\`). Same-directory plain
+\`*.md\` files are companion documents and must be listed in the descriptor's
+\`documents\` metadata map. Ordinary companion documents should also include
+\`keywords\` in their own frontmatter.
 
 **Load the \`${xdocsSkillName}\` agent skill** for any documentation work:
 creating, updating, regenerating, scanning, merging, or navigating xdocs descriptors.
