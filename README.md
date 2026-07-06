@@ -4,7 +4,7 @@
 
 **npm package:** [@guiho/xdocs](https://www.npmjs.com/package/@guiho/xdocs)
 
-xdocs is a CLI and TypeScript library that places named `*.xdocs.md` descriptors throughout your project so that AI agents (and humans) can navigate, understand, and work within a codebase without reading every file. Each descriptor describes the directory it lives in -- its purpose, its files, its companion Markdown documents, and how it fits into the project hierarchy.
+xdocs is a CLI and TypeScript library that places named `*.xdocs.md` descriptors throughout your project so that AI agents (and humans) can navigate, understand, and work within a codebase without reading every file. Each descriptor describes the directory it lives in -- its purpose, searchable keywords, its files, its companion Markdown documents, and how it fits into the project hierarchy.
 
 ```text
 codebase -> named *.xdocs.md descriptors + companion *.md documents -> AI understands the project
@@ -102,12 +102,37 @@ files:
 documents:
   authentication-implementation.md: Detailed implementation notes and decisions.
 tags: []
+keywords:
+  - authentication
+  - sessions
+  - identity
 flags: []
 ---
 
 ## Overview
 
 The authentication module handles all identity verification flows...
+```
+
+Ordinary same-directory companion `.md` files should also have YAML
+frontmatter. Use `owner` to point back to the owning descriptor `subject`, and
+include `keywords` for search/matching:
+
+```markdown
+---
+name: authentication-implementation
+purpose: Explain authentication implementation details and decisions.
+description: Detailed notes for login, password verification, and session behavior.
+created: 2026-07-06
+flags: []
+tags:
+  - security
+keywords:
+  - authentication
+  - password verification
+  - session lifecycle
+owner: authentication
+---
 ```
 
 #### Metadata Fields
@@ -121,6 +146,7 @@ The authentication module handles all identity verification flows...
 | `files`       | `map<string, string>` | Yes      | Files in this directory. Key = filename, value = description. |
 | `documents`   | `map<string, string>` | Yes      | Same-directory plain Markdown documents. Key = filename, value = description. |
 | `tags`        | `string[]`            | Yes      | Tags for categorization and search.                           |
+| `keywords`    | `string[]`            | Yes      | Search terms and concepts agents can use to match requests.   |
 | `flags`       | `string[]`            | Yes      | Flags for marking attributes or states.                       |
 | `status`      | `string`              | No       | Module status (e.g., `active`, `deprecated`, `experimental`). |
 
