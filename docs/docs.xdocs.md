@@ -9,6 +9,10 @@ documents:
 tags:
   - documentation
   - design
+keywords:
+  - document model
+  - design notes
+  - companion documents
 flags: []
 status: stable
 ---
