@@ -67,6 +67,10 @@ const generateProjectDoc = async (projectName: string, xdocsFiles: XDocsFile[], 
     lines.push(file.metadata.description, '')
     lines.push(`Location: \`${file.relativePath}\``, '')
 
+    if (file.metadata.keywords.length > 0) {
+      lines.push(`Keywords: ${file.metadata.keywords.map((keyword) => `\`${keyword}\``).join(', ')}`, '')
+    }
+
     const fileEntries = Object.entries(file.metadata.files)
     if (fileEntries.length > 0) {
       lines.push('Files:', '')
@@ -114,6 +118,10 @@ const generateModuleDoc = async (moduleName: string, xdocsFiles: XDocsFile[], _c
       if (!file.metadata) continue
       lines.push(`## ${file.metadata.subject}`, '')
       lines.push(file.metadata.description, '')
+
+      if (file.metadata.keywords.length > 0) {
+        lines.push(`Keywords: ${file.metadata.keywords.map((keyword) => `\`${keyword}\``).join(', ')}`, '')
+      }
 
       const fileEntries = Object.entries(file.metadata.files)
       if (fileEntries.length > 0) {
