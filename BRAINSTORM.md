@@ -35,6 +35,7 @@ An xdocs descriptor for a directory/module covers:
 - **Purpose** -- what this directory/module is and why it exists
 - **Files** -- the files in this directory and what each one does
 - **Documents** -- same-directory plain Markdown companion documents and what each one explains
+- **Keywords** -- searchable concepts that help agents match user requests to the right module
 - **Subdirectories** -- the child directories and what they contain
 - **Parent** -- which directory this is a subdirectory of (what is above in the hierarchy)
 - **Hierarchy** -- how this module fits into the broader project structure (what is above and what is below)
@@ -69,7 +70,7 @@ The primary goal of xdocs code is to **help AI make sense of the codebase and us
 
 xdocs descriptors are Markdown files with YAML frontmatter. A descriptor must be a named file ending in `.xdocs.md`, such as `authentication.xdocs.md`. A file named only `.xdocs.md` is invalid.
 
-Same-directory plain `*.md` files are companion documents. They are listed in the descriptor's `documents` metadata map.
+Same-directory plain `*.md` files are companion documents. They are listed in the descriptor's `documents` metadata map and should carry frontmatter with their own `keywords`.
 
 ### Who Writes xdocs Files
 
@@ -135,7 +136,7 @@ Scans every directory and subdirectory in the project for named `*.xdocs.md` des
 
 Generates documentation. This is a versatile command that works at different scopes:
 
-- **Directory/module scope** -- when run on a directory, it scans descriptors, files, companion documents, and subdirectories, then generates a comprehensive document describing the whole module.
+- **Directory/module scope** -- when run on a directory, it scans descriptors, keywords, files, companion documents, and subdirectories, then generates a comprehensive document describing the whole module.
 - **Project scope** -- when run at the project level, it scans the entire project and generates a single `.md` file with the complete description of everything: all modules, all files, the full hierarchy, and how it all fits together.
 
 The generate command produces a complete, self-contained document for whatever scope it targets.
