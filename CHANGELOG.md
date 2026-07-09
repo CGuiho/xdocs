@@ -1,5 +1,12 @@
 # GUIHO XDocs Changelog
 
+## 0.4.8
+
+- Harden the direct Linux/macOS Bash installer and Windows PowerShell installer for native xdocs binaries, including baseline-first x64 fallback, explicit default/modern variants, downloaded binary validation, PATH setup, and shadowing warnings.
+- Verify the 12-asset native binary matrix during `bun run binaries` for Linux, macOS, and Windows arm64/x64 baseline/default/modern outputs.
+- Upload native binaries as CI workflow artifacts and publish/verify all 12 GitHub Release assets before npm publishing on version-tag releases.
+- Document native binary installation, PATH fallback commands, and the full release asset matrix in `README.md` and `DOCS.md`.
+
 ## 0.4.0-alpha.0
 
 - Change the documentation model to one named `*.xdocs.md` descriptor per documented directory, with `XDOCS.md` reserved as the frontmatter-less repository index.

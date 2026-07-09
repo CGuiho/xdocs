@@ -20,7 +20,7 @@ Download and run the installer:
 
 **Linux / macOS:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.sh | bash
 ```
 
 **Windows (PowerShell):**
@@ -28,20 +28,29 @@ curl -fsSL https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.sh
 irm https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.ps1 | iex
 ```
 
-The installer auto-detects your OS and architecture, preferring the `baseline` variant for maximum compatibility. Installs to `~/.local/bin` by default.
+The installers download native binaries from GitHub Releases, install `xdocs` into `~/.local/bin` by default, and add that directory to your user PATH when possible. x64 installs prefer the `baseline` variant first for maximum compatibility, then fall back to the default and `modern` variants.
 
 **Flags and options:**
 
 ```bash
 # Pin a specific version
-curl .../install.sh | sh -s -- --version 0.4.4
+curl .../install.sh | bash -s -- --version 0.4.7
 
 # Force architecture and variant
-curl .../install.sh | sh -s -- --arch arm64
-curl .../install.sh | sh -s -- --arch x64 --variant modern
+curl .../install.sh | bash -s -- --arch arm64
+curl .../install.sh | bash -s -- --arch x64 --variant modern
+curl .../install.sh | bash -s -- --arch x64 --variant default
 
 # Custom install directory
-curl .../install.sh | sh -s -- --install-dir /usr/local/bin
+curl .../install.sh | bash -s -- --install-dir /usr/local/bin
+```
+
+PowerShell examples:
+
+```powershell
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.ps1))) -Version 0.4.7
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.ps1))) -Arch x64 -Variant baseline
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.ps1))) -InstallDir "$HOME\.local\bin"
 ```
 
 Or download the script first and run with flags directly:
@@ -51,7 +60,30 @@ chmod +x install.sh
 ./install.sh --version latest --arch x64 --variant baseline
 ```
 
-Native binaries are published for Linux x64/arm64, macOS x64/arm64, and Windows x64/arm64. x64 targets include `baseline`, default, and `modern` variants.
+Native binaries are built and uploaded for all supported OS/architecture/variant combinations:
+
+| OS | ARM64 | x64 baseline | x64 default | x64 modern |
+| --- | --- | --- | --- | --- |
+| Linux | `xdocs-linux-arm64` | `xdocs-linux-x64-baseline` | `xdocs-linux-x64` | `xdocs-linux-x64-modern` |
+| macOS | `xdocs-macos-arm64` | `xdocs-macos-x64-baseline` | `xdocs-macos-x64` | `xdocs-macos-x64-modern` |
+| Windows | `xdocs-windows-arm64.exe` | `xdocs-windows-x64-baseline.exe` | `xdocs-windows-x64.exe` | `xdocs-windows-x64-modern.exe` |
+
+CI builds the same 12 native binaries and uploads them as a GitHub Actions artifact. Version-tag releases upload `bin/xdocs-*` to the matching GitHub Release and verify that all 12 assets are present.
+
+If your current shell does not see the updated PATH immediately, open a new terminal or run one of these commands:
+
+```bash
+# bash/zsh
+export PATH="$HOME/.local/bin:$PATH"
+
+# fish
+fish_add_path "$HOME/.local/bin"
+```
+
+```powershell
+$env:Path = "$HOME\.local\bin;$env:Path"
+[Environment]::SetEnvironmentVariable('Path', "$HOME\.local\bin;" + [Environment]::GetEnvironmentVariable('Path', 'User'), 'User')
+```
 
 ### Initializing
 

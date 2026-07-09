@@ -119,11 +119,29 @@ Scanning walks the project tree and skips directories listed in `[scan].exclude`
 Direct native binary install (no Node.js or Bun required after installation):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.sh | bash
 ```
 
 ```powershell
 irm https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.ps1 | iex
+```
+
+The Linux/macOS installer is a Bash script in `devops/install.sh`; the Windows
+installer is the PowerShell script in `devops/install.ps1`. Both download from
+GitHub Releases, install into `~/.local/bin` by default, and add that directory
+then fall back to the default and `modern` variants. Users can force a specific
+architecture or variant with `--arch` / `--variant` on Bash or `-Arch` /
+`-Variant` on PowerShell.
+
+Manual PATH fallback commands:
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+```powershell
+$env:Path = "$HOME\.local\bin;$env:Path"
+[Environment]::SetEnvironmentVariable('Path', "$HOME\.local\bin;" + [Environment]::GetEnvironmentVariable('Path', 'User'), 'User')
 ```
 
 Install XDocs as a development dependency through a JavaScript package manager. Package-manager execution uses the shipped Bun launcher, which downloads the matching native binary during `postinstall` or on first run if the install hook did not run, then executes the native binary:
@@ -540,6 +558,13 @@ Supported release asset matrix:
 - macOS arm64: `xdocs-macos-arm64`
 - Windows x64: `xdocs-windows-x64-baseline.exe`, `xdocs-windows-x64.exe`, `xdocs-windows-x64-modern.exe`
 - Windows arm64: `xdocs-windows-arm64.exe`
+
+`bun run binaries` verifies that all 12 expected native assets are present and
+non-empty after compilation. CI builds the matrix and uploads `bin/xdocs-*` as a
+GitHub Actions artifact. The tag publish workflow has `contents: write`, rebuilds
+the same matrix, uploads it as a workflow artifact, publishes `bin/xdocs-*` to
+the matching GitHub Release before npm publishing, and verifies that the release
+contains exactly 12 `xdocs-*` assets.
 
 Unsupported platforms should use a documented manual path: install Bun and run
 from source, or download a compatible release asset manually.

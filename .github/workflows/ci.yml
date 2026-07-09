@@ -1,5 +1,8 @@
 name: CI
 
+permissions:
+  contents: read
+
 on:
   pull_request:
   push:
@@ -18,3 +21,10 @@ jobs:
       - run: bun run build
       - run: bun run binary
       - run: bun run binaries
+      - name: Upload native binary artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: xdocs-native-binaries-${{ github.sha }}
+          path: bin/xdocs-*
+          if-no-files-found: error
+          retention-days: 14

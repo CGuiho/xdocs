@@ -4,7 +4,7 @@
  * Build release binaries for the supported xdocs platform matrix.
  */
 
-import { mkdir, rm } from 'node:fs/promises'
+import { mkdir, rm, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -27,6 +27,18 @@ const targets: readonly BinaryTarget[] = [
   { bunTarget: 'bun-windows-x64-baseline', assetName: 'xdocs-windows-x64-baseline.exe' },
   { bunTarget: 'bun-windows-x64-modern', assetName: 'xdocs-windows-x64-modern.exe' },
 ]
+
+const expectedAssetCount = 12
+const assetNames = targets.map((target) => target.assetName)
+const uniqueAssetNames = new Set(assetNames)
+
+if (targets.length !== expectedAssetCount) {
+  throw new Error(`Expected ${expectedAssetCount} binary targets, found ${targets.length}`)
+}
+
+if (uniqueAssetNames.size !== assetNames.length) {
+  throw new Error('Binary target matrix contains duplicate asset names')
+}
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const binDirectory = join(root, 'bin')
@@ -74,3 +86,14 @@ const builds = targets.map(async (target) => {
 })
 
 await Promise.all(builds)
+
+for (const target of targets) {
+  const outputPath = join(binDirectory, target.assetName)
+  const output = await stat(outputPath)
+
+  if (output.size === 0) {
+    throw new Error(`Built binary is empty: bin/${target.assetName}`)
+  }
+}
+
+process.stdout.write(`verified ${targets.length} native binary assets\n`)
