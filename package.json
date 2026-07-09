@@ -66,8 +66,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/CGuiho/xdocs.git",
-    "directory": "xdocs"
+    "url": "git+https://github.com/CGuiho/xdocs.git"
   },
   "homepage": "https://github.com/CGuiho/xdocs#readme",
   "bugs": {
