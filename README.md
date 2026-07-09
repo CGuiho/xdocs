@@ -417,10 +417,9 @@ console.log(prompt?.body)
 
 ## Development
 
-Development requires Bun. Run from the `xdocs/` directory:
+Development requires Bun. Run from the repository root:
 
 ```bash
-cd xdocs
 bun install
 bun run typecheck
 bun test
@@ -432,4 +431,4 @@ bun run binary
 
 ## License
 
-MIT -- see [LICENSE.md](xdocs/LICENSE.md).
+MIT -- see [LICENSE.md](LICENSE.md).
