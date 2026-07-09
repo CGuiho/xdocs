@@ -86,7 +86,7 @@ function detectAssetCandidates() {
   const ext = os === 'windows' ? '.exe' : ''
 
   if (arch === 'x64') {
-    return [`xdocs-${os}-x64-baseline${ext}`, `xdocs-${os}-x64${ext}`]
+    return [`xdocs-${os}-x64-baseline${ext}`, `xdocs-${os}-x64${ext}`, `xdocs-${os}-x64-modern${ext}`]
   }
 
   return [`xdocs-${os}-${arch}${ext}`]
