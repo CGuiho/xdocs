@@ -52,7 +52,7 @@
 - `source/errors.ts` -- XDocsError class and invariant helper
 - `source/types.ts` -- all TypeScript type definitions
 - `source/agents.ts` -- skill install (local/global, multi-tool), legacy skill-name removal, version/content refresh, AGENTS.md section, config-gated automation; reads `skills/guiho-s-xdocs/SKILL.md` from disk at runtime (`readFileSync` via `import.meta.url`)
-- `source/commands/` -- one file per CLI command (`init.ts`, `scan.ts`, `generate.ts`, `prompt.ts`, `merge.ts`, `tree.ts`, `list.ts`, `agents.ts`)
+- `source/commands/` -- one file per CLI command (`init.ts`, `scan.ts`, `generate.ts`, `prompt.ts`, `merge.ts`, `tree.ts`, `list.ts`, `agents.ts`, `upgrade.ts`, `uninstall.ts`)
 - `skills/guiho-s-xdocs/SKILL.md` -- the bundled versioned agent skill; shipped via `package.json` `files` and `jsr.json` include, read from disk at runtime
 - `devops/install.sh` / `devops/install.ps1` -- direct native binary installers for users who do not want Node.js or Bun at runtime
 - `DOCS.md` -- canonical full user-facing documentation for `@guiho/xdocs`; update it before every release with the same discipline as the changelog (ships via `package.json` `files`)

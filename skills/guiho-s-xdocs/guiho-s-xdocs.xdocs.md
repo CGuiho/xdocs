@@ -5,7 +5,7 @@ parent: xdocs-skills
 children: []
 files: {}
 documents:
-  SKILL.md: Versioned xdocs workflow skill installed into .agents/skills or .claude/skills; defines descriptor, companion-document metadata, scan, tree, and maintenance rules.
+  SKILL.md: Versioned xdocs workflow skill installed into .agents/skills or .claude/skills; defines descriptor, companion-document metadata, native CLI usage, scan, tree, and maintenance rules.
 tags:
   - skills
   - agents
@@ -14,6 +14,7 @@ keywords:
   - xdocs skill
   - companion metadata
   - agent workflow
+  - native cli
 flags: []
 status: stable
 ---
@@ -23,4 +24,6 @@ package. The installer treats `SKILL.md` as the source of truth and refreshes
 installed copies when the bundled version or content changes.
 The skill also documents the standard frontmatter fields expected on ordinary
 companion Markdown documents: `name`, `purpose`, `description`, `created`,
-`flags`, `tags`, `keywords`, and `owner`.
+`flags`, `tags`, `keywords`, and `owner`. The skill now instructs agents to use
+the installed native `xdocs` CLI first, reserving Bun source execution for xdocs
+development checkouts.

@@ -121,8 +121,9 @@ Before changing documentation, read \`xdocs.config.toml\` and respect \`[ai].mod
 - **prompt** — announce which xdocs descriptors need updating and wait for confirmation.
 - **auto** — update the relevant xdocs descriptors immediately.
 
-Use the xdocs CLI for operations: \`xdocs scan\`, \`xdocs tree\`, \`xdocs generate\`,
-\`xdocs list\`, \`xdocs merge\`.
+Use the installed xdocs CLI for operations: \`xdocs scan\`, \`xdocs tree\`,
+\`xdocs generate\`, \`xdocs list\`, \`xdocs merge\`, \`xdocs upgrade\`, and
+\`xdocs uninstall --dry-run\`.
 ${AGENTS_END_MARKER}`
 
 type SkillPathOptions = {

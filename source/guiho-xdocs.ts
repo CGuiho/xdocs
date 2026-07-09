@@ -28,6 +28,9 @@ export type {
   XDocsSkillScope,
   XDocsTreeNode,
   XDocsTreeValidation,
+  XDocsUninstallResult,
+  XDocsUpdateCache,
+  XDocsUpgradeResult,
 } from './types.js'
 
 // Flags
@@ -57,10 +60,25 @@ export { extractFrontmatter, parseXDocsFile, validateMetadata } from './metadata
 export { buildTree, renderTree, renderTreeMarkdown, validateTree } from './tree.js'
 
 // Help
-export { readPackageVersion, showCommandHelp, showHelp, showVersion } from './help.js'
+export { readPackageVersion, showCommandHelp, showCommandHelpDocs, showCommandHelpTree, showHelp, showHelpDocs, showHelpTree, showVersion } from './help.js'
 
 // Prompts
 export { getPrompt, getPromptNames, prompts } from './prompts.js'
+
+// Self-management
+export {
+  checkForLatestVersion,
+  detectNativeArch,
+  detectNativePlatform,
+  listAvailableVersions,
+  readUpdateCache,
+  resolveCachePath,
+  resolveExecutablePath,
+  runBackgroundUpdateCheck,
+  scheduleBackgroundUpdateCheck,
+  uninstallSelf,
+  upgradeSelf,
+} from './self-management.js'
 
 // Agents
 export {

@@ -1,6 +1,6 @@
 ---
 name: guiho-s-xdocs
-version: 0.4.0
+version: 0.5.0
 purpose: Teach AI agents how to maintain xdocs descriptor files, companion Markdown documents, metadata, and tree integrity.
 description: Use this skill whenever the user works with xdocs (`@guiho/xdocs`) structured documentation, AND proactively whenever you create a new module or subdirectory or add/change/remove files in a directory of an xdocs project, so you create or update that directory's named `*.xdocs.md` descriptor as part of the change. This includes creating, updating, or regenerating `*.xdocs.md` descriptor files, companion Markdown documents, the root `XDOCS.md`, the project tree, scanning documentation coverage, merging docs, or maintaining xdocs metadata and AGENTS.md guidance, even when the user only says "document this module", "update the docs", or "what does this folder do" without naming xdocs.
 created: 2026-07-06
@@ -31,15 +31,21 @@ Use xdocs for documentation work instead of ad hoc README sprawl or re-reading t
 
 ## Command Selection
 
-Choose the xdocs command in this order:
+Choose the installed native CLI first:
 
-1. Use `bun @guiho/xdocs` when the package is installed locally and Bun is available.
-2. Use `xdocs` when a global binary is available.
-3. Use `bunx @guiho/xdocs` when running without installation.
+1. Use `xdocs` when the CLI is installed on the system.
+2. Use `bun run source/guiho-xdocs-bin.ts` only inside an xdocs source checkout while developing xdocs itself.
+3. Use `bunx @guiho/xdocs` only as a last-resort bootstrap path when no native CLI is installed yet.
 
-When unsure, run a cheap availability check (`bun @guiho/xdocs --help`, `xdocs --help`, or `bunx @guiho/xdocs --help`) and then reuse the working command consistently. Run `xdocs --help` or `xdocs <command> --help` for command-specific details when needed.
+When unsure, run a cheap availability check (`xdocs --help`) and then reuse the
+working command consistently. Run `xdocs --help`, `xdocs <command> --help`,
+`xdocs --help-tree`, or `xdocs <command> --help-docs` for command-specific
 
-xdocs is a Bun/TypeScript ESM tool. Bun is the recommended runtime. The CLI never bumps versions or mutates `package.json` — it only reads and writes documentation files. (Versioning is a separate concern handled by GUIHO Mirror.)
+xdocs ships as a native self-sufficient CLI. It can check for updates, print a
+cached upgrade notice, upgrade itself with `xdocs upgrade`, and remove its native
+binary with `xdocs uninstall`. The CLI never bumps project versions or mutates
+`package.json` version fields for documented projects; versioning is a separate
+concern handled by GUIHO Mirror.
 
 ## Core Concepts
 
@@ -296,12 +302,14 @@ xdocs list <path>              # list files and companion documents with descrip
 xdocs generate [path]          # draft documentation for a directory or the whole project
 xdocs merge [path]             # merge a directory's xdocs descriptors into one document
 xdocs prompt --name=<name>     # print a ready-made AI prompt (write|update|agents|generate)
+xdocs upgrade                  # upgrade the installed native xdocs binary
+xdocs uninstall --dry-run      # preview native binary removal
 xdocs agents install local     # install guiho-s-xdocs into this project (.agents/skills/...)
 xdocs agents install global    # install guiho-s-xdocs into the user home skills directory
 xdocs agents instructions      # insert/refresh the xdocs section in AGENTS.md
 ```
 
-Global flags: `--help`, `--version`, `--cwd <path>`, `--config <path>`, `--format <text|json|markdown>`, `--verbose`. The `agents install` command also accepts `--tool <agents|claude|all>`.
+Global flags: `--help`, `--help-tree`, `--help-docs`, `--version`, `--cwd <path>`, `--config <path>`, `--format <text|json|markdown>`, `--verbose`. The `agents install` command also accepts `--tool <agents|claude|all>`.
 
 ## Agent Skill Installation
 

@@ -12,7 +12,9 @@ import { extractFrontmatter, validateMetadata } from './metadata.js'
 import { buildTree, renderTree, renderTreeMarkdown, validateTree } from './tree.js'
 import { normalizeConfig, defaultConfig, normalizeAgentSettings } from './config.js'
 import { isPlainMarkdownDocument, isXDocsDescriptorFile, isXDocsFile, scanProject } from './discovery.js'
+import { showCommandHelpDocs, showCommandHelpTree, showHelpDocs, showHelpTree } from './help.js'
 import { runCli } from './cli.js'
+import { detectNativeArch, readUpdateCache, resolveCachePath, upgradeSelf } from './self-management.js'
 import {
   detectAgentTools,
   ensureAgentsInstructions,
@@ -105,6 +107,18 @@ describe('parseArgs', () => {
     expect(result.flags['verbose']).toBe(true)
   })
 
+  test('parses help tree and docs flags as booleans', () => {
+    const result = parseArgs(['scan', '--help-tree', '--help-docs'])
+    expect(result.flags['helpTree']).toBe(true)
+    expect(result.flags['helpDocs']).toBe(true)
+  })
+
+  test('parses upgrade --version as a value flag', () => {
+    const result = parseArgs(['upgrade', '--version', '0.5.0'])
+    expect(result.command).toBe('upgrade')
+    expect(result.flags['version']).toBe('0.5.0')
+  })
+
   test('parses short flags -h and -v', () => {
     expect(parseArgs(['-h']).flags['help']).toBe(true)
     expect(parseArgs(['-v']).flags['version']).toBe(true)
@@ -195,6 +209,96 @@ describe('package metadata', () => {
     expect(exitCode).toBe(0)
     expect(stdout.trim()).toMatch(/^xdocs \d+\.\d+\.\d+/)
     expect(stderr).not.toContain('native binary is missing')
+  })
+})
+
+describe('help rendering', () => {
+  test('renders command tree and markdown docs', () => {
+    expect(showHelpTree()).toContain('xdocs upgrade')
+    expect(showCommandHelpTree('upgrade')).toContain('xdocs upgrade check')
+    expect(showHelpDocs()).toContain('# xdocs CLI')
+    expect(showCommandHelpDocs('uninstall')).toContain('xdocs uninstall')
+  })
+})
+
+describe('self management', () => {
+  test('detectNativeArch accepts x64 and arm64', () => {
+    expect(detectNativeArch('x64')).toBe('x64')
+    expect(detectNativeArch('arm64')).toBe('arm64')
+    expect(() => detectNativeArch('ia32')).toThrow(XDocsError)
+  })
+
+  test('readUpdateCache returns null when cache is missing', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-cache-'))
+    try {
+      expect(resolveCachePath({ cacheDir: dir })).toBe(join(dir, 'update.json'))
+      expect(await readUpdateCache({ cacheDir: dir })).toBeNull()
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('upgradeSelf dry-run selects the baseline x64 asset with an explicit self path', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-upgrade-'))
+    const previousSelfPath = process.env['XDOCS_SELF_PATH']
+    try {
+      const executable = join(dir, process.platform === 'win32' ? 'xdocs.exe' : 'xdocs')
+      await writeFile(executable, process.platform === 'win32' ? 'MZ' : '\x7fELF', 'binary')
+      process.env['XDOCS_SELF_PATH'] = executable
+      const result = await upgradeSelf({ version: '0.5.0', arch: 'x64', dryRun: true, repo: 'CGuiho/xdocs' })
+
+      expect(result.asset).toBe(process.platform === 'win32' ? 'xdocs-windows-x64-baseline.exe' : process.platform === 'darwin' ? 'xdocs-macos-x64-baseline' : 'xdocs-linux-x64-baseline')
+      expect(result.url).toContain('%40guiho%2Fxdocs%400.5.0')
+      expect(result.dryRun).toBe(true)
+    } finally {
+      if (previousSelfPath === undefined) {
+        delete process.env['XDOCS_SELF_PATH']
+      } else {
+        process.env['XDOCS_SELF_PATH'] = previousSelfPath
+      }
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('bare CLI prints a cached update notice', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-cache-notice-'))
+    const previousCacheDir = process.env['XDOCS_CACHE_DIR']
+    const previousDisable = process.env['XDOCS_DISABLE_UPDATE_CHECK']
+    const originalStderrWrite = process.stderr.write
+    const stderr: string[] = []
+    try {
+      process.env['XDOCS_CACHE_DIR'] = dir
+      process.env['XDOCS_DISABLE_UPDATE_CHECK'] = '1'
+      await writeFile(join(dir, 'update.json'), JSON.stringify({
+        checkedAt: new Date().toISOString(),
+        currentVersion: '0.0.0',
+        latestVersion: '999.0.0',
+        updateAvailable: true,
+        releaseUrl: 'https://github.com/CGuiho/xdocs/releases/latest',
+      }), 'utf8')
+
+      process.stderr.write = ((chunk: string | Uint8Array) => {
+        stderr.push(String(chunk))
+        return true
+      }) as typeof process.stderr.write
+
+      await runCli(['--cwd', dir])
+
+      expect(stderr.join('')).toContain('Run `xdocs upgrade`')
+    } finally {
+      process.stderr.write = originalStderrWrite
+      if (previousCacheDir === undefined) {
+        delete process.env['XDOCS_CACHE_DIR']
+      } else {
+        process.env['XDOCS_CACHE_DIR'] = previousCacheDir
+      }
+      if (previousDisable === undefined) {
+        delete process.env['XDOCS_DISABLE_UPDATE_CHECK']
+      } else {
+        process.env['XDOCS_DISABLE_UPDATE_CHECK'] = previousDisable
+      }
+      await rm(dir, { recursive: true, force: true })
+    }
   })
 })
 

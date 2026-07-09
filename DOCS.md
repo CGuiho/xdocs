@@ -196,6 +196,8 @@ xdocs prompt --name=write
 
 - `-h`, `--help`: Show help for the CLI or a command.
 - `-v`, `--version`: Show the xdocs version.
+- `--help-tree`: Show the command tree from the current command, including nested subcommands and flags.
+- `--help-docs`: Print Markdown documentation for the current command.
 - `--cwd <path>`: Run as if XDocs started in this directory.
 - `--config <path>`: Use an explicit `xdocs.config.toml` path.
 - `--format <text|json|markdown>`: Output format (command-dependent; defaults to `text`).
@@ -319,6 +321,58 @@ canonical section.
 Flags: `--tool <agents|claude|all>`, `--format <text|json>`, `--cwd`.
 
 When `--tool` is omitted, XDocs installs the standard target and adds the Claude target only when a `.claude/` directory or `CLAUDE.md` is detected in the project. Global skill installation uses the user home directory; tests and automation can override that home root with `XDOCS_AGENT_HOME`.
+
+### `xdocs upgrade`
+
+Upgrades the installed native xdocs binary from GitHub Releases. It chooses the
+current OS and architecture automatically. On x64, it prefers the `baseline`
+variant first, then falls back to the default and `modern` assets. Source
+checkouts intentionally refuse self-upgrade so development commands do not
+replace Bun or a source launcher by mistake.
+
+```bash
+xdocs upgrade
+xdocs upgrade --dry-run
+xdocs upgrade --version 0.5.0
+xdocs upgrade --variant modern
+xdocs upgrade check
+xdocs upgrade list
+```
+
+- `xdocs upgrade`: Download and replace the current installed native binary.
+- `xdocs upgrade check`: Fetch latest release metadata and report whether a newer version exists.
+- `xdocs upgrade list`: List available GitHub Release versions.
+
+Flags: `--version <version>`, `--arch <x64|arm64>`, `--variant <baseline|default|modern>`, `--dry-run`, `--format <text|json>`.
+
+### `xdocs uninstall`
+
+Removes the installed native xdocs executable. On Windows, deletion is scheduled
+after the current xdocs process exits because the running executable cannot
+delete itself while it is still locked.
+
+```bash
+xdocs uninstall --dry-run
+xdocs uninstall
+```
+
+Flags: `--dry-run`, `--format <text|json>`.
+
+### Background Update Checks
+
+A bare `xdocs` invocation runs agent automation and prints help immediately. It
+does not block on network update checks. For installed native binaries, xdocs
+starts a background worker when the cached update check is missing or stale. The
+worker writes update metadata to the user cache. On a later bare run, if a newer
+release is cached, xdocs prints a notice to stderr:
+
+```text
+notice: xdocs 0.5.0 is available. Run `xdocs upgrade` to update.
+```
+
+Set `XDOCS_DISABLE_UPDATE_CHECK=1` to disable the background checker. Tests can
+redirect the cache with `XDOCS_CACHE_DIR` and override the executable path with
+`XDOCS_SELF_PATH`.
 
 ## Configuration Reference
 
@@ -471,17 +525,18 @@ The API uses the same configuration discovery and validation as the CLI.
 - `source/guiho-xdocs-native-bin.ts`: Bun-compiled native binary entrypoint that registers embedded resources before importing the CLI.
 - `source/embedded-resources.ts`: prompt, skill, and package metadata text imports used only for native binary embedding.
 - `source/cli.ts`: argument parsing, command dispatch, config-gated automation, and process-facing error handling.
+- `source/self-management.ts`: background update checks, update cache, native binary upgrade, and uninstall helpers.
 - `source/config.ts`: TOML discovery, schema validation, defaulting, default config generation, and agent-settings normalization.
 - `source/discovery.ts`: filesystem scanning, xdocs descriptor matching, companion Markdown discovery, and descriptor/document validation.
 - `source/metadata.ts`: YAML frontmatter extraction, metadata validation, and nameless descriptor rejection.
 - `source/tree.ts`: tree assembly, integrity checks, and rendering (text, markdown).
 - `source/prompts.ts`: prompt loader (reads `prompts/*.md` from disk at runtime relative to `import.meta.url`).
-- `source/help.ts`: help text and version display.
+- `source/help.ts`: data-driven help text, command-tree output, Markdown help docs, and version display.
 - `source/flags.ts`: argument/flag parsing utilities.
 - `source/errors.ts`: `XDocsError` with stable exit codes and the `invariant` helper.
 - `source/types.ts`: public and internal TypeScript types.
 - `source/agents.ts`: agent skill installation (standard/claude, local/global), legacy skill-name removal, version/content refresh, AGENTS.md section management, detection, and config-gated automation. Reads `skills/guiho-s-xdocs/SKILL.md` from disk at runtime relative to `import.meta.url`.
-- `source/commands/*.ts`: one file per CLI command (`init`, `scan`, `generate`, `prompt`, `merge`, `tree`, `list`, `agents`).
+- `source/commands/*.ts`: one file per CLI command (`init`, `scan`, `generate`, `prompt`, `merge`, `tree`, `list`, `agents`, `upgrade`, `uninstall`).
 - `prompts/*.md`: prompt templates embedded at build time.
 - `skills/guiho-s-xdocs/SKILL.md`: bundled versioned AI-agent skill installed by `xdocs agents` commands.
 
@@ -517,6 +572,7 @@ Current tests cover:
 - Config discovery, validation, and defaulting.
 - Agent settings normalization, skill path resolution, skill installation (local/global), tool detection, and AGENTS.md section insertion.
 - Package launcher execution from a source checkout without a native vendor binary.
+- Self-management helpers for update cache behavior, command docs/tree rendering, and upgrade dry-run asset selection.
 
 Run all tests:
 

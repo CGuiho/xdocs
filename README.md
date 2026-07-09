@@ -115,6 +115,20 @@ xdocs tree
 xdocs prompt --name=write
 ```
 
+Self-manage the installed native CLI:
+
+```bash
+xdocs upgrade              # upgrade to the latest GitHub Release binary
+xdocs upgrade check        # check for a newer version now
+xdocs upgrade list         # list available release versions
+xdocs uninstall --dry-run  # preview the executable that would be removed
+```
+
+A bare `xdocs` invocation never waits on network update checks. It starts a
+background update check when appropriate, writes the result to the user cache,
+and on the next bare run prints a notice such as `xdocs 0.5.0 is available. Run
+\`xdocs upgrade\` to update.`
+
 ---
 
 ## Documentation
@@ -293,6 +307,30 @@ xdocs agents instructions      # insert/refresh the xdocs section in AGENTS.md
 
 Accepts `--tool <agents|claude|all>`. See [Agent Skills](#agent-skills) for details.
 
+#### `xdocs upgrade`
+
+Upgrades the installed native xdocs binary from GitHub Releases. x64 upgrades
+prefer the `baseline` binary first, then fall back to the default and `modern`
+variants.
+
+```bash
+xdocs upgrade
+xdocs upgrade --dry-run
+xdocs upgrade --version 0.5.0
+xdocs upgrade check
+xdocs upgrade list
+```
+
+#### `xdocs uninstall`
+
+Removes the installed native xdocs executable. On Windows, the removal is
+scheduled after the current xdocs process exits.
+
+```bash
+xdocs uninstall --dry-run
+xdocs uninstall
+```
+
 #### Global Flags
 
 All commands accept:
@@ -301,6 +339,8 @@ All commands accept:
 | ----------------- | -------------------------------------------- |
 | `-h`, `--help`    | Show help for a command                      |
 | `-v`, `--version` | Show the xdocs version                       |
+| `--help-tree`     | Show the command tree from the current command |
+| `--help-docs`     | Print Markdown docs for the current command  |
 | `--cwd <path>`    | Run as if started in the given directory      |
 | `--config <path>` | Path to `xdocs.config.toml`                  |
 | `--format <fmt>`  | Output format: `text`, `json`, or `markdown` |

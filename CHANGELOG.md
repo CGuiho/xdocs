@@ -1,5 +1,13 @@
 # GUIHO XDocs Changelog
 
+## 0.5.0
+
+- Add native CLI self-management with `xdocs upgrade`, `xdocs upgrade check`, `xdocs upgrade list`, and `xdocs uninstall`.
+- Add non-blocking background update checks on bare `xdocs` invocations with a cached notice that tells users to run `xdocs upgrade` when a newer release is available.
+- Add `--help-tree` and `--help-docs` for the root CLI and every command, generated from shared command metadata.
+- Update the bundled `guiho-s-xdocs` skill to prefer the installed native `xdocs` CLI instead of Bun package execution.
+- Track future JSON output-format improvements in `TODO.md` and `docs/todo/improve-json-output-coverage.md`.
+
 ## 0.4.10
 
 - Remove Node-based GitHub Actions and npm/node commands from CI and native-binary publish workflows; checkout, Bun setup, binary release upload, and release verification now run through shell, Bun, git, and `gh`.

@@ -9,7 +9,7 @@ export type XDocsFormat = 'text' | 'json' | 'markdown'
 export type XDocsAiMode = 'prompt' | 'auto'
 
 /** Command names recognized by the CLI. */
-export type XDocsCommand = 'init' | 'scan' | 'generate' | 'prompt' | 'merge' | 'tree' | 'list' | 'agents'
+export type XDocsCommand = 'init' | 'scan' | 'generate' | 'prompt' | 'merge' | 'tree' | 'list' | 'agents' | 'upgrade' | 'uninstall'
 
 /** AI tools the guiho-s-xdocs skill can be installed for.
  *
@@ -180,4 +180,40 @@ export type XDocsAgentAutomationResult = {
   settings: XDocsAgentSettings
   agentsMd?: XDocsAgentsInstructionsResult
   globalSkill?: XDocsSkillInstallResult
+}
+
+/** Cached latest-version information written by the background update checker. */
+export type XDocsUpdateCache = {
+  checkedAt: string
+  currentVersion: string
+  latestVersion: string
+  updateAvailable: boolean
+  releaseUrl: string
+}
+
+/** Supported native binary platform labels. */
+export type XDocsNativePlatform = 'linux' | 'macos' | 'windows'
+
+/** Supported native binary architecture labels. */
+export type XDocsNativeArch = 'x64' | 'arm64'
+
+/** x64 binary variant preference. */
+export type XDocsNativeVariant = 'baseline' | 'default' | 'modern'
+
+/** Result of a self-upgrade operation. */
+export type XDocsUpgradeResult = {
+  currentVersion: string
+  targetVersion: string
+  asset: string
+  url: string
+  executablePath: string
+  dryRun: boolean
+  scheduled: boolean
+}
+
+/** Result of a self-uninstall operation. */
+export type XDocsUninstallResult = {
+  executablePath: string
+  dryRun: boolean
+  scheduled: boolean
 }

@@ -10,6 +10,11 @@ const booleanFlags = new Set([
   'version',
   'verbose',
   'global',
+  'help-tree',
+  'help-docs',
+  'dry-run',
+  'yes',
+  'xdocs-update-check-worker',
 ])
 
 const shortFlagMap: Record<string, string> = {
@@ -54,7 +59,8 @@ export const parseArgs = (rawArgs: string[]): XDocsParsedArgs => {
       const equalsIndex = withoutPrefix.indexOf('=')
       const rawKey = equalsIndex >= 0 ? withoutPrefix.slice(0, equalsIndex) : withoutPrefix
 
-      if (booleanFlags.has(rawKey)) {
+      const isCommandVersionValue = rawKey === 'version' && command === 'upgrade'
+      if (booleanFlags.has(rawKey) && equalsIndex < 0 && !isCommandVersionValue) {
         flags[normalizeKey(rawKey)] = true
         continue
       }

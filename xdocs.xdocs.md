@@ -34,6 +34,7 @@ keywords:
   - cli
   - structured documentation
   - native binary
+  - self management
 flags: []
 status: stable
 ---
