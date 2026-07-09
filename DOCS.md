@@ -119,11 +119,11 @@ Scanning walks the project tree and skips directories listed in `[scan].exclude`
 Direct native binary install (no Node.js or Bun required after installation):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/CGuiho/xdocs/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.sh | sh
 ```
 
 ```powershell
-irm https://raw.githubusercontent.com/CGuiho/xdocs/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.ps1 | iex
 ```
 
 Install XDocs as a development dependency through a JavaScript package manager. Package-manager execution uses the shipped Bun launcher, which downloads the matching native binary during `postinstall` or on first run if the install hook did not run, then executes the native binary:
@@ -469,7 +469,7 @@ The API uses the same configuration discovery and validation as the CLI.
 
 ## Development Workflow
 
-Run package commands from `xdocs/`.
+Run package commands from the repository root.
 
 ```bash
 bun install
@@ -498,6 +498,7 @@ Current tests cover:
 - Tree construction, rendering, and integrity validation.
 - Config discovery, validation, and defaulting.
 - Agent settings normalization, skill path resolution, skill installation (local/global), tool detection, and AGENTS.md section insertion.
+- Package launcher execution from a source checkout without a native vendor binary.
 
 Run all tests:
 
@@ -533,15 +534,27 @@ bun run binaries
 
 Supported release asset matrix:
 
-- Linux x64: `xdocs-linux-x64`
+- Linux x64: `xdocs-linux-x64-baseline`, `xdocs-linux-x64`, `xdocs-linux-x64-modern`
 - Linux arm64: `xdocs-linux-arm64`
-- macOS x64: `xdocs-macos-x64`
+- macOS x64: `xdocs-macos-x64-baseline`, `xdocs-macos-x64`, `xdocs-macos-x64-modern`
 - macOS arm64: `xdocs-macos-arm64`
-- Windows x64: `xdocs-windows-x64.exe`
+- Windows x64: `xdocs-windows-x64-baseline.exe`, `xdocs-windows-x64.exe`, `xdocs-windows-x64-modern.exe`
+- Windows arm64: `xdocs-windows-arm64.exe`
 
-Windows arm64 is intentionally not published until Bun's compilation support is reliable enough for this project. Unsupported platforms should use a documented manual path: install Bun and run from source, or download a compatible release asset manually.
+Unsupported platforms should use a documented manual path: install Bun and run
+from source, or download a compatible release asset manually.
 
-The package-manager install path ships `scripts/xdocs-bin.ts` as the package `bin`. That launcher calls `scripts/install-package.ts` during first run if `vendor/xdocs` or `vendor/xdocs.exe` is missing. The install helper downloads the matching GitHub Release asset, or copies a bundled asset when present. The native binary entrypoint embeds prompt templates, the `guiho-s-xdocs` skill, and package version metadata before importing the CLI, so installed binaries do not need adjacent prompt or skill files at runtime.
+The package-manager install path ships `scripts/xdocs-bin.ts` as the package
+`bin`. That launcher delegates to `vendor/xdocs` or `vendor/xdocs.exe` when the
+native binary exists. In source checkouts, it falls back to
+`source/guiho-xdocs-bin.ts` so local package execution tests the checked-out
+source without downloading a release artifact. In published package layouts, it
+calls `scripts/install-package.ts` during first run if the vendor binary is
+missing. The install helper downloads the matching GitHub Release asset, or
+copies a bundled asset when present. The native binary entrypoint embeds prompt
+templates, the `guiho-s-xdocs` skill, and package version metadata before
+importing the CLI, so installed binaries do not need adjacent prompt or skill
+files at runtime.
 
 ## Documentation Requirement Before Publishing
 
