@@ -40,6 +40,9 @@
     "url": "https://guiho.co/cg"
   },
   "sideEffects": false,
+  "trustedDependencies": [
+    "@guiho/mirror"
+  ],
   "publishConfig": {
     "access": "public"
   },

@@ -15,10 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
 
-    defaults:
-      run:
-        working-directory: xdocs
-
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2

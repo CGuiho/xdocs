@@ -9,9 +9,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: xdocs
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
