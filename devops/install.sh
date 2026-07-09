@@ -155,9 +155,32 @@ for ASSET in $CANDIDATES; do
   URL="$(build_url "$ASSET")"
   echo "  Trying ${URL}"
   if curl -fsSL "$URL" -o "$TMP/xdocs" 2>/dev/null; then
+    # Verify it's a real binary, not an HTML error page or text script
+    local magic
+    magic="$(head -c 4 "$TMP/xdocs" 2>/dev/null || true)"
+    case "$magic" in
+      $'\x7fELF') ;;  # ELF binary — OK
+      $'\xcf\xfa\xed\xfe'|$'\xce\xfa\xed\xfe'|$'\xca\xfe\xba\xbe') ;;  # Mach-O — OK
+      'MZ'*) ;;         # Windows PE — OK
+      '#!'*)
+        echo "error: downloaded file is a script, not a native binary" >&2
+        echo "This may be an old release. Try --version to pin a specific version." >&2
+        continue ;;
+      '<!DO'*|'<html'*)
+        echo "error: downloaded file appears to be an HTML page (${ASSET} not found)" >&2
+        continue ;;
+      *)
+        echo "warning: unrecognized file format, proceeding anyway" >&2 ;;
+    esac
+
     mkdir -p "$INSTALL_DIR"
     install -m 0755 "$TMP/xdocs" "$INSTALL_DIR/xdocs"
     echo "Installed xdocs to ${INSTALL_DIR}/xdocs"
+
+    # Post-install checks
+    check_path
+    check_shadowing
+
     echo "Run: xdocs --version"
     exit 0
   fi
@@ -167,3 +190,45 @@ done
 echo "error: no compatible xdocs binary found" >&2
 echo "Check available assets at: https://github.com/${REPO}/releases" >&2
 exit 1
+
+# === Post-install: warn if install dir is not in PATH ===
+check_path() {
+  case ":$PATH:" in
+    *:"$INSTALL_DIR":*) return 0 ;;
+  esac
+
+  echo ""
+  echo "⚠  ${INSTALL_DIR} is not in your PATH."
+  echo "   Add it to your shell profile to use xdocs globally:"
+  echo ""
+  case "$(basename "$SHELL" 2>/dev/null || echo sh)" in
+    zsh)  echo "   echo 'export PATH=\"${INSTALL_DIR}:\$PATH\"' >> ~/.zshrc" ;;
+    bash) echo "   echo 'export PATH=\"${INSTALL_DIR}:\$PATH\"' >> ~/.bashrc" ;;
+    fish) echo "   fish_add_path ${INSTALL_DIR}" ;;
+    *)    echo "   export PATH=\"${INSTALL_DIR}:\$PATH\"" ;;
+  esac
+  echo ""
+}
+
+# === Post-install: warn if another xdocs shadows this one ===
+check_shadowing() {
+  local shadow
+  shadow="$(command -v xdocs 2>/dev/null || true)"
+
+  if [[ -z "$shadow" ]]; then
+    return 0
+  fi
+
+  if [[ "$shadow" == "$INSTALL_DIR/xdocs" ]]; then
+    return 0
+  fi
+
+  echo ""
+  echo "⚠  Another xdocs was found earlier in your PATH:"
+  echo "   ${shadow}"
+  echo ""
+  echo "   This will shadow the newly installed binary."
+  echo "   If this is an old npm/pip installation, remove it first:"
+  echo "   npm uninstall -g @guiho/xdocs"
+  echo ""
+}
