@@ -560,11 +560,11 @@ Supported release asset matrix:
 - Windows arm64: `xdocs-windows-arm64.exe`
 
 `bun run binaries` verifies that all 12 expected native assets are present and
-non-empty after compilation. CI builds the matrix and uploads `bin/xdocs-*` as a
-GitHub Actions artifact. The tag publish workflow has `contents: write`, rebuilds
-the same matrix, uploads it as a workflow artifact, publishes `bin/xdocs-*` to
-the matching GitHub Release before npm publishing, and verifies that the release
-contains exactly 12 `xdocs-*` assets.
+non-empty after compilation. CI builds the matrix with Bun. The tag publish
+workflow has `contents: write`, rebuilds the same matrix with Bun, publishes
+`bin/xdocs-*` to the matching GitHub Release with `gh`, and verifies that the
+release contains exactly 12 `xdocs-*` assets. The workflow does not use Node,
+npm, or Node-based GitHub Actions.
 
 Unsupported platforms should use a documented manual path: install Bun and run
 from source, or download a compatible release asset manually.
@@ -603,7 +603,7 @@ Before publishing a new version:
 8. Build the Mirror release plan: `bun x @guiho/mirror version plan <target>`.
 9. Commit release-documentation updates before applying the version bump.
 10. Apply the bump with GUIHO Mirror: `bun x @guiho/mirror version apply <target> --yes`.
-11. Confirm the tag workflow uploads native binary assets to the GitHub Release and publishes the npm package.
+11. Confirm the tag workflow uploads and verifies all 12 native binary assets on the GitHub Release.
 
 Versioning itself is handled by GUIHO Mirror via `mirror.config.toml`; XDocs never edits version fields directly.
 

@@ -68,7 +68,7 @@ Native binaries are built and uploaded for all supported OS/architecture/variant
 | macOS | `xdocs-macos-arm64` | `xdocs-macos-x64-baseline` | `xdocs-macos-x64` | `xdocs-macos-x64-modern` |
 | Windows | `xdocs-windows-arm64.exe` | `xdocs-windows-x64-baseline.exe` | `xdocs-windows-x64.exe` | `xdocs-windows-x64-modern.exe` |
 
-CI builds the same 12 native binaries and uploads them as a GitHub Actions artifact. Version-tag releases upload `bin/xdocs-*` to the matching GitHub Release and verify that all 12 assets are present.
+CI builds the same 12 native binaries with Bun. Version-tag releases upload `bin/xdocs-*` to the matching GitHub Release with `gh` and verify that all 12 assets are present.
 
 If your current shell does not see the updated PATH immediately, open a new terminal or run one of these commands:
 

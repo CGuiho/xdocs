@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: write
-  id-token: write
 
 jobs:
   publish:
@@ -16,30 +15,24 @@ jobs:
     environment: production
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          registry-url: https://registry.npmjs.org
-          cache: ''
+      - name: Checkout
+        run: |
+          git init .
+          git remote add origin "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git"
+          git fetch --depth=1 origin "${GITHUB_REF}"
+          git checkout --detach FETCH_HEAD
 
-      - run: npm --version
-      - run: node --version
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+          "$HOME/.bun/bin/bun" --version
 
       - run: bun install --frozen-lockfile
       - run: bun run typecheck
       - run: bun test
       - run: bun run build
       - run: bun run binaries
-
-      - name: Upload native binary workflow artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: xdocs-native-binaries-${{ github.run_id }}
-          path: bin/xdocs-*
-          if-no-files-found: error
-          retention-days: 30
 
       - name: Publish native binaries to GitHub release
         env:
@@ -62,34 +55,3 @@ jobs:
             gh release view "${GITHUB_REF_NAME}" --json assets --jq '.assets[].name' >&2
             exit 1
           fi
-
-      - run: npm config delete always-auth || true
-
-      - name: Publish to npm
-        run: |
-          VERSION=$(bun -e "console.log(require('./package.json').version)")
-
-          TAG=$(bun -e '
-            const version = require("./package.json").version;
-
-            const prereleaseMatch = version.match(/^\d+\.\d+\.\d+-([^+]+)/);
-
-            if (!prereleaseMatch) {
-              console.log("latest");
-              process.exit(0);
-            }
-
-            const prerelease = prereleaseMatch[1];
-            const firstIdentifier = prerelease.split(".")[0];
-
-            if (/[A-Za-z]/.test(firstIdentifier)) {
-              console.log(firstIdentifier);
-            } else {
-              console.log("prerelease");
-            }
-          ')
-
-          echo "Package version: $VERSION"
-          echo "Publishing with npm dist-tag: $TAG"
-
-          npm publish --access public --tag "$TAG"

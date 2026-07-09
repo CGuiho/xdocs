@@ -1,5 +1,9 @@
 # GUIHO XDocs Changelog
 
+## 0.4.10
+
+- Remove Node-based GitHub Actions and npm/node commands from CI and native-binary publish workflows; checkout, Bun setup, binary release upload, and release verification now run through shell, Bun, git, and `gh`.
+
 ## 0.4.9
 
 - Fix GitHub Actions artifact names for scoped package tags by using run IDs, allowing the native binary publish workflow to upload artifacts and continue to GitHub Release asset publication.
