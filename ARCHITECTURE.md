@@ -339,48 +339,36 @@ The AI workflow with xdocs:
 ```
 /                                 # repository root
   XDOCS.md                        # root repository index
+  xdocs.xdocs.md                  # package-root xdocs descriptor
+  package.json                    # npm package metadata and scripts
+  jsr.json                        # JSR package metadata
+  mirror.config.toml              # GUIHO Mirror versioning config
   ARCHITECTURE.md                 # this file
   BRAINSTORM.md                   # brainstorming and vision
   AGENTS.md                       # AI agent instructions
   README.md                       # public-facing README
   CHANGELOG.md                    # release changelog
+  DOCS.md                         # canonical full package documentation
   TECHNICAL.md                    # technical notes
   TODO.md                         # task list
-  xdocs/                          # npm package directory
-    package.json
-    tsconfig.json
-    tsconfig.build.json
-    jsr.json
-    .npmrc
-    source/
-      guiho-xdocs.ts              # library entrypoint
-      guiho-xdocs-bin.ts          # CLI entrypoint
-      commands/
-        init.ts
-        scan.ts
-        generate.ts
-        prompt.ts
-        merge.ts
-        tree.ts
-        list.ts
-      core/
-        config.ts                 # config loading and validation
-        discovery.ts              # filesystem scanning and matching
-        metadata.ts               # YAML frontmatter parsing and validation
-        tree.ts                   # tree assembly and integrity checks
-      prompts/
-        write.ts
-        update.ts
-        agents.ts
-        generate.ts
-    skills/                       # bundled agent skill (shipped inside the package)
-      guiho-s-xdocs/
-        SKILL.md
-    library/                      # tsc output (ignored)
-    bin/                          # compiled binaries (ignored)
-  skills/                         # repository-root placeholder (.gitkeep)
-  docs/                           # documentation (reserved)
-  devops/                         # devops configuration
+  source/                         # TypeScript source
+    guiho-xdocs.ts                # library entrypoint
+    guiho-xdocs-bin.ts            # source CLI entrypoint
+    guiho-xdocs-native-bin.ts     # native binary entrypoint
+    commands/                     # one file per CLI command
+    config.ts                     # config loading and validation
+    discovery.ts                  # filesystem scanning and matching
+    metadata.ts                   # YAML frontmatter parsing and validation
+    tree.ts                       # tree assembly and integrity checks
+  scripts/                        # package-manager launcher and install helper
+  prompts/                        # prompt templates shipped with the package
+  skills/                         # bundled agent skill shipped with the package
+    guiho-s-xdocs/
+      SKILL.md
+  docs/                           # durable project documentation and decisions
+  devops/                         # binary builder and direct installers
+  library/                        # tsc output (ignored)
+  bin/                            # compiled binaries (ignored)
   .github/                        # GitHub workflows and config
   .vscode/                        # VS Code workspace settings
 ```
