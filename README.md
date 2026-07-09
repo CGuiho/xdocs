@@ -2,15 +2,13 @@
 
 **Structured documentation system for codebases. Helps AI make sense of projects.**
 
-**npm package:** [@guiho/xdocs](https://www.npmjs.com/package/@guiho/xdocs)
-
-xdocs is a CLI and TypeScript library that places named `*.xdocs.md` descriptors throughout your project so that AI agents (and humans) can navigate, understand, and work within a codebase without reading every file. Each descriptor describes the directory it lives in -- its purpose, searchable keywords, its files, its companion Markdown documents, and how it fits into the project hierarchy.
+xdocs is a CLI tool that places named `*.xdocs.md` descriptors throughout your project so that AI agents (and humans) can navigate, understand, and work within a codebase without reading every file. Each descriptor describes the directory it lives in -- its purpose, searchable keywords, its files, its companion Markdown documents, and how it fits into the project hierarchy.
 
 ```text
 codebase -> named *.xdocs.md descriptors + companion *.md documents -> AI understands the project
 ```
 
-xdocs ships as compiled native binaries, a thin Bun launcher for package-manager and `bunx` execution, and a fully-typed TypeScript library.
+xdocs ships as a single native binary — no Node.js, Bun, or runtime required.
 
 ---
 
@@ -18,27 +16,42 @@ xdocs ships as compiled native binaries, a thin Bun launcher for package-manager
 
 ### Installation
 
-Direct native binary install (no Node.js or Bun required after installation):
+Download and run the installer:
 
+**Linux / macOS:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/CGuiho/xdocs/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.sh | sh
 ```
 
+**Windows (PowerShell):**
 ```powershell
-irm https://raw.githubusercontent.com/CGuiho/xdocs/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.ps1 | iex
 ```
 
-Set `XDOCS_VERSION=0.2.3` (or the full tag `@guiho/xdocs@0.2.3`) before running an installer to pin a specific release instead of installing the latest.
+The installer auto-detects your OS and architecture, preferring the `baseline` variant for maximum compatibility. Installs to `~/.local/bin` by default.
 
-Package-manager install (convenient for JavaScript projects; downloads the matching native binary during `postinstall`, or on first run if the install hook did not run):
+**Flags and options:**
 
 ```bash
-npm install -D @guiho/xdocs
-# or
-bun add -d @guiho/xdocs
+# Pin a specific version
+curl .../install.sh | sh -s -- --version 0.4.4
+
+# Force architecture and variant
+curl .../install.sh | sh -s -- --arch arm64
+curl .../install.sh | sh -s -- --arch x64 --variant modern
+
+# Custom install directory
+curl .../install.sh | sh -s -- --install-dir /usr/local/bin
 ```
 
-Native release assets are published for Linux x64/arm64, macOS x64/arm64, and Windows x64. Windows arm64 is not published yet. Direct installs run without Node.js or Bun at runtime. Package-manager and `bunx` execution use a shipped Bun launcher that ensures the matching native binary is installed, then delegates to it.
+Or download the script first and run with flags directly:
+```bash
+curl -O https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.sh
+chmod +x install.sh
+./install.sh --version latest --arch x64 --variant baseline
+```
+
+Native binaries are published for Linux x64/arm64, macOS x64/arm64, and Windows x64/arm64. x64 targets include `baseline`, default, and `modern` variants.
 
 ### Initializing
 
