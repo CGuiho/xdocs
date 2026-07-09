@@ -14,11 +14,18 @@ type BinaryTarget = {
 }
 
 const targets: readonly BinaryTarget[] = [
-  { bunTarget: 'bun-linux-x64', assetName: 'xdocs-linux-x64' },
   { bunTarget: 'bun-linux-arm64', assetName: 'xdocs-linux-arm64' },
-  { bunTarget: 'bun-darwin-x64', assetName: 'xdocs-macos-x64' },
+  { bunTarget: 'bun-linux-x64', assetName: 'xdocs-linux-x64' },
+  { bunTarget: 'bun-linux-x64-baseline', assetName: 'xdocs-linux-x64-baseline' },
+  { bunTarget: 'bun-linux-x64-modern', assetName: 'xdocs-linux-x64-modern' },
   { bunTarget: 'bun-darwin-arm64', assetName: 'xdocs-macos-arm64' },
+  { bunTarget: 'bun-darwin-x64', assetName: 'xdocs-macos-x64' },
+  { bunTarget: 'bun-darwin-x64-baseline', assetName: 'xdocs-macos-x64-baseline' },
+  { bunTarget: 'bun-darwin-x64-modern', assetName: 'xdocs-macos-x64-modern' },
+  { bunTarget: 'bun-windows-arm64', assetName: 'xdocs-windows-arm64.exe' },
   { bunTarget: 'bun-windows-x64', assetName: 'xdocs-windows-x64.exe' },
+  { bunTarget: 'bun-windows-x64-baseline', assetName: 'xdocs-windows-x64-baseline.exe' },
+  { bunTarget: 'bun-windows-x64-modern', assetName: 'xdocs-windows-x64-modern.exe' },
 ]
 
 const root = fileURLToPath(new URL('..', import.meta.url))

@@ -23,33 +23,47 @@ if (await sourceEntrypoint.exists()) {
 
 const version = process.env['XDOCS_VERSION'] ?? packageJson.version ?? 'latest'
 const repo = process.env['XDOCS_REPO'] ?? 'CGuiho/xdocs'
-const asset = detectAsset()
-const bundledAsset = Bun.file(new URL(`../bin/${asset}`, import.meta.url))
+const candidates = detectAssetCandidates()
 const destination = new URL(`../vendor/xdocs${process.platform === 'win32' ? '.exe' : ''}`, import.meta.url)
 
-if (await bundledAsset.exists()) {
-  await Bun.write(destination, bundledAsset)
+for (const asset of candidates) {
+  const bundledAsset = Bun.file(new URL(`../bin/${asset}`, import.meta.url))
+
+  if (await bundledAsset.exists()) {
+    await Bun.write(destination, bundledAsset)
+    await makeExecutable(destination)
+    console.log(`installed bundled xdocs native binary: ${asset}`)
+    process.exit(0)
+  }
+}
+
+for (const asset of candidates) {
+  const tag = version === 'latest' ? 'latest' : `@guiho/xdocs@${version}`
+  const url = tag === 'latest'
+    ? `https://github.com/${repo}/releases/latest/download/${asset}`
+    : `https://github.com/${repo}/releases/download/${encodeURIComponent(tag)}/${asset}`
+
+  console.log(`    Downloading ${asset} from GitHub Releases...`)
+  const response = await fetch(url)
+
+  if (!response.ok) {
+    if (candidates.length > 1 && asset !== candidates[candidates.length - 1]) {
+      console.log(`    ${asset} not available (${response.status}), trying next variant...`)
+      continue
+    }
+    console.error(`error: failed to download ${url}`)
+    console.error(`status: ${response.status} ${response.statusText}`)
+    process.exit(1)
+  }
+
+  await Bun.write(destination, response)
   await makeExecutable(destination)
-  console.log(`installed bundled xdocs native binary: ${asset}`)
+  console.log(`installed xdocs native binary: ${asset}`)
   process.exit(0)
 }
 
-const tag = version === 'latest' ? 'latest' : `@guiho/xdocs@${version}`
-const url = tag === 'latest'
-  ? `https://github.com/${repo}/releases/latest/download/${asset}`
-  : `https://github.com/${repo}/releases/download/${encodeURIComponent(tag)}/${asset}`
-
-const response = await fetch(url)
-
-if (!response.ok) {
-  console.error(`error: failed to download ${url}`)
-  console.error(`status: ${response.status} ${response.statusText}`)
-  process.exit(1)
-}
-
-await Bun.write(destination, response)
-await makeExecutable(destination)
-console.log(`installed xdocs native binary: ${asset}`)
+console.error('error: no compatible xdocs binary found for this platform')
+process.exit(1)
 
 async function makeExecutable(path: URL) {
   if (process.platform === 'win32') return
@@ -66,10 +80,16 @@ async function makeExecutable(path: URL) {
   }
 }
 
-function detectAsset() {
+function detectAssetCandidates() {
   const os = detectOs()
   const arch = detectArch()
-  return `xdocs-${os}-${arch}${os === 'windows' ? '.exe' : ''}`
+  const ext = os === 'windows' ? '.exe' : ''
+
+  if (arch === 'x64') {
+    return [`xdocs-${os}-x64-baseline${ext}`, `xdocs-${os}-x64${ext}`]
+  }
+
+  return [`xdocs-${os}-${arch}${ext}`]
 }
 
 function detectOs() {
