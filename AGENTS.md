@@ -1,20 +1,20 @@
 ﻿# Repository Notes
 
 - `xdocs` is almost always written lowercase (CLI, code, text). Only capitalize as `XDocs` when used in a title or heading.
-- The real package lives in `xdocs/`; run package commands there unless editing root docs or `devops/`.
-- `@guiho/xdocs` is a Bun/TypeScript ESM CLI/library. The library entrypoint is `xdocs/source/guiho-xdocs.ts` and the CLI entrypoint is `xdocs/source/guiho-xdocs-bin.ts`; `tsc` emits `xdocs/library/` for `main`/`types`, and Bun compiles `xdocs/bin/` for the CLI binary.
+- The real package lives at the repository root; run package commands from `C:\GUIHO\xdocs`.
+- `@guiho/xdocs` is a Bun/TypeScript ESM CLI/library. The library entrypoint is `source/guiho-xdocs.ts` and the CLI entrypoint is `source/guiho-xdocs-bin.ts`; `tsc` emits `library/` for `main`/`types`, and Bun compiles `bin/` for the CLI binary.
 - New library entrypoints must use the full library name instead of generic `index.ts` files. For XDocs v3, use `guiho-xdocs.ts`.
-- Use Bun, not npm/pnpm/yarn. Install from `xdocs/` with `bun install`. Private `@guiho40` packages use Google Artifact Registry from `xdocs/.npmrc`; auth helper is `bun _gaa` or `bunx google-artifactregistry-auth`.
+- Use Bun, not npm/pnpm/yarn. Install from the repository root with `bun install`. Private `@guiho40` packages use Google Artifact Registry from `.npmrc`; auth helper is `bun _gaa` or `bunx google-artifactregistry-auth`.
 
 ## Commands
 
-- Typecheck: `cd xdocs && bun run typecheck`
-- Test all: `cd xdocs && bun test`
-- Test one file: `cd xdocs && bun test source/guiho-xdocs.spec.ts`
-- Build library: `cd xdocs && bun run build` (writes ignored `xdocs/library/`)
-- Compile CLI binary: `cd xdocs && bun run binary` (writes ignored `xdocs/bin/`)
-- Compile release binary matrix: `cd xdocs && bun run binaries` (writes ignored `xdocs/bin/xdocs-*`)
-- Dev mode: `cd xdocs && bun run dev` (watches and re-runs the CLI entrypoint)
+- Typecheck: `bun run typecheck`
+- Test all: `bun test`
+- Test one file: `bun test source/guiho-xdocs.spec.ts`
+- Build library: `bun run build` (writes ignored `library/`)
+- Compile CLI binary: `bun run binary` (writes ignored `bin/`)
+- Compile release binary matrix: `bun run binaries` (writes ignored `bin/xdocs-*`)
+- Dev mode: `bun run dev` (watches and re-runs the CLI entrypoint)
 - Avoid `bun _ci` and `bun clean-installation` unless intentionally resetting dependencies; they remove `node_modules` and `bun.lock`.
 
 ## CLI Behavior
@@ -35,27 +35,27 @@
 
 ## Source Structure
 
-- `xdocs/source/guiho-xdocs.ts` -- library entrypoint, re-exports all public API
-- `xdocs/source/guiho-xdocs-bin.ts` -- CLI entrypoint
-- `xdocs/source/guiho-xdocs-native-bin.ts` -- Bun-compiled native binary entrypoint; registers embedded prompt/skill/package resources before importing the CLI
-- `xdocs/source/embedded-resources.ts` -- Bun text imports used only for native binary embedding
-- `xdocs/scripts/xdocs-bin.ts` -- shipped Bun launcher used as the package `bin`; installs the native binary on first run when needed
-- `xdocs/scripts/install-package.ts` -- package-manager install helper that downloads or copies the matching native binary into `xdocs/vendor/`
-- `xdocs/source/cli.ts` -- CLI argument parsing and command dispatch
-- `xdocs/source/config.ts` -- TOML config loading, validation, and defaults
-- `xdocs/source/discovery.ts` -- filesystem scanning, xdocs descriptor matching, companion Markdown discovery, and descriptor/document validation
-- `xdocs/source/metadata.ts` -- YAML frontmatter parsing and validation
-- `xdocs/source/tree.ts` -- tree assembly, integrity checks, and rendering
-- `xdocs/source/prompts.ts` -- prompt loader (reads `.md` files from disk at runtime via `import.meta.url`)
-- `xdocs/source/help.ts` -- help text and version display
-- `xdocs/source/flags.ts` -- argument/flag parsing utilities
-- `xdocs/source/errors.ts` -- XDocsError class and invariant helper
-- `xdocs/source/types.ts` -- all TypeScript type definitions
-- `xdocs/source/agents.ts` -- skill install (local/global, multi-tool), legacy skill-name removal, version/content refresh, AGENTS.md section, config-gated automation; reads `skills/guiho-s-xdocs/SKILL.md` from disk at runtime (`readFileSync` via `import.meta.url`)
-- `xdocs/source/commands/` -- one file per CLI command (`init.ts`, `scan.ts`, `generate.ts`, `prompt.ts`, `merge.ts`, `tree.ts`, `list.ts`, `agents.ts`)
-- `xdocs/skills/guiho-s-xdocs/SKILL.md` -- the bundled versioned agent skill; shipped via `package.json` `files` and `jsr.json` include, read from disk at runtime
-- `install.sh` / `install.ps1` -- direct native binary installers for users who do not want Node.js or Bun at runtime
-- `xdocs/DOCS.md` -- canonical full user-facing documentation for `@guiho/xdocs`; update it before every release with the same discipline as the changelog (ships via `package.json` `files`)
+- `source/guiho-xdocs.ts` -- library entrypoint, re-exports all public API
+- `source/guiho-xdocs-bin.ts` -- CLI entrypoint
+- `source/guiho-xdocs-native-bin.ts` -- Bun-compiled native binary entrypoint; registers embedded prompt/skill/package resources before importing the CLI
+- `source/embedded-resources.ts` -- Bun text imports used only for native binary embedding
+- `scripts/xdocs-bin.ts` -- shipped Bun launcher used as the package `bin`; delegates to a native binary when present, falls back to source in checkouts, and installs the native binary on first run for published packages
+- `scripts/install-package.ts` -- package-manager install helper that downloads or copies the matching native binary into `vendor/`
+- `source/cli.ts` -- CLI argument parsing and command dispatch
+- `source/config.ts` -- TOML config loading, validation, and defaults
+- `source/discovery.ts` -- filesystem scanning, xdocs descriptor matching, companion Markdown discovery, and descriptor/document validation
+- `source/metadata.ts` -- YAML frontmatter parsing and validation
+- `source/tree.ts` -- tree assembly, integrity checks, and rendering
+- `source/prompts.ts` -- prompt loader (reads `.md` files from disk at runtime via `import.meta.url`)
+- `source/help.ts` -- help text and version display
+- `source/flags.ts` -- argument/flag parsing utilities
+- `source/errors.ts` -- XDocsError class and invariant helper
+- `source/types.ts` -- all TypeScript type definitions
+- `source/agents.ts` -- skill install (local/global, multi-tool), legacy skill-name removal, version/content refresh, AGENTS.md section, config-gated automation; reads `skills/guiho-s-xdocs/SKILL.md` from disk at runtime (`readFileSync` via `import.meta.url`)
+- `source/commands/` -- one file per CLI command (`init.ts`, `scan.ts`, `generate.ts`, `prompt.ts`, `merge.ts`, `tree.ts`, `list.ts`, `agents.ts`)
+- `skills/guiho-s-xdocs/SKILL.md` -- the bundled versioned agent skill; shipped via `package.json` `files` and `jsr.json` include, read from disk at runtime
+- `devops/install.sh` / `devops/install.ps1` -- direct native binary installers for users who do not want Node.js or Bun at runtime
+- `DOCS.md` -- canonical full user-facing documentation for `@guiho/xdocs`; update it before every release with the same discipline as the changelog (ships via `package.json` `files`)
 
 ## Key Concepts
 
@@ -70,11 +70,10 @@
 ## Gotchas
 
 - There is no lint or formatter config. Existing TS uses strict `tsconfig.json`, single quotes, and no semicolons; match nearby style.
-- Generated outputs (`xdocs/library/`, `xdocs/bundle/`, `xdocs/bin/`, `*.tgz`) are ignored; do not hand-edit them.
-- Prompt files in `xdocs/prompts/` are read from disk at runtime (`readFileSync` relative to `import.meta.url`) so the compiled library runs under Node and Bun; they ship via `package.json` `files`. Each prompt `.md` file has YAML frontmatter with `name` and `description`. Adding a new prompt requires creating the `.md` file and adding its name to `PROMPT_NAMES` in `xdocs/source/prompts.ts`.
-- The shipped agent skill lives at `xdocs/skills/guiho-s-xdocs/SKILL.md` (inside the package) and is read from disk at runtime (`readFileSync` relative to `import.meta.url`) in `xdocs/source/agents.ts`; it ships via `package.json` `files` and `jsr.json` `publish.include`. `xdocs agents install` writes it into the standard `.agents/skills` directory by default, and into `.claude/skills` only when the non-standard claude target is requested or detected. Installs remove the legacy `guiho-as-xdocs` skill directory and replace `guiho-s-xdocs` when the bundled version or content differs.
-- The empty `skills/` directory at the repository root is a placeholder; the canonical skill source is the package-internal `xdocs/skills/`.
-- Versioning is handled by `@guiho/mirror` via `xdocs/mirror.config.toml`, not by xdocs itself. Do not confuse xdocs (documentation) with mirror (versioning).
+- Generated outputs (`library/`, `bundle/`, `bin/`, `vendor/`, `*.tgz`) are ignored; do not hand-edit them.
+- Prompt files in `prompts/` are read from disk at runtime (`readFileSync` relative to `import.meta.url`) so the compiled library runs under Node and Bun; they ship via `package.json` `files`. Each prompt `.md` file has YAML frontmatter with `name` and `description`. Adding a new prompt requires creating the `.md` file and adding its name to `PROMPT_NAMES` in `source/prompts.ts`.
+- The shipped agent skill lives at `skills/guiho-s-xdocs/SKILL.md` and is read from disk at runtime (`readFileSync` relative to `import.meta.url`) in `source/agents.ts`; it ships via `package.json` `files` and `jsr.json` `publish.include`. `xdocs agents install` writes it into the standard `.agents/skills` directory by default, and into `.claude/skills` only when the non-standard claude target is requested or detected. Installs remove the legacy `guiho-as-xdocs` skill directory and replace `guiho-s-xdocs` when the bundled version or content differs.
+- Versioning is handled by `@guiho/mirror` via `mirror.config.toml`, not by xdocs itself. Do not confuse xdocs (documentation) with mirror (versioning).
 
 ## Semantic Project Versioning -- GUIHO Mirror
 
@@ -84,7 +83,7 @@ Before editing release docs or changelogs, inspect mirror.config.toml. If [agent
 
 Use [agents].changelog_path as the changelog file path. If it is missing, use CHANGELOG.md in the project root.
 
-Before publishing a new version, update `xdocs/DOCS.md` -- the canonical full documentation for `@guiho/xdocs` -- to capture every behavior change in the release, written the same way as the changelog. Treat `DOCS.md` as a required release artifact: keep it current with CLI commands and flags, configuration fields, the metadata schema, the TypeScript API, and agent skill behavior. Do not publish when `DOCS.md` is stale relative to the shipping code.
+Before publishing a new version, update `DOCS.md` -- the canonical full documentation for `@guiho/xdocs` -- to capture every behavior change in the release, written the same way as the changelog. Treat `DOCS.md` as a required release artifact: keep it current with CLI commands and flags, configuration fields, the metadata schema, the TypeScript API, and agent skill behavior. Do not publish when `DOCS.md` is stale relative to the shipping code.
 
 ## GUIHO Project
 
