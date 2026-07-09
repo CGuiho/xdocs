@@ -38,7 +38,7 @@ flags: []
 status: stable
 ---
 
-The `xdocs/` directory is the actual `@guiho/xdocs` package. It contains the
+The repository root is the actual `@guiho/xdocs` package. It contains the
 TypeScript implementation, package metadata, bundled prompt and skill resources,
-package-manager launcher/install scripts, and Bun-native release binary
-tooling. It is versioned by GUIHO Mirror using `mirror.config.toml`.
+package-manager launcher/install scripts, and Bun-native release binary tooling.
+It is versioned by GUIHO Mirror using `mirror.config.toml`.
