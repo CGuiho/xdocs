@@ -178,6 +178,24 @@ describe('package metadata', () => {
     expect(existsSync(resolve(process.cwd(), 'scripts/xdocs-bin.ts'))).toBe(true)
     expect(existsSync(resolve(process.cwd(), 'scripts/install-package.ts'))).toBe(true)
   })
+
+  test('runs the package launcher from a source checkout without a native vendor binary', async () => {
+    const proc = Bun.spawn([process.execPath, 'run', 'scripts/xdocs-bin.ts', '--version'], {
+      cwd: process.cwd(),
+      stdout: 'pipe',
+      stderr: 'pipe',
+    })
+
+    const [stdout, stderr, exitCode] = await Promise.all([
+      new Response(proc.stdout).text(),
+      new Response(proc.stderr).text(),
+      proc.exited,
+    ])
+
+    expect(exitCode).toBe(0)
+    expect(stdout.trim()).toMatch(/^xdocs \d+\.\d+\.\d+/)
+    expect(stderr).not.toContain('native binary is missing')
+  })
 })
 
 // ---------------------------------------------------------------------------
