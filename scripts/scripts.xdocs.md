@@ -4,7 +4,7 @@ description: Package-manager launcher and installation scripts for executing the
 parent: xdocs-package
 children: []
 files:
-  xdocs-bin.ts: Shipped Bun launcher used as the package bin; installs the native binary on first run when needed and delegates to it.
+  xdocs-bin.ts: Shipped Bun launcher used as the package bin; delegates to an installed native binary, falls back to the TypeScript CLI in source checkouts, and installs the native binary on first run for published packages.
   install-package.ts: Package-manager install helper that downloads or copies the matching GitHub Release native binary into vendor/xdocs or vendor/xdocs.exe.
 documents: {}
 tags:
@@ -21,5 +21,7 @@ status: stable
 
 The `scripts/` directory contains the package-manager launcher and install
 helper. Package-manager and `bunx` execution start in `xdocs-bin.ts`; if the
-native binary is missing, it runs `install-package.ts` and then delegates to the
-downloaded binary in `vendor/`. Direct installers remain the no-Bun runtime path.
+native binary is missing in a published package, it runs `install-package.ts` and
+then delegates to the downloaded binary in `vendor/`. Source checkouts run the
+TypeScript CLI directly when no vendor binary exists. Direct installers remain
+the no-Bun runtime path.
