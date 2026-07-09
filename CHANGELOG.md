@@ -1,5 +1,9 @@
 # GUIHO XDocs Changelog
 
+## 0.4.9
+
+- Fix GitHub Actions artifact names for scoped package tags by using run IDs, allowing the native binary publish workflow to upload artifacts and continue to GitHub Release asset publication.
+
 ## 0.4.8
 
 - Harden the direct Linux/macOS Bash installer and Windows PowerShell installer for native xdocs binaries, including baseline-first x64 fallback, explicit default/modern variants, downloaded binary validation, PATH setup, and shadowing warnings.

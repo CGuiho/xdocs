@@ -24,7 +24,7 @@ jobs:
       - name: Upload native binary artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: xdocs-native-binaries-${{ github.sha }}
+          name: xdocs-native-binaries-${{ github.run_id }}
           path: bin/xdocs-*
           if-no-files-found: error
           retention-days: 14
