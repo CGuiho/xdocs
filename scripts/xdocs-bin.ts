@@ -24,6 +24,7 @@ if (!(await binary.exists())) {
     process.exit(await proc.exited)
   }
 
+  console.error('notice: first xdocs run is installing the native CLI binary. This may take a moment...')
   const installerPath = new URL('install-package.ts', import.meta.url)
   const proc = Bun.spawn([process.execPath, Bun.fileURLToPath(installerPath)], {
     stdin: 'inherit',

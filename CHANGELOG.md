@@ -1,5 +1,10 @@
 # GUIHO XDocs Changelog
 
+## 0.5.1
+
+- Remove the GitHub Actions production approval gate from the native-binary publish workflow so patch releases can complete unattended.
+- Print a first-run package-manager launcher notice before installing the native CLI binary so users know xdocs is downloading/installing instead of hanging.
+
 ## 0.5.0
 
 - Add native CLI self-management with `xdocs upgrade`, `xdocs upgrade check`, `xdocs upgrade list`, and `xdocs uninstall`.
