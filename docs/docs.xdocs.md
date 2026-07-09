@@ -2,7 +2,8 @@
 subject: xdocs-docs
 description: Durable project documentation for xdocs behavior, design notes, and implementation context.
 parent: xdocs-package
-children: []
+children:
+  - xdocs-decisions
 files: {}
 documents:
   2026-07-05-xdocs-document-model.md: Defines the named descriptor plus companion Markdown document model for xdocs modules.
@@ -17,6 +18,6 @@ flags: []
 status: stable
 ---
 
-The `docs/` directory stores durable xdocs project notes. Each plain Markdown
-document in this directory is listed in `documents` so agents can find the note
-from descriptor metadata before opening the full document.
+The `docs/` directory stores durable xdocs project notes. Plain Markdown
+documents directly in this directory are listed in `documents`; categorized
+subdirectories such as `decisions/` have their own xdocs descriptors.
