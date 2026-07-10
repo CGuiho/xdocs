@@ -10,18 +10,22 @@ files:
   guiho-xdocs-native-bin.ts: Bun-compiled native binary entrypoint that registers embedded resources before importing the CLI.
   embedded-resources.ts: Bun text imports for embedding prompts, the versioned agent skill, and package version into native binaries.
   cli.ts: CLI argument parsing, command dispatch, and config-gated agent automation for bare and data-command invocations.
+  context.ts: Deterministic reading-set recommendation from descriptor, file, and companion-document metadata for `xdocs context`.
+  doctor.ts: CI-friendly xdocs health checks for descriptor validity, companion metadata, tree integrity, and documented file existence.
   self-management.ts: Self-sufficient native CLI helpers for background update checks, cached update notices, `xdocs upgrade`, and `xdocs uninstall`.
   config.ts: TOML configuration discovery, Bun-native TOML parsing, validation, defaults, and [agents] settings normalization.
   discovery.ts: Project scanning, named xdocs descriptor discovery, sibling Markdown document discovery, and descriptor/document validation.
-  metadata.ts: YAML frontmatter extraction, Bun-native YAML parsing, xdocs metadata validation including required keywords, and nameless descriptor rejection.
+  meta.ts: Metadata-only top-down scanning for descriptor and associated companion-document frontmatter, with strict validation and owner/tag/keyword filters.
+  metadata.ts: YAML frontmatter extraction, bounded frontmatter-only file reads, Bun-native YAML parsing, xdocs metadata validation including required keywords, and nameless descriptor rejection.
   tree.ts: Parent-child hierarchy construction, validation, and rendering.
   prompts.ts: Runtime prompt loader for package-manager/library use; native binaries can use embedded resources.
-  agents.ts: Versioned agent skill installation, legacy skill-name removal, AGENTS.md section management, tool detection, and automation.
+  agents.ts: Versioned agent skill installation, metadata.version-aware skill version reads, legacy skill-name removal, AGENTS.md section management, tool detection, and automation.
   help.ts: Data-driven help, help-tree, and Markdown help-doc rendering for the root CLI and each command.
   flags.ts: CLI flag parsing utilities, including command-aware `upgrade --version` parsing and help-tree/help-docs flags.
   errors.ts: XDocsError and invariant helper.
-  types.ts: Public and internal TypeScript type definitions, including xdocs metadata keywords, skill install version, self-management cache/result types, and legacy-cleanup result fields.
-  guiho-xdocs.spec.ts: Bun test suite covering flags, package metadata, metadata parsing, descriptor/document discovery, tree, config, agents, CLI automation, self-management helpers, skill migration/version refresh, and resource behavior.
+  types.ts: Public and internal TypeScript type definitions, including xdocs metadata keywords, metadata-only scan results, skill install version, self-management cache/result types, and legacy-cleanup result fields.
+  context-doctor.spec.ts: Bun tests for deterministic context recommendations and doctor health checks.
+  guiho-xdocs.spec.ts: Bun test suite covering flags, package metadata, metadata parsing, metadata-only scans, descriptor/document discovery, tree, config, agents, CLI automation, self-management helpers, skill migration/version refresh, and resource behavior.
 documents: {}
 tags:
   - source
@@ -31,6 +35,9 @@ keywords:
   - TypeScript
   - CLI
   - metadata parsing
+  - metadata-only scanning
+  - context recommendations
+  - doctor health checks
   - agent automation
   - self management
 flags: []
