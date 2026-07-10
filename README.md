@@ -111,6 +111,15 @@ xdocs generate ./src/auth
 # View the project hierarchy
 xdocs tree
 
+# Read descriptor + companion document frontmatter before full files
+xdocs meta ./src --documents --format json
+
+# Ask xdocs what an AI should read for a task
+xdocs context "authentication sessions" --documents --files --format json
+
+# Validate xdocs health in CI
+xdocs doctor
+
 # Get a ready-made prompt for AI to write documentation
 xdocs prompt --name=write
 ```
@@ -295,6 +304,34 @@ Lists implementation files and companion Markdown documents in a scope with desc
 xdocs list ./src/auth
 ```
 
+#### `xdocs meta [path]`
+
+Scans a directory top-down and reads only YAML frontmatter from named `*.xdocs.md` descriptors. Add `--documents` to also read frontmatter from companion `.md` files listed in each descriptor's `documents` map. Use `--owner`, `--tag`, and `--keyword` to filter metadata before an AI agent reads full Markdown bodies.
+
+```bash
+xdocs meta ./src --format json
+xdocs meta ./src --documents --keyword authentication --format json
+xdocs meta --documents --strict
+```
+
+#### `xdocs context <query> [path]`
+
+Recommends a minimal reading set for a task using descriptor metadata, companion-document frontmatter, file descriptions, tags, and keywords. This is the command an AI agent should run before opening full files.
+
+```bash
+xdocs context "authentication sessions" --documents --files --format json
+xdocs context "release skill version" . --tag agents --explain
+```
+
+#### `xdocs doctor [path]`
+
+Runs CI-friendly health checks for descriptor validity, companion-document frontmatter, tree integrity, and documented file existence. Companion-document frontmatter issues are warnings by default; add `--warnings-as-errors` to fail CI on them.
+
+```bash
+xdocs doctor
+xdocs doctor ./src --format json
+```
+
 #### `xdocs agents`
 
 Installs the `guiho-s-xdocs` agent skill and maintains the `AGENTS.md` section.
@@ -401,7 +438,7 @@ xdocs agents instructions      # insert/refresh the AGENTS.md section
 
 `xdocs init` runs this automatically for the standard target (`local` scope). `local` scope installs under the project; `global` installs under your home directory. The default is always the standard target -- non-standard files are written only when you ask (`--tool`) or when they are already present. Installation removes legacy `guiho-as-xdocs` skill directories and replaces `guiho-s-xdocs` when the bundled version or content differs.
 
-A bare `xdocs` invocation and the normal data commands refresh the global skill before doing their usual work. Without `xdocs.config.toml`, xdocs uses the standard `agents` target; with config, `[agents].skill_tool` can choose the target and `[agents].auto_skill_install = false` can disable the refresh. If the legacy `guiho-as-xdocs` skill exists for that global target, xdocs removes it and writes the bundled `guiho-s-xdocs` skill.
+A bare `xdocs` invocation and the normal data commands refresh the global skill before doing their usual work. Without `xdocs.config.toml`, xdocs uses the standard `agents` target; with config, `[agents].skill_tool` can choose the target and `[agents].auto_skill_install = false` can disable the refresh. If the legacy `guiho-as-xdocs` skill exists for that global target, xdocs removes it and writes the bundled `guiho-s-xdocs` skill. The bundled skill frontmatter includes both the legacy top-level `version` and `metadata.version`; release preparation keeps both aligned with the package version.
 
 ---
 
@@ -442,7 +479,19 @@ isPlainMarkdownDocument('auth-notes.md')     // true
 ### Metadata Parsing
 
 ```ts
-import { parseXDocsFile, extractFrontmatter, validateMetadata } from '@guiho/xdocs'
+import { doctorProject, findContext, parseXDocsFile, extractFrontmatter, scanMetadata, validateMetadata } from '@guiho/xdocs'
+
+// Read descriptor and associated companion-document frontmatter only
+const metadata = await scanMetadata(config, { targetPath: 'src', includeDocuments: true, keyword: 'authentication' })
+console.log(metadata.descriptors)
+
+// Recommend files/docs to read for a task
+const context = await findContext(config, 'authentication sessions', { includeDocuments: true, includeFiles: true })
+console.log(context.entries)
+
+// Run xdocs health checks
+const health = await doctorProject(config)
+console.log(health.valid)
 
 // Parse an xdocs descriptor from disk
 const file = await parseXDocsFile('/path/to/auth.xdocs.md', process.cwd())
