@@ -20,7 +20,7 @@
 ## CLI Behavior
 
 - The xdocs CLI is a structured documentation tool, not a versioning tool. It does not bump versions or mutate `package.json` versions.
-- Supported commands: `init`, `scan`, `generate`, `prompt`, `merge`, `tree`, `list`, `agents`.
+- Supported commands: `init`, `scan`, `generate`, `prompt`, `merge`, `tree`, `list`, `meta`, `context`, `doctor`, `agents`, `upgrade`, `uninstall`.
 - `xdocs init` creates `XDOCS.md`, `xdocs.config.toml`, updates `AGENTS.md` (the xdocs section pointing AI at the skill), and installs or refreshes the `guiho-s-xdocs` skill to the standard location (`.agents/skills`); `--tool` and `--global` are supported.
 - `xdocs scan` walks the project tree (respecting `[scan].exclude`) and reports named `*.xdocs.md` descriptor coverage plus same-directory Markdown companion-document coverage.
 - `xdocs generate [path]` generates documentation for a specific directory or the entire project.
@@ -28,9 +28,12 @@
 - `xdocs merge [path]` merges xdocs descriptors from a directory into a single consolidated document.
 - `xdocs tree` builds and displays the project hierarchy from xdocs metadata.
 - `xdocs list [path]` lists files in a scope with descriptions from xdocs metadata.
+- `xdocs meta [path]` scans top-down and reads only YAML frontmatter from named `*.xdocs.md` descriptors; `--documents` also reads associated companion `.md` frontmatter, while `--owner`, `--tag`, and `--keyword` filter metadata before agents read full files.
+- `xdocs context <query> [path]` recommends a minimal reading set for a task from descriptor, file, and companion-document metadata; use `--documents`, `--files`, `--limit`, and `--explain` for agent workflows.
+- `xdocs doctor [path]` runs CI-friendly health checks for descriptor validity, companion-document metadata, tree integrity, and documented file existence.
 - `xdocs agents install <local|global> [--tool <agents|claude|all>]` installs or refreshes the `guiho-s-xdocs` skill; `xdocs agents instructions` inserts/refreshes the xdocs section in `AGENTS.md`.
 - Skill install is standard-first: the default `agents` target is `AGENTS.md` + `.agents/skills` (local) / `~/.agents/skills` (global). The non-standard `claude` target (`.claude/skills`) is used only when `--tool` requests it or a `.claude`/`CLAUDE.md` is detected. Codex, Jules, and other AGENTS.md tools read the standard target.
-- A bare `xdocs` invocation and data commands (`scan`, `generate`, `merge`, `tree`, `list`) run agent automation first: global skill refresh uses the standard `agents` target without config, and when an `xdocs.config.toml` is present, `[agents].auto_agents_md` keeps the AGENTS.md section fresh while `[agents].auto_skill_install` / `[agents].skill_tool` control global skill refresh from the bundled copy. Refresh removes legacy `guiho-as-xdocs` installs for that target.
+- A bare `xdocs` invocation and data commands (`scan`, `generate`, `merge`, `tree`, `list`, `meta`, `context`, `doctor`) run agent automation first: global skill refresh uses the standard `agents` target without config, and when an `xdocs.config.toml` is present, `[agents].auto_agents_md` keeps the AGENTS.md section fresh while `[agents].auto_skill_install` / `[agents].skill_tool` control global skill refresh from the bundled copy. Refresh removes legacy `guiho-as-xdocs` installs for that target.
 - Global flags: `--help`, `--version`, `--cwd <path>`, `--config <path>`, `--format <text|json|markdown>`, `--verbose`.
 
 ## Source Structure
@@ -43,7 +46,10 @@
 - `scripts/install-package.ts` -- package-manager install helper that downloads or copies the matching native binary into `vendor/`
 - `source/cli.ts` -- CLI argument parsing and command dispatch
 - `source/config.ts` -- TOML config loading, validation, and defaults
+- `source/context.ts` -- deterministic reading-set recommendation from xdocs metadata for `xdocs context`
+- `source/doctor.ts` -- CI-friendly xdocs health checks for descriptors, companion metadata, tree links, and documented files
 - `source/discovery.ts` -- filesystem scanning, xdocs descriptor matching, companion Markdown discovery, and descriptor/document validation
+- `source/meta.ts` -- metadata-only top-down scanner for descriptor and companion-document frontmatter, with strict validation and owner/tag/keyword filters
 - `source/metadata.ts` -- YAML frontmatter parsing and validation
 - `source/tree.ts` -- tree assembly, integrity checks, and rendering
 - `source/prompts.ts` -- prompt loader (reads `.md` files from disk at runtime via `import.meta.url`)
@@ -52,14 +58,14 @@
 - `source/errors.ts` -- XDocsError class and invariant helper
 - `source/types.ts` -- all TypeScript type definitions
 - `source/agents.ts` -- skill install (local/global, multi-tool), legacy skill-name removal, version/content refresh, AGENTS.md section, config-gated automation; reads `skills/guiho-s-xdocs/SKILL.md` from disk at runtime (`readFileSync` via `import.meta.url`)
-- `source/commands/` -- one file per CLI command (`init.ts`, `scan.ts`, `generate.ts`, `prompt.ts`, `merge.ts`, `tree.ts`, `list.ts`, `agents.ts`, `upgrade.ts`, `uninstall.ts`)
+- `source/commands/` -- one file per CLI command (`init.ts`, `scan.ts`, `generate.ts`, `prompt.ts`, `merge.ts`, `tree.ts`, `list.ts`, `meta.ts`, `context.ts`, `doctor.ts`, `agents.ts`, `upgrade.ts`, `uninstall.ts`)
 - `skills/guiho-s-xdocs/SKILL.md` -- the bundled versioned agent skill; shipped via `package.json` `files` and `jsr.json` include, read from disk at runtime
 - `devops/install.sh` / `devops/install.ps1` -- direct native binary installers for users who do not want Node.js or Bun at runtime
 - `DOCS.md` -- canonical full user-facing documentation for `@guiho/xdocs`; update it before every release with the same discipline as the changelog (ships via `package.json` `files`)
 
 ## Key Concepts
 
-- xdocs descriptors use Markdown with YAML frontmatter and must be named `*.xdocs.md`; `.docs.md` is not supported and `.xdocs.md` by itself is invalid. Same-directory plain `*.md` files are companion documents listed in the descriptor's `documents` metadata. The root file is always `XDOCS.md` (uppercase, no prefix, no frontmatter).
+- xdocs descriptors use Markdown with YAML frontmatter and must be named `*.xdocs.md`; `.docs.md` is not supported and `.xdocs.md` by itself is invalid. Same-directory plain `*.md` files are companion documents listed in the descriptor's `documents` metadata. The root file is always `XDOCS.md` (uppercase, no prefix, no frontmatter). Use `xdocs meta [path] --documents --format json` when an agent needs descriptor and companion-document frontmatter without reading full Markdown bodies.
 - Metadata fields: `subject`, `description`, `parent`, `children`, `files`, `documents`, `tags`, `keywords`, `flags`, and optional `status`.
 - The tree is a parent-child containment hierarchy, not a dependency graph. Built from `subject`/`parent`/`children` fields.
 - Configuration lives in `xdocs.config.toml`. Sections: `extensions`, `ai`, `scan`, `project`, `agents`.
@@ -72,7 +78,7 @@
 - There is no lint or formatter config. Existing TS uses strict `tsconfig.json`, single quotes, and no semicolons; match nearby style.
 - Generated outputs (`library/`, `bundle/`, `bin/`, `vendor/`, `*.tgz`) are ignored; do not hand-edit them.
 - Prompt files in `prompts/` are read from disk at runtime (`readFileSync` relative to `import.meta.url`) so the compiled library runs under Node and Bun; they ship via `package.json` `files`. Each prompt `.md` file has YAML frontmatter with `name` and `description`. Adding a new prompt requires creating the `.md` file and adding its name to `PROMPT_NAMES` in `source/prompts.ts`.
-- The shipped agent skill lives at `skills/guiho-s-xdocs/SKILL.md` and is read from disk at runtime (`readFileSync` relative to `import.meta.url`) in `source/agents.ts`; it ships via `package.json` `files` and `jsr.json` `publish.include`. `xdocs agents install` writes it into the standard `.agents/skills` directory by default, and into `.claude/skills` only when the non-standard claude target is requested or detected. Installs remove the legacy `guiho-as-xdocs` skill directory and replace `guiho-s-xdocs` when the bundled version or content differs.
+- The shipped agent skill lives at `skills/guiho-s-xdocs/SKILL.md` and is read from disk at runtime (`readFileSync` relative to `import.meta.url`) in `source/agents.ts`; it ships via `package.json` `files` and `jsr.json` `publish.include`. `xdocs agents install` writes it into the standard `.agents/skills` directory by default, and into `.claude/skills` only when the non-standard claude target is requested or detected. Installs remove the legacy `guiho-as-xdocs` skill directory and replace `guiho-s-xdocs` when the bundled version or content differs. The skill frontmatter keeps the legacy top-level `version` plus `metadata.version`; both must match the current package version when preparing a release.
 - Versioning is handled by `@guiho/mirror` via `mirror.config.toml`, not by xdocs itself. Do not confuse xdocs (documentation) with mirror (versioning).
 
 ## Semantic Project Versioning -- GUIHO Mirror
