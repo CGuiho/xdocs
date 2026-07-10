@@ -16,14 +16,17 @@ import { runPrompt } from './commands/prompt.js'
 import { runMerge } from './commands/merge.js'
 import { runTree } from './commands/tree.js'
 import { runList } from './commands/list.js'
+import { runMeta } from './commands/meta.js'
+import { runContext } from './commands/context.js'
+import { runDoctor } from './commands/doctor.js'
 import { runAgents } from './commands/agents.js'
 import { runUpgrade } from './commands/upgrade.js'
 import { runUninstall } from './commands/uninstall.js'
 
-const validCommands = new Set<XDocsCommand>(['init', 'scan', 'generate', 'prompt', 'merge', 'tree', 'list', 'agents', 'upgrade', 'uninstall'])
+const validCommands = new Set<XDocsCommand>(['init', 'scan', 'generate', 'prompt', 'merge', 'tree', 'list', 'meta', 'context', 'doctor', 'agents', 'upgrade', 'uninstall'])
 
 /** Commands that run the config-gated agent automation before executing. */
-const automationCommands = new Set<XDocsCommand>(['scan', 'generate', 'merge', 'tree', 'list'])
+const automationCommands = new Set<XDocsCommand>(['scan', 'generate', 'merge', 'tree', 'list', 'meta', 'context', 'doctor'])
 
 /** Main CLI entry point. */
 export const runCli = async (rawArgs: string[] = process.argv.slice(2)): Promise<void> => {
@@ -99,6 +102,15 @@ export const runCli = async (rawArgs: string[] = process.argv.slice(2)): Promise
       break
     case 'list':
       await runList(options, parsed)
+      break
+    case 'meta':
+      await runMeta(options, parsed)
+      break
+    case 'context':
+      await runContext(options, parsed)
+      break
+    case 'doctor':
+      await runDoctor(options, parsed)
       break
     case 'agents':
       await runAgents(options, parsed)
