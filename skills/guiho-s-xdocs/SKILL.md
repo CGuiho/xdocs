@@ -1,8 +1,10 @@
 ---
 name: guiho-s-xdocs
-version: 0.5.0
+version: 0.5.1
+metadata:
+  version: 0.5.1
 purpose: Teach AI agents how to maintain xdocs descriptor files, companion Markdown documents, metadata, and tree integrity.
-description: Use this skill whenever the user works with xdocs (`@guiho/xdocs`) structured documentation, AND proactively whenever you create a new module or subdirectory or add/change/remove files in a directory of an xdocs project, so you create or update that directory's named `*.xdocs.md` descriptor as part of the change. This includes creating, updating, or regenerating `*.xdocs.md` descriptor files, companion Markdown documents, the root `XDOCS.md`, the project tree, scanning documentation coverage, merging docs, or maintaining xdocs metadata and AGENTS.md guidance, even when the user only says "document this module", "update the docs", or "what does this folder do" without naming xdocs.
+description: Use this skill whenever the user works with xdocs (`@guiho/xdocs`) structured documentation, AND proactively whenever you create a new module or subdirectory or add/change/remove files in a directory of an xdocs project, so you create or update that directory's named `*.xdocs.md` descriptor as part of the change. This includes creating, updating, or regenerating `*.xdocs.md` descriptor files, companion Markdown documents, the root `XDOCS.md`, the project tree, metadata scans, context recommendations, doctor health checks, scanning documentation coverage, merging docs, or maintaining xdocs metadata and AGENTS.md guidance, even when the user only says "document this module", "update the docs", or "what does this folder do" without naming xdocs.
 created: 2026-07-06
 flags:
   - automatic-documentation-maintenance
@@ -218,7 +220,52 @@ When you start working in a project that uses xdocs:
 2. Run `<xdocs> tree` to see the module hierarchy.
 3. Run `<xdocs> scan` to see documentation coverage, invalid descriptors, and companion-document coverage.
 4. Read `xdocs.config.toml` and note `[ai].mode` and `[scan].exclude`; xdocs descriptors always use the `.xdocs.md` suffix.
-5. When you navigate into a module, read that module's named `*.xdocs.md` descriptor frontmatter first. Read listed companion documents only when their descriptions show they are relevant.
+5. Run `<xdocs> context "<task>" [path] --documents --files --format json` to get the smallest useful reading set for the current task.
+6. Run `<xdocs> meta [path] --documents --format json` before opening full descriptor or companion Markdown bodies when you only need metadata, search terms, ownership, tags, or summaries.
+7. When metadata shows a module is relevant, read that module's named `*.xdocs.md` descriptor body and listed companion documents only when their descriptions show they are relevant.
+
+## Metadata-Only Workflow
+
+Use `xdocs meta` when an agent needs to understand documentation structure without reading entire Markdown files.
+
+```bash
+xdocs meta [path] --documents --format json
+```
+
+- `xdocs meta [path]` scans the target directory top-down and reads only YAML frontmatter from named `*.xdocs.md` descriptors.
+- `--documents` also reads frontmatter from companion `.md` files that are listed in each descriptor's `documents` map.
+- `--strict` fails the command if descriptor metadata, document references, companion document frontmatter, or `owner` relationships are invalid.
+- `--owner <subject>` filters descriptors by `subject` and companion documents by `owner`.
+- `--tag <tag>` filters descriptors and documents whose `tags` include that value.
+- `--keyword <keyword>` filters descriptors and documents whose `keywords` include that value.
+
+Prefer `--format json` for AI/tool workflows. Use `--owner`, `--tag`, and `--keyword` to narrow the result before reading any full Markdown body.
+
+## Context Workflow
+
+Use `xdocs context` when an agent has a task/query and needs to know what to read.
+
+```bash
+xdocs context "<query>" [path] --documents --files --format json
+```
+
+- `--documents` includes matching companion Markdown documents.
+- `--files` includes matching implementation files declared in descriptor `files` maps.
+- `--limit <n>` caps returned entries.
+- `--owner`, `--tag`, and `--keyword` constrain metadata before scoring.
+- `--explain` includes readable match reasons in text/Markdown; JSON always includes reasons.
+
+Run this before reading broad code or documentation. Prefer the smallest result set that can answer the task.
+
+## Doctor Workflow
+
+Use `xdocs doctor [path]` before finishing documentation-heavy changes or in CI.
+
+```bash
+xdocs doctor --format json
+```
+
+It checks descriptor validity, companion-document metadata, tree integrity, and documented file existence. Add `--warnings-as-errors` when CI should fail on tree warnings. Add `--no-documents` only when intentionally skipping companion-document frontmatter validation.
 
 ## Documentation Workflow (writing and updating)
 
@@ -247,6 +294,9 @@ When generating from scratch, prefer `<xdocs> generate <path>` (one directory) o
 - "What is documented / what is missing" -> `<xdocs> scan`
 - "Show me the structure" -> `<xdocs> tree`
 - "What is in this folder" -> `<xdocs> list <path>`
+- "Find relevant documentation metadata without reading full files" -> `<xdocs> meta [path] --documents --format json`
+- "What should I read for this task?" -> `<xdocs> context "<query>" [path] --documents --files --format json`
+- "Validate xdocs health" -> `<xdocs> doctor [path]`
 - "Draft docs for this module / project" -> `<xdocs> generate [path]`
 - "Give me one combined document" -> `<xdocs> merge [path]`
 - "Give me the AI instructions for writing/updating docs" -> `<xdocs> prompt --name=<write|update|agents|generate>`
@@ -297,6 +347,9 @@ The `[extensions]` section is retained for config compatibility, but the only su
 ```bash
 xdocs init                     # create XDOCS.md + xdocs.config.toml, update AGENTS.md, install the skill
 xdocs scan                     # report descriptor and companion-document coverage
+xdocs meta [path]              # read descriptor frontmatter only; add --documents for companion .md frontmatter
+xdocs context <query> [path]   # recommend a minimal reading set for a task
+xdocs doctor [path]            # run descriptor, document, tree, and file health checks
 xdocs tree                     # print the module hierarchy
 xdocs list <path>              # list files and companion documents with descriptions
 xdocs generate [path]          # draft documentation for a directory or the whole project
@@ -309,7 +362,7 @@ xdocs agents install global    # install guiho-s-xdocs into the user home skills
 xdocs agents instructions      # insert/refresh the xdocs section in AGENTS.md
 ```
 
-Global flags: `--help`, `--help-tree`, `--help-docs`, `--version`, `--cwd <path>`, `--config <path>`, `--format <text|json|markdown>`, `--verbose`. The `agents install` command also accepts `--tool <agents|claude|all>`.
+Global flags: `--help`, `--help-tree`, `--help-docs`, `--version`, `--cwd <path>`, `--config <path>`, `--format <text|json|markdown>`, `--verbose`. `xdocs meta` also accepts `--documents`, `--strict`, `--owner <subject>`, `--tag <tag>`, and `--keyword <keyword>`. `xdocs context` accepts `--documents`, `--files`, `--limit <n>`, `--owner <subject>`, `--tag <tag>`, `--keyword <keyword>`, and `--explain`. `xdocs doctor` accepts `--no-documents` and `--warnings-as-errors`. The `agents install` command also accepts `--tool <agents|claude|all>`.
 
 ## Agent Skill Installation
 
@@ -338,12 +391,18 @@ already exist in the project.
 When the user wants automation code rather than CLI usage, use the typed API:
 
 ```ts
-import { loadConfigOrDefaults, scanProject, buildTree, renderTree } from '@guiho/xdocs'
+import { doctorProject, findContext, loadConfigOrDefaults, scanMetadata, scanProject, buildTree, renderTree } from '@guiho/xdocs'
 
 const config = await loadConfigOrDefaults({ cwd: process.cwd(), format: 'text', verbose: false })
+const metadata = await scanMetadata(config, { targetPath: 'source', includeDocuments: true, keyword: 'auth' })
+const context = await findContext(config, 'auth sessions', { includeDocuments: true, includeFiles: true })
+const health = await doctorProject(config)
 const scan = await scanProject(config)
 const tree = buildTree(scan.xdocsFiles)
 
+console.log(metadata.descriptors)
+console.log(context.entries)
+console.log(health.valid)
 console.log(renderTree(tree))
 ```
 
