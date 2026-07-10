@@ -15,8 +15,22 @@ export type {
   XDocsCliOptions,
   XDocsCommand,
   XDocsConfig,
+  XDocsContextEntry,
+  XDocsContextEntryKind,
+  XDocsContextOptions,
+  XDocsContextResult,
+  XDocsDoctorIssue,
+  XDocsDoctorOptions,
+  XDocsDoctorResult,
+  XDocsDoctorSeverity,
   XDocsFile,
+  XDocsFrontmatter,
   XDocsFormat,
+  XDocsMetaDescriptor,
+  XDocsMetaDocument,
+  XDocsMetaFilters,
+  XDocsMetaScanOptions,
+  XDocsMetaScanResult,
   XDocsMarkdownDocument,
   XDocsMetadata,
   XDocsParsedArgs,
@@ -54,7 +68,16 @@ export {
 export { isPlainMarkdownDocument, isXDocsDescriptorFile, isXDocsFile, listDirectoryFiles, scanDirectory, scanProject } from './discovery.js'
 
 // Metadata
-export { extractFrontmatter, parseXDocsFile, validateMetadata } from './metadata.js'
+export { extractFrontmatter, parseFrontmatterObject, parseXDocsFile, readFrontmatterFromFile, validateMetadata } from './metadata.js'
+
+// Metadata-only scans
+export { collectMetaErrors, scanMetadata } from './meta.js'
+
+// Context lookup
+export { findContext } from './context.js'
+
+// Doctor checks
+export { doctorProject } from './doctor.js'
 
 // Tree
 export { buildTree, renderTree, renderTreeMarkdown, validateTree } from './tree.js'
