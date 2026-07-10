@@ -14,6 +14,12 @@ const booleanFlags = new Set([
   'help-docs',
   'dry-run',
   'yes',
+  'documents',
+  'files',
+  'explain',
+  'strict',
+  'no-documents',
+  'warnings-as-errors',
   'xdocs-update-check-worker',
 ])
 
