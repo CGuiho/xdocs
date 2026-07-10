@@ -9,7 +9,7 @@ export type XDocsFormat = 'text' | 'json' | 'markdown'
 export type XDocsAiMode = 'prompt' | 'auto'
 
 /** Command names recognized by the CLI. */
-export type XDocsCommand = 'init' | 'scan' | 'generate' | 'prompt' | 'merge' | 'tree' | 'list' | 'agents' | 'upgrade' | 'uninstall'
+export type XDocsCommand = 'init' | 'scan' | 'generate' | 'prompt' | 'merge' | 'tree' | 'list' | 'meta' | 'context' | 'doctor' | 'agents' | 'upgrade' | 'uninstall'
 
 /** AI tools the guiho-s-xdocs skill can be installed for.
  *
@@ -82,6 +82,123 @@ export type XDocsMetadata = {
   keywords: string[]
   flags: string[]
   status?: string
+}
+
+/** Parsed YAML frontmatter as a generic key-value store. */
+export type XDocsFrontmatter = Record<string, unknown>
+
+/** Filters available to metadata-only scans. */
+export type XDocsMetaFilters = {
+  owner?: string
+  tag?: string
+  keyword?: string
+}
+
+/** Options for a metadata-only scan. */
+export type XDocsMetaScanOptions = XDocsMetaFilters & {
+  targetPath?: string
+  includeDocuments?: boolean
+  strict?: boolean
+}
+
+/** Parsed metadata for a companion Markdown document. */
+export type XDocsMetaDocument = {
+  path: string
+  relativePath: string
+  directory: string
+  name: string
+  owner: string | null
+  valid: boolean
+  frontmatter: XDocsFrontmatter | null
+  errors: string[]
+}
+
+/** Parsed metadata for an xdocs descriptor. */
+export type XDocsMetaDescriptor = {
+  path: string
+  relativePath: string
+  directory: string
+  subject: string | null
+  valid: boolean
+  frontmatter: XDocsFrontmatter | null
+  metadata: XDocsMetadata | null
+  documents: XDocsMetaDocument[]
+  errors: string[]
+}
+
+/** Result of a metadata-only scan. */
+export type XDocsMetaScanResult = {
+  root: string
+  targetPath: string
+  includeDocuments: boolean
+  strict: boolean
+  filters: XDocsMetaFilters
+  descriptors: XDocsMetaDescriptor[]
+  errors: string[]
+}
+
+/** Kinds of entries returned by context lookup. */
+export type XDocsContextEntryKind = 'descriptor' | 'file' | 'document'
+
+/** Options for deterministic context lookup. */
+export type XDocsContextOptions = XDocsMetaFilters & {
+  targetPath?: string
+  includeDocuments?: boolean
+  includeFiles?: boolean
+  limit?: number
+}
+
+/** One recommended item for an agent to read. */
+export type XDocsContextEntry = {
+  kind: XDocsContextEntryKind
+  path: string
+  source: string
+  owner: string | null
+  score: number
+  reasons: string[]
+  description: string | null
+}
+
+/** Result of deterministic context lookup. */
+export type XDocsContextResult = {
+  root: string
+  targetPath: string
+  query: string
+  tokens: string[]
+  includeDocuments: boolean
+  includeFiles: boolean
+  filters: XDocsMetaFilters
+  entries: XDocsContextEntry[]
+}
+
+/** Severity levels emitted by xdocs doctor. */
+export type XDocsDoctorSeverity = 'error' | 'warning'
+
+/** One health-check issue emitted by xdocs doctor. */
+export type XDocsDoctorIssue = {
+  severity: XDocsDoctorSeverity
+  code: string
+  path: string | null
+  message: string
+}
+
+/** Options for project health checks. */
+export type XDocsDoctorOptions = {
+  targetPath?: string
+  includeDocuments?: boolean
+  warningsAsErrors?: boolean
+}
+
+/** Result of project health checks. */
+export type XDocsDoctorResult = {
+  root: string
+  targetPath: string
+  valid: boolean
+  summary: {
+    errors: number
+    warnings: number
+  }
+  issues: XDocsDoctorIssue[]
 }
 
 /** A sibling Markdown document listed by a module descriptor. */
