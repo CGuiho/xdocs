@@ -190,6 +190,24 @@ Print a ready-made AI prompt:
 xdocs prompt --name=write
 ```
 
+Read only descriptor and companion-document frontmatter before opening full Markdown files:
+
+```bash
+xdocs meta ./src --documents --format json
+```
+
+Ask xdocs what an AI should read for a task:
+
+```bash
+xdocs context "authentication sessions" --documents --files --format json
+```
+
+Run CI-friendly health checks:
+
+```bash
+xdocs doctor
+```
+
 ## CLI Reference
 
 ### Global Flags
@@ -277,6 +295,60 @@ xdocs list --format json
 ```
 
 Flags: `--format <text|json>`, `--cwd`, `--config`.
+
+### `xdocs meta [path]`
+
+Scans a directory top-down and reads only YAML frontmatter from named `*.xdocs.md` descriptors. It does not read Markdown bodies. With `--documents`, it also reads frontmatter from same-directory companion `.md` files listed in each descriptor's `documents` map. This command is optimized for AI agents that need to inspect subjects, descriptions, owners, tags, keywords, and document purpose before deciding which full files to open.
+
+```bash
+xdocs meta
+xdocs meta ./src --format json
+xdocs meta ./src --documents --keyword authentication --format json
+xdocs meta --documents --strict
+```
+
+Flags: `--documents`, `--strict`, `--owner <subject>`, `--tag <tag>`, `--keyword <keyword>`, `--format <text|markdown|json>`, `--cwd`, `--config`, `--verbose`.
+
+- `--documents`: Also reads associated companion-document frontmatter.
+- `--strict`: Fails when descriptor metadata, document references, companion-document metadata, or owner relationships are invalid.
+- `--owner <subject>`: Filters descriptors by `subject` and companion documents by `owner`.
+- `--tag <tag>`: Filters descriptors/documents whose `tags` include the value.
+- `--keyword <keyword>`: Filters descriptors/documents whose `keywords` include the value.
+
+JSON output contains the scan root, target path, flags, active filters, descriptors, associated documents, parsed generic frontmatter, validated descriptor metadata, and metadata errors. Use `--format json` for tool and AI workflows.
+
+### `xdocs context <query> [path]`
+
+Recommends a minimal reading set for a task using xdocs metadata. It scores descriptor subjects/descriptions/tags/keywords, optional implementation files from descriptor `files` maps, and optional companion-document frontmatter. It is deterministic and does not use embeddings or an LLM.
+
+```bash
+xdocs context "authentication sessions"
+xdocs context "authentication sessions" ./src --documents --files --format json
+xdocs context "release skill version" . --tag agents --explain
+```
+
+Flags: `--documents`, `--files`, `--limit <n>`, `--owner <subject>`, `--tag <tag>`, `--keyword <keyword>`, `--explain`, `--format <text|markdown|json>`, `--cwd`, `--config`, `--verbose`.
+
+- `--documents`: Include companion Markdown documents in the recommended reading set.
+- `--files`: Include implementation files from descriptor `files` maps.
+- `--limit <n>`: Cap returned entries. Defaults to 20.
+- `--owner <subject>`: Scope metadata to one descriptor subject or document owner.
+- `--tag <tag>` and `--keyword <keyword>`: Require metadata filters before scoring.
+- `--explain`: Include match reasons in text and Markdown output. JSON always includes reasons.
+
+### `xdocs doctor [path]`
+
+Runs a CI-friendly health check for xdocs documentation. It combines descriptor validity, companion-document metadata validation, tree integrity checks, and documented-file existence checks. Companion-document frontmatter issues are warnings by default because some Markdown files preserve host-specific schemas; use `--warnings-as-errors` when CI should fail on those warnings.
+
+```bash
+xdocs doctor
+xdocs doctor ./src --format json
+xdocs doctor --warnings-as-errors
+```
+
+Flags: `--no-documents`, `--warnings-as-errors`, `--format <text|markdown|json>`, `--cwd`, `--config`, `--verbose`.
+
+The command exits with an error when error-level health checks fail. Use `--format json` in CI to capture structured `issues` with `severity`, `code`, `path`, and `message`.
 
 ### `xdocs prompt --name=<name>`
 
@@ -437,7 +509,7 @@ Agent settings control skill installation and the automation that runs on bare a
 
 ## Agent Skills and Automation
 
-XDocs ships the `guiho-s-xdocs` skill inside the package at `skills/guiho-s-xdocs/SKILL.md`. The skill is a large, on-demand instruction document with a `version` field in its frontmatter; a small section in `AGENTS.md` tells an agent to load it.
+XDocs ships the `guiho-s-xdocs` skill inside the package at `skills/guiho-s-xdocs/SKILL.md`. The skill is a large, on-demand instruction document with a legacy top-level `version` field and `metadata.version` in its frontmatter; a small section in `AGENTS.md` tells an agent to load it. Release preparation keeps both skill version fields aligned with the package version.
 
 Installation is standard-first:
 
@@ -454,7 +526,7 @@ The rule is: default to the standard target. Only write non-standard files (`.cl
 
 ### Automation
 
-Bare `xdocs` invocations and the data commands (`scan`, `generate`, `merge`, `tree`, `list`) run agent automation before executing:
+Bare `xdocs` invocations and the data commands (`scan`, `generate`, `merge`, `tree`, `list`, `meta`, `context`, `doctor`) run agent automation before executing:
 
 - XDocs always bootstraps the global skill with default settings when no config is present, using the standard `agents` target.
 - When `xdocs.config.toml` is present and `auto_agents_md` is true, the xdocs section is kept fresh if `AGENTS.md` exists.
@@ -467,7 +539,7 @@ Bare `xdocs` invocations and the data commands (`scan`, `generate`, `merge`, `tr
 Maintaining xdocs descriptors is an automatic responsibility for an agent working in an xdocs project, not something the user has to request. The intended workflow:
 
 1. On entering a project, read `XDOCS.md`, run `xdocs tree`, and run `xdocs scan` to understand the structure and coverage.
-2. On navigating to a module, read that module's named `*.xdocs.md` descriptor frontmatter first. Use `documents` to decide which companion Markdown files to open, instead of reading every source file.
+2. On navigating to a module, prefer `xdocs context <query> [path] --documents --files --format json` to identify the smallest useful reading set, or `xdocs meta [path] --documents --format json` when you only need frontmatter. Use `documents`, `owner`, `tags`, and `keywords` to decide which full files to open.
 3. On creating a new module or subdirectory, create that directory's named xdocs descriptor (for example `authentication.xdocs.md`) describing its purpose, searchable `keywords`, its files (with their key functions/exports), its companion `documents`, and its `parent`/`children` links -- as part of the same change, without being asked.
 4. On modifying a module (adding, renaming, moving, or removing files or sibling Markdown documents, or changing what it does), update its xdocs descriptor, companion document frontmatter, and the affected parent/child links so the documentation matches reality.
 5. `[ai].mode` governs only how the agent writes: `prompt` announces the xdocs changes then writes them; `auto` writes immediately. It never makes documentation optional. A code change is not complete until the affected xdocs descriptors are updated and `xdocs tree` is consistent.
@@ -496,7 +568,14 @@ console.log(renderTree(tree))
 Metadata parsing:
 
 ```ts
-import { extractFrontmatter, parseXDocsFile, validateMetadata } from '@guiho/xdocs'
+import { doctorProject, extractFrontmatter, findContext, parseXDocsFile, scanMetadata, validateMetadata } from '@guiho/xdocs'
+
+const metadata = await scanMetadata(config, { targetPath: 'source', includeDocuments: true, keyword: 'cli' })
+const context = await findContext(config, 'metadata cli', { includeDocuments: true, includeFiles: true })
+const health = await doctorProject(config)
+console.log(metadata.descriptors)
+console.log(context.entries)
+console.log(health.valid)
 ```
 
 Agent skill and AGENTS.md automation:
@@ -527,8 +606,11 @@ The API uses the same configuration discovery and validation as the CLI.
 - `source/cli.ts`: argument parsing, command dispatch, config-gated automation, and process-facing error handling.
 - `source/self-management.ts`: background update checks, update cache, native binary upgrade, and uninstall helpers.
 - `source/config.ts`: TOML discovery, schema validation, defaulting, default config generation, and agent-settings normalization.
+- `source/context.ts`: deterministic reading-set recommendation from xdocs metadata for `xdocs context`.
+- `source/doctor.ts`: health checks for descriptor validity, companion-document metadata, tree integrity, and documented file existence.
 - `source/discovery.ts`: filesystem scanning, xdocs descriptor matching, companion Markdown discovery, and descriptor/document validation.
-- `source/metadata.ts`: YAML frontmatter extraction, metadata validation, and nameless descriptor rejection.
+- `source/meta.ts`: metadata-only top-down scanner for descriptor and companion-document frontmatter, strict validation, and owner/tag/keyword filters.
+- `source/metadata.ts`: YAML frontmatter extraction, bounded frontmatter-only file reads, metadata validation, and nameless descriptor rejection.
 - `source/tree.ts`: tree assembly, integrity checks, and rendering (text, markdown).
 - `source/prompts.ts`: prompt loader (reads `prompts/*.md` from disk at runtime relative to `import.meta.url`).
 - `source/help.ts`: data-driven help text, command-tree output, Markdown help docs, and version display.
@@ -536,7 +618,7 @@ The API uses the same configuration discovery and validation as the CLI.
 - `source/errors.ts`: `XDocsError` with stable exit codes and the `invariant` helper.
 - `source/types.ts`: public and internal TypeScript types.
 - `source/agents.ts`: agent skill installation (standard/claude, local/global), legacy skill-name removal, version/content refresh, AGENTS.md section management, detection, and config-gated automation. Reads `skills/guiho-s-xdocs/SKILL.md` from disk at runtime relative to `import.meta.url`.
-- `source/commands/*.ts`: one file per CLI command (`init`, `scan`, `generate`, `prompt`, `merge`, `tree`, `list`, `agents`, `upgrade`, `uninstall`).
+- `source/commands/*.ts`: one file per CLI command (`init`, `scan`, `generate`, `prompt`, `merge`, `tree`, `list`, `meta`, `context`, `doctor`, `agents`, `upgrade`, `uninstall`).
 - `prompts/*.md`: prompt templates embedded at build time.
 - `skills/guiho-s-xdocs/SKILL.md`: bundled versioned AI-agent skill installed by `xdocs agents` commands.
 
@@ -568,6 +650,8 @@ Current tests cover:
 
 - CLI flag parsing and short aliases.
 - YAML frontmatter extraction and metadata validation.
+- Metadata-only scans for descriptors and associated companion documents.
+- Context recommendations and doctor health checks.
 - Tree construction, rendering, and integrity validation.
 - Config discovery, validation, and defaulting.
 - Agent settings normalization, skill path resolution, skill installation (local/global), tool detection, and AGENTS.md section insertion.
