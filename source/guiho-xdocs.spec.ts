@@ -8,7 +8,8 @@ import { mkdir, mkdtemp, rm, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { parseArgs, stringFlag, booleanFlag, listFlag } from './flags.js'
-import { extractFrontmatter, validateMetadata } from './metadata.js'
+import { extractFrontmatter, readFrontmatterFromFile, validateMetadata } from './metadata.js'
+import { scanMetadata } from './meta.js'
 import { buildTree, renderTree, renderTreeMarkdown, validateTree } from './tree.js'
 import { normalizeConfig, defaultConfig, normalizeAgentSettings } from './config.js'
 import { isPlainMarkdownDocument, isXDocsDescriptorFile, isXDocsFile, scanProject } from './discovery.js'
@@ -215,8 +216,14 @@ describe('package metadata', () => {
 describe('help rendering', () => {
   test('renders command tree and markdown docs', () => {
     expect(showHelpTree()).toContain('xdocs upgrade')
+    expect(showHelpTree()).toContain('xdocs meta')
+    expect(showHelpTree()).toContain('xdocs context')
+    expect(showHelpTree()).toContain('xdocs doctor')
     expect(showCommandHelpTree('upgrade')).toContain('xdocs upgrade check')
     expect(showHelpDocs()).toContain('# xdocs CLI')
+    expect(showCommandHelpDocs('meta')).toContain('xdocs meta')
+    expect(showCommandHelpDocs('context')).toContain('xdocs context')
+    expect(showCommandHelpDocs('doctor')).toContain('xdocs doctor')
     expect(showCommandHelpDocs('uninstall')).toContain('xdocs uninstall')
   })
 })
@@ -336,6 +343,28 @@ description: Authentication module
     const content = `  \n---\nsubject: test\n---\n\nbody`
     const result = extractFrontmatter(content)
     expect(result.frontmatter).toBe('subject: test')
+  })
+})
+
+describe('readFrontmatterFromFile', () => {
+  test('reads only the leading frontmatter block', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-frontmatter-'))
+    try {
+      const path = join(dir, 'document.md')
+      await writeFile(path, `---
+name: example
+tags: []
+---
+
+# Body
+
+The body should not be returned.
+`, 'utf8')
+
+      await expect(readFrontmatterFromFile(path)).resolves.toBe('name: example\ntags: []')
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
   })
 })
 
@@ -565,6 +594,133 @@ describe('discovery', () => {
       expect(file?.errors.some((error) => error.includes('Missing Markdown document: "missing.md"'))).toBe(true)
       expect(file?.errors.filter((error) => error.includes('Invalid document entry'))).toHaveLength(3)
     } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+})
+
+describe('scanMetadata', () => {
+  test('returns descriptor and companion document frontmatter', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-meta-'))
+    try {
+      const authDir = join(dir, 'auth')
+      await mkdir(authDir)
+      await writeFile(join(authDir, 'auth.xdocs.md'), descriptorContent('auth', { 'implementation.md': 'Authentication implementation notes.' }), 'utf8')
+      await writeFile(join(authDir, 'implementation.md'), `---
+name: auth-implementation
+purpose: Explain authentication implementation details.
+description: Detailed notes for auth behavior.
+created: 2026-07-10
+flags: []
+tags:
+  - security
+keywords:
+  - authentication
+  - sessions
+owner: auth
+---
+
+# Implementation
+`, 'utf8')
+
+      const result = await scanMetadata(defaultConfig(dir), { targetPath: 'auth', includeDocuments: true })
+      const descriptor = result.descriptors[0]
+      const document = descriptor?.documents[0]
+
+      expect(result.errors).toEqual([])
+      expect(descriptor?.subject).toBe('auth')
+      expect(descriptor?.frontmatter?.['subject']).toBe('auth')
+      expect(document?.owner).toBe('auth')
+      expect(document?.frontmatter?.['purpose']).toBe('Explain authentication implementation details.')
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('filters by owner, tag, and keyword across descriptors and documents', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-meta-filter-'))
+    try {
+      const authDir = join(dir, 'auth')
+      const billingDir = join(dir, 'billing')
+      await mkdir(authDir)
+      await mkdir(billingDir)
+      await writeFile(join(authDir, 'auth.xdocs.md'), descriptorContent('auth', { 'implementation.md': 'Authentication implementation notes.' }), 'utf8')
+      await writeFile(join(authDir, 'implementation.md'), `---
+name: auth-implementation
+purpose: Explain authentication implementation details.
+description: Detailed notes for auth behavior.
+created: 2026-07-10
+flags: []
+tags:
+  - security
+keywords:
+  - sessions
+owner: auth
+---
+`, 'utf8')
+      await writeFile(join(billingDir, 'billing.xdocs.md'), descriptorContent('billing'), 'utf8')
+
+      const result = await scanMetadata(defaultConfig(dir), { includeDocuments: true, owner: 'auth', tag: 'security', keyword: 'sessions' })
+
+      expect(result.descriptors).toHaveLength(1)
+      expect(result.descriptors[0]?.subject).toBe('auth')
+      expect(result.descriptors[0]?.documents).toHaveLength(1)
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('reports invalid companion document metadata', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-meta-invalid-'))
+    try {
+      await writeFile(join(dir, 'auth.xdocs.md'), descriptorContent('auth', { 'implementation.md': 'Authentication implementation notes.' }), 'utf8')
+      await writeFile(join(dir, 'implementation.md'), `---
+name: auth-implementation
+purpose: Explain authentication implementation details.
+description: Detailed notes for auth behavior.
+created: 2026-07-10
+flags: []
+tags: []
+keywords: []
+owner: wrong-owner
+---
+`, 'utf8')
+
+      const result = await scanMetadata(defaultConfig(dir), { includeDocuments: true })
+
+      expect(result.errors.some((error) => error.includes('Expected "auth"'))).toBe(true)
+      expect(result.descriptors[0]?.documents[0]?.valid).toBe(false)
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('strict CLI mode fails on metadata errors', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-meta-cli-'))
+    const originalStdoutWrite = process.stdout.write
+    const originalStderrWrite = process.stderr.write
+    try {
+      await writeFile(join(dir, 'xdocs.config.toml'), 'schema = 1\n\n[agents]\nauto_agents_md = false\nauto_skill_install = false\n', 'utf8')
+      await writeFile(join(dir, 'auth.xdocs.md'), descriptorContent('auth', { 'implementation.md': 'Authentication implementation notes.' }), 'utf8')
+      await writeFile(join(dir, 'implementation.md'), `---
+name: auth-implementation
+purpose: Explain authentication implementation details.
+description: Detailed notes for auth behavior.
+created: 2026-07-10
+flags: []
+tags: []
+keywords: []
+owner: wrong-owner
+---
+`, 'utf8')
+
+      process.stdout.write = (() => true) as typeof process.stdout.write
+      process.stderr.write = (() => true) as typeof process.stderr.write
+
+      await expect(runCli(['meta', '--cwd', dir, '--documents', '--strict'])).rejects.toThrow(XDocsError)
+    } finally {
+      process.stdout.write = originalStdoutWrite
+      process.stderr.write = originalStderrWrite
       await rm(dir, { recursive: true, force: true })
     }
   })
