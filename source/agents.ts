@@ -110,7 +110,8 @@ with YAML frontmatter (\`subject\`, \`description\`, \`parent\`, \`children\`,
 \`files\`, \`documents\`, \`tags\`, \`keywords\`, \`flags\`). Same-directory plain
 \`*.md\` files are companion documents and must be listed in the descriptor's
 \`documents\` metadata map. Ordinary companion documents should also include
-\`keywords\` in their own frontmatter.
+frontmatter with \`owner\`, \`tags\`, and \`keywords\` so agents can inspect
+metadata before reading full Markdown bodies.
 
 **Load the \`${xdocsSkillName}\` agent skill** for any documentation work:
 creating, updating, regenerating, scanning, merging, or navigating xdocs descriptors.
@@ -121,8 +122,11 @@ Before changing documentation, read \`xdocs.config.toml\` and respect \`[ai].mod
 - **prompt** — announce which xdocs descriptors need updating and wait for confirmation.
 - **auto** — update the relevant xdocs descriptors immediately.
 
-Use the installed xdocs CLI for operations: \`xdocs scan\`, \`xdocs tree\`,
-\`xdocs generate\`, \`xdocs list\`, \`xdocs merge\`, \`xdocs upgrade\`, and
+Use the installed xdocs CLI for operations. Prefer \`xdocs context "<query>"
+[path] --documents --files --format json\` to get a task-specific reading set,
+or \`xdocs meta [path] --documents --format json\` when you only need
+frontmatter. Other commands: \`xdocs scan\`, \`xdocs tree\`, \`xdocs generate\`,
+\`xdocs list\`, \`xdocs doctor\`, \`xdocs merge\`, \`xdocs upgrade\`, and
 \`xdocs uninstall --dry-run\`.
 ${AGENTS_END_MARKER}`
 
@@ -301,21 +305,57 @@ export const runAgentAutomation = async (
 
 /** Read a skill version from SKILL.md YAML frontmatter. */
 export function readSkillVersion(content: string): string | undefined {
-  return readSkillFrontmatterValue(content, 'version')
+  const frontmatter = extractSkillFrontmatter(content)
+  if (!frontmatter) return undefined
+
+  return readNestedSkillFrontmatterValue(frontmatter, 'metadata', 'version') ?? readSkillFrontmatterValue(frontmatter, 'version')
 }
 
-function readSkillFrontmatterValue(content: string, key: string): string | undefined {
+function extractSkillFrontmatter(content: string): string | undefined {
   const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/)
   if (!match) return undefined
-  const frontmatter = match[1]
-  if (frontmatter === undefined) return undefined
+  return match[1]
+}
 
+function readSkillFrontmatterValue(frontmatter: string, key: string): string | undefined {
   for (const line of frontmatter.split(/\r?\n/)) {
     const separator = line.indexOf(':')
     if (separator === -1) continue
     if (line.slice(0, separator).trim() !== key) continue
 
     const value = line.slice(separator + 1).trim()
+    if (!value) return undefined
+    return value.replace(/^['"]|['"]$/g, '')
+  }
+
+  return undefined
+}
+
+function readNestedSkillFrontmatterValue(frontmatter: string, parentKey: string, key: string): string | undefined {
+  const lines = frontmatter.split(/\r?\n/)
+  let parentIndent: number | undefined
+
+  for (const line of lines) {
+    if (line.trim().length === 0) continue
+
+    const indent = line.length - line.trimStart().length
+    const trimmed = line.trim()
+
+    if (parentIndent === undefined) {
+      if (trimmed === `${parentKey}:`) parentIndent = indent
+      continue
+    }
+
+    if (indent <= parentIndent) {
+      parentIndent = trimmed === `${parentKey}:` ? indent : undefined
+      continue
+    }
+
+    const separator = trimmed.indexOf(':')
+    if (separator === -1) continue
+    if (trimmed.slice(0, separator).trim() !== key) continue
+
+    const value = trimmed.slice(separator + 1).trim()
     if (!value) return undefined
     return value.replace(/^['"]|['"]$/g, '')
   }
