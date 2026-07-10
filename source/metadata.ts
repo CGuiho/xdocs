@@ -2,9 +2,12 @@
  * @copyright Copyright (c) 2026 GUIHO Technologies as represented by Cristóvão GUIHO. All Rights Reserved.
  */
 
-import { readFile } from 'node:fs/promises'
+import { open, readFile } from 'node:fs/promises'
 import { basename, dirname, relative } from 'node:path'
-import type { XDocsFile, XDocsMetadata } from './types.js'
+import type { XDocsFile, XDocsFrontmatter, XDocsMetadata } from './types.js'
+
+const FRONTMATTER_READ_CHUNK_SIZE = 8192
+const FRONTMATTER_MAX_BYTES = 256 * 1024
 
 /** Parse an xdocs descriptor from disk into an XDocsFile object. */
 export const parseXDocsFile = async (filePath: string, cwd: string): Promise<XDocsFile> => {
@@ -69,6 +72,52 @@ export const extractFrontmatter = (content: string): { frontmatter: string | nul
   const body = trimmed.slice(endIndex + 4).trim()
 
   return { frontmatter, body }
+}
+
+/** Read only the leading YAML frontmatter block from a Markdown file. */
+export const readFrontmatterFromFile = async (filePath: string): Promise<string | null> => {
+  const handle = await open(filePath, 'r')
+  const buffer = Buffer.allocUnsafe(FRONTMATTER_READ_CHUNK_SIZE)
+  let content = ''
+  let position = 0
+
+  try {
+    while (content.length < FRONTMATTER_MAX_BYTES) {
+      const { bytesRead } = await handle.read(buffer, 0, buffer.length, position)
+      if (bytesRead === 0) break
+
+      position += bytesRead
+      content += buffer.toString('utf8', 0, bytesRead)
+
+      const trimmed = content.trimStart()
+      if (!trimmed.startsWith('---')) return null
+
+      const endIndex = trimmed.indexOf('\n---', 3)
+      if (endIndex !== -1) return trimmed.slice(3, endIndex).trim()
+    }
+
+    return null
+  } finally {
+    await handle.close()
+  }
+}
+
+/** Parse YAML frontmatter into a generic object. */
+export const parseFrontmatterObject = (frontmatter: string): { frontmatter: XDocsFrontmatter | null, errors: string[] } => {
+  let parsed: unknown
+
+  try {
+    parsed = Bun.YAML.parse(frontmatter)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    return { frontmatter: null, errors: [`Invalid YAML frontmatter: ${message}`] }
+  }
+
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    return { frontmatter: null, errors: ['Frontmatter must be a YAML object.'] }
+  }
+
+  return { frontmatter: parsed as XDocsFrontmatter, errors: [] }
 }
 
 /** Validate parsed YAML as XDocsMetadata. */
