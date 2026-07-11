@@ -296,6 +296,8 @@ xdocs tree
 xdocs tree --format markdown --output tree.md
 ```
 
+Text output uses branch scope markers (`|-`, `` `- ``, and `|  `) so nested modules remain visually connected.
+
 #### `xdocs list [path]`
 
 Lists implementation files and companion Markdown documents in a scope with descriptions pulled from xdocs metadata.
@@ -508,7 +510,7 @@ import { buildTree, renderTree, renderTreeMarkdown, validateTree } from '@guiho/
 // Build the hierarchy tree from scanned files
 const tree = buildTree(result.xdocsFiles)
 
-// Render as indented text
+// Render as branch-lined text
 console.log(renderTree(tree))
 
 // Render as Markdown

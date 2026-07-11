@@ -1,12 +1,15 @@
 # GUIHO XDocs Changelog
 
-## Unreleased
+## 0.5.2
 
+- Render `xdocs tree` text output with branch scope markers (`|-`, `` `- ``, and `|  `) so nested module boundaries are visually clearer while preserving Markdown and JSON output formats.
 - Add `xdocs meta [path]` to scan descriptor frontmatter top-down without reading Markdown bodies, with optional companion-document frontmatter via `--documents` and filters for `--owner`, `--tag`, and `--keyword`.
 - Add strict metadata validation for `xdocs meta --documents --strict`, including companion document frontmatter and `owner` relationships.
 - Add `xdocs context <query>` to recommend a minimal AI reading set from descriptor, file, and companion-document metadata.
 - Add `xdocs doctor [path]` for CI-friendly xdocs health checks covering descriptor validity, companion-document metadata, tree integrity, and documented file existence.
 - Add `metadata.version` to the bundled `guiho-s-xdocs` skill frontmatter and document that skill versions stay aligned with the package version during release preparation.
+
+## Unreleased
 
 ## 0.5.1
 

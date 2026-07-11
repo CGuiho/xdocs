@@ -17,7 +17,7 @@ files:
   discovery.ts: Project scanning, named xdocs descriptor discovery, sibling Markdown document discovery, and descriptor/document validation.
   meta.ts: Metadata-only top-down scanning for descriptor and associated companion-document frontmatter, with strict validation and owner/tag/keyword filters.
   metadata.ts: YAML frontmatter extraction, bounded frontmatter-only file reads, Bun-native YAML parsing, xdocs metadata validation including required keywords, and nameless descriptor rejection.
-  tree.ts: Parent-child hierarchy construction, validation, and rendering.
+  tree.ts: Parent-child hierarchy construction, validation, branch-lined text rendering with visual scope markers, and Markdown rendering.
   prompts.ts: Runtime prompt loader for package-manager/library use; native binaries can use embedded resources.
   agents.ts: Versioned agent skill installation, metadata.version-aware skill version reads, legacy skill-name removal, AGENTS.md section management, tool detection, and automation.
   help.ts: Data-driven help, help-tree, and Markdown help-doc rendering for the root CLI and each command.

@@ -814,7 +814,7 @@ describe('renderTree', () => {
     expect(output).toContain('api')
   })
 
-  test('renders nested indentation', () => {
+  test('renders nested branches', () => {
     const files = [
       makeFile('root', null, ['a']),
       makeFile('a', 'root', ['b']),
@@ -825,8 +825,23 @@ describe('renderTree', () => {
     const lines = output.split('\n')
 
     expect(lines[0]).toBe('root')
-    expect(lines[1]).toBe('  a')
-    expect(lines[2]).toBe('    b')
+    expect(lines[1]).toBe('`- a')
+    expect(lines[2]).toBe('   `- b')
+  })
+
+  test('renders sibling scope pipes', () => {
+    const files = [
+      makeFile('root', null, ['a', 'b']),
+      makeFile('a', 'root', ['a-child']),
+      makeFile('a-child', 'a'),
+      makeFile('b', 'root'),
+    ]
+    const tree = buildTree(files)
+    const output = renderTree(tree)
+
+    expect(output).toContain('|- a')
+    expect(output).toContain('|  `- a-child')
+    expect(output).toContain('`- b')
   })
 })
 

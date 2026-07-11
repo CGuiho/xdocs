@@ -1,8 +1,8 @@
 ---
 name: guiho-s-xdocs
-version: 0.5.1
+version: 0.5.2
 metadata:
-  version: 0.5.1
+  version: 0.5.2
 purpose: Teach AI agents how to maintain xdocs descriptor files, companion Markdown documents, metadata, and tree integrity.
 description: Use this skill whenever the user works with xdocs (`@guiho/xdocs`) structured documentation, AND proactively whenever you create a new module or subdirectory or add/change/remove files in a directory of an xdocs project, so you create or update that directory's named `*.xdocs.md` descriptor as part of the change. This includes creating, updating, or regenerating `*.xdocs.md` descriptor files, companion Markdown documents, the root `XDOCS.md`, the project tree, metadata scans, context recommendations, doctor health checks, scanning documentation coverage, merging docs, or maintaining xdocs metadata and AGENTS.md guidance, even when the user only says "document this module", "update the docs", or "what does this folder do" without naming xdocs.
 created: 2026-07-06

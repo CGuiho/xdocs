@@ -274,7 +274,7 @@ Flags: `--output <path>`, `--cwd`, `--config`, `--verbose`.
 
 ### `xdocs tree`
 
-Scans all xdocs descriptors, reads their metadata, and assembles the parent-child hierarchy (modules only, not individual files or companion documents). With `--verbose`, tree integrity warnings and errors (duplicate subjects, orphans, missing children) are printed to stderr.
+Scans all xdocs descriptors, reads their metadata, and assembles the parent-child hierarchy (modules only, not individual files or companion documents). Text output uses branch scope markers (`|-`, `` `- ``, and `|  `) so nested modules remain visually connected. With `--verbose`, tree integrity warnings and errors (duplicate subjects, orphans, missing children) are printed to stderr.
 
 ```bash
 xdocs tree

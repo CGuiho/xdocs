@@ -107,22 +107,27 @@ export const validateTree = (files: XDocsFile[]): XDocsTreeValidation => {
   }
 }
 
-/** Render a tree as an indented text string. */
-export const renderTree = (node: XDocsTreeNode, indent = 0): string => {
-  const prefix = '  '.repeat(indent)
-  const lines: string[] = []
+/** Render a tree as a branch-lined text string. */
+export const renderTree = (node: XDocsTreeNode): string => {
+  const lines = [node.subject]
 
-  if (indent === 0) {
-    lines.push(`${node.subject}`)
-  } else {
-    lines.push(`${prefix}${node.subject}`)
-  }
-
-  for (const child of node.children) {
-    lines.push(renderTree(child, indent + 1))
+  for (const [index, child] of node.children.entries()) {
+    lines.push(...renderTreeBranch(child, '', index === node.children.length - 1))
   }
 
   return lines.join('\n')
+}
+
+const renderTreeBranch = (node: XDocsTreeNode, prefix: string, isLast: boolean): string[] => {
+  const branch = isLast ? '`- ' : '|- '
+  const childPrefix = isLast ? '   ' : '|  '
+  const lines = [`${prefix}${branch}${node.subject}`]
+
+  for (const [index, child] of node.children.entries()) {
+    lines.push(...renderTreeBranch(child, `${prefix}${childPrefix}`, index === node.children.length - 1))
+  }
+
+  return lines
 }
 
 /** Render a tree as Markdown. */
