@@ -825,8 +825,8 @@ describe('renderTree', () => {
     const lines = output.split('\n')
 
     expect(lines[0]).toBe('root')
-    expect(lines[1]).toBe('`- a')
-    expect(lines[2]).toBe('   `- b')
+    expect(lines[1]).toBe('|- a')
+    expect(lines[2]).toBe('|  |- b')
   })
 
   test('renders sibling scope pipes', () => {
@@ -840,8 +840,8 @@ describe('renderTree', () => {
     const output = renderTree(tree)
 
     expect(output).toContain('|- a')
-    expect(output).toContain('|  `- a-child')
-    expect(output).toContain('`- b')
+    expect(output).toContain('|  |- a-child')
+    expect(output).toContain('|- b')
   })
 })
 

@@ -298,7 +298,7 @@ xdocs tree
 xdocs tree --format markdown --output tree.md
 ```
 
-Text output uses branch scope markers (`|-`, `` `- ``, and `|  `) so nested modules remain visually connected.
+Text output uses pipe-based branch scope markers (`|-` and `|  `) so nested modules remain visually connected.
 
 #### `xdocs list [path]`
 

@@ -2,7 +2,7 @@
 
 ## 0.5.2
 
-- Render `xdocs tree` text output with branch scope markers (`|-`, `` `- ``, and `|  `) so nested module boundaries are visually clearer while preserving Markdown and JSON output formats.
+- Render `xdocs tree` text output with pipe-based branch scope markers (`|-` and `|  `) so nested module boundaries are visually clearer while preserving Markdown and JSON output formats.
 - Add `xdocs meta [path]` to scan descriptor frontmatter top-down without reading Markdown bodies, with optional companion-document frontmatter via `--documents` and filters for `--owner`, `--tag`, and `--keyword`.
 - Add strict metadata validation for `xdocs meta --documents --strict`, including companion document frontmatter and `owner` relationships.
 - Add `xdocs context <query>` to recommend a minimal AI reading set from descriptor, file, and companion-document metadata.

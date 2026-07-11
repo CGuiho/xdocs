@@ -111,20 +111,18 @@ export const validateTree = (files: XDocsFile[]): XDocsTreeValidation => {
 export const renderTree = (node: XDocsTreeNode): string => {
   const lines = [node.subject]
 
-  for (const [index, child] of node.children.entries()) {
-    lines.push(...renderTreeBranch(child, '', index === node.children.length - 1))
+  for (const child of node.children) {
+    lines.push(...renderTreeBranch(child, ''))
   }
 
   return lines.join('\n')
 }
 
-const renderTreeBranch = (node: XDocsTreeNode, prefix: string, isLast: boolean): string[] => {
-  const branch = isLast ? '`- ' : '|- '
-  const childPrefix = isLast ? '   ' : '|  '
-  const lines = [`${prefix}${branch}${node.subject}`]
+const renderTreeBranch = (node: XDocsTreeNode, prefix: string): string[] => {
+  const lines = [`${prefix}|- ${node.subject}`]
 
-  for (const [index, child] of node.children.entries()) {
-    lines.push(...renderTreeBranch(child, `${prefix}${childPrefix}`, index === node.children.length - 1))
+  for (const child of node.children) {
+    lines.push(...renderTreeBranch(child, `${prefix}|  `))
   }
 
   return lines
