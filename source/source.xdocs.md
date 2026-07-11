@@ -20,7 +20,7 @@ files:
   tree.ts: Parent-child hierarchy construction, validation, branch-lined text rendering with visual scope markers, and Markdown rendering.
   prompts.ts: Runtime prompt loader for package-manager/library use; native binaries can use embedded resources.
   agents.ts: Versioned agent skill installation, metadata.version-aware skill version reads, legacy skill-name removal, AGENTS.md section management, tool detection, and automation.
-  help.ts: Data-driven help, help-tree, and Markdown help-doc rendering for the root CLI and each command.
+  help.ts: Data-driven versioned root help, help-tree, and Markdown help-doc rendering for the root CLI and each command.
   flags.ts: CLI flag parsing utilities, including command-aware `upgrade --version` parsing and help-tree/help-docs flags.
   errors.ts: XDocsError and invariant helper.
   types.ts: Public and internal TypeScript type definitions, including xdocs metadata keywords, metadata-only scan results, skill install version, self-management cache/result types, and legacy-cleanup result fields.

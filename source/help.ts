@@ -280,22 +280,31 @@ function showVersion(): string {
 
 function showHelp(): string {
   return [
-    'xdocs - Structured documentation system for codebases',
+    `xdocs ${readPackageVersion()}`,
+    'Structured documentation for codebases and AI agents',
     '',
-    'Usage: xdocs <command> [options]',
+    'Usage',
+    '  xdocs <command> [options]',
     '',
-    'Commands:',
-    ...commandHelpRecords.map((command) => `  ${pad(command.name, 18)}${command.summary}`),
+    'Core Commands',
+    ...commandHelpRecords
+      .filter((command) => ['init', 'scan', 'meta', 'context', 'doctor', 'tree', 'list', 'generate', 'merge'].includes(command.name))
+      .map((command) => `  ${pad(command.name, 18)}${command.summary}`),
     '',
-    'Global Flags:',
+    'Agent Commands',
+    ...commandHelpRecords
+      .filter((command) => ['prompt', 'agents'].includes(command.name))
+      .map((command) => `  ${pad(command.name, 18)}${command.summary}`),
+    '',
+    'Binary Commands',
+    ...commandHelpRecords
+      .filter((command) => ['upgrade', 'uninstall'].includes(command.name))
+      .map((command) => `  ${pad(command.name, 18)}${command.summary}`),
+    '',
+    'Global Flags',
     ...globalFlags.map((flag) => `  ${pad(flag.name, 28)}${flag.description}`),
     '',
-    'Examples:',
-    '  xdocs init',
-    '  xdocs scan',
-    '  xdocs tree',
-    '  xdocs upgrade',
-    '  xdocs uninstall --dry-run',
+    'Use `xdocs <command> --help` for command-specific usage.',
   ].join('\n')
 }
 

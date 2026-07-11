@@ -133,6 +133,9 @@ then fall back to the default and `modern` variants. Users can force a specific
 architecture or variant with `--arch` / `--variant` on Bash or `-Arch` /
 `-Variant` on PowerShell.
 
+The Windows installer returns after success rather than calling `exit`, avoiding
+unintentional closure of the caller's PowerShell host when run through `irm ... | iex`.
+
 Manual PATH fallback commands:
 
 ```bash

@@ -30,6 +30,8 @@ irm https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.ps1 | iex
 
 The installers download native binaries from GitHub Releases, install `xdocs` into `~/.local/bin` by default, and add that directory to your user PATH when possible. x64 installs prefer the `baseline` variant first for maximum compatibility, then fall back to the default and `modern` variants.
 
+The Windows PowerShell installer returns after success instead of calling `exit`, so it does not intentionally close the host PowerShell session.
+
 **Flags and options:**
 
 ```bash

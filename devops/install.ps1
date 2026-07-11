@@ -36,7 +36,7 @@ Parameters:
 Environment variables:
   XDOCS_VERSION, XDOCS_REPO, XDOCS_INSTALL_DIR
 "@
-  exit 0
+  return
 }
 
 # === Detect architecture (compatible with PowerShell 5.1+) ===
@@ -202,7 +202,7 @@ foreach ($asset in $assetCandidates) {
     }
 
     Write-Host 'Run: xdocs --version'
-    exit 0
+    return
   } catch {
     Write-Host "  not available, trying next..."
   }
