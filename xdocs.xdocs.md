@@ -10,7 +10,7 @@ children:
   - xdocs-prompts
   - xdocs-docs
 files:
-  package.json: npm package metadata, CLI bin mapping, build/test scripts, and package publish file list.
+  package.json: npm package metadata, Citty runtime dependency, CLI bin mapping, build/test scripts, and package publish file list.
   jsr.json: JSR package metadata and publish include list.
   tsconfig.json: Strict TypeScript settings for source development.
   tsconfig.build.json: Build-specific TypeScript settings for library output, including Bun and Node types.
@@ -43,6 +43,6 @@ status: stable
 ---
 
 The repository root is the actual `@guiho/xdocs` package. It contains the
-TypeScript implementation, package metadata, bundled prompt and skill resources,
+Citty-based TypeScript CLI implementation, package metadata, bundled prompt and skill resources,
 package-manager launcher/install scripts, and Bun-native release binary tooling.
 It is versioned by GUIHO Mirror using `mirror.config.toml`.

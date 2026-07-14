@@ -2,22 +2,30 @@
  * @copyright Copyright (c) 2026 GUIHO Technologies as represented by Cristóvão GUIHO. All Rights Reserved.
  */
 
-import type { XDocsCliOptions, XDocsMetaDescriptor, XDocsMetaScanResult, XDocsParsedArgs } from '../types.js'
+import type { XDocsCliOptions, XDocsMetaDescriptor, XDocsMetaScanResult } from '../types.js'
 import { loadConfigOrDefaults } from '../config.js'
 import { XDocsError } from '../errors.js'
-import { booleanFlag, stringFlag } from '../flags.js'
 import { scanMetadata } from '../meta.js'
 
+type XDocsMetaInput = {
+  targetPath?: string
+  includeDocuments?: boolean
+  strict?: boolean
+  owner?: string
+  tag?: string
+  keyword?: string
+}
+
 /** Run the meta command. */
-export const runMeta = async (options: XDocsCliOptions, parsed: XDocsParsedArgs): Promise<void> => {
+export const runMeta = async (options: XDocsCliOptions, input: XDocsMetaInput = {}): Promise<void> => {
   const config = await loadConfigOrDefaults(options)
   const result = await scanMetadata(config, {
-    targetPath: parsed.positionals[0],
-    includeDocuments: booleanFlag(parsed.flags, 'documents'),
-    strict: booleanFlag(parsed.flags, 'strict'),
-    owner: stringFlag(parsed.flags, 'owner'),
-    tag: stringFlag(parsed.flags, 'tag'),
-    keyword: stringFlag(parsed.flags, 'keyword'),
+    targetPath: input.targetPath,
+    includeDocuments: input.includeDocuments,
+    strict: input.strict,
+    owner: input.owner,
+    tag: input.tag,
+    keyword: input.keyword,
   })
 
   if (result.strict && result.errors.length > 0) {

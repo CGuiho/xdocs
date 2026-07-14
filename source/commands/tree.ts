@@ -4,16 +4,19 @@
 
 import { resolve } from 'node:path'
 import { writeFile } from 'node:fs/promises'
-import type { XDocsCliOptions, XDocsParsedArgs } from '../types.js'
+import type { XDocsCliOptions } from '../types.js'
 import { loadConfigOrDefaults } from '../config.js'
 import { scanProject } from '../discovery.js'
 import { buildTree, validateTree, renderTree, renderTreeMarkdown } from '../tree.js'
-import { stringFlag } from '../flags.js'
+
+type XDocsTreeInput = {
+  outputPath?: string
+}
 
 /** Run the tree command. */
-export const runTree = async (options: XDocsCliOptions, parsed: XDocsParsedArgs): Promise<void> => {
+export const runTree = async (options: XDocsCliOptions, input: XDocsTreeInput = {}): Promise<void> => {
   const config = await loadConfigOrDefaults(options)
-  const outputPath = stringFlag(parsed.flags, 'output')
+  const outputPath = input.outputPath
 
   const result = await scanProject(config)
   const tree = buildTree(result.xdocsFiles)

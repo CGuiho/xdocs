@@ -7,13 +7,12 @@ import { existsSync } from 'node:fs'
 import { mkdir, mkdtemp, rm, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
-import { parseArgs, stringFlag, booleanFlag, listFlag } from './flags.js'
 import { extractFrontmatter, readFrontmatterFromFile, validateMetadata } from './metadata.js'
 import { scanMetadata } from './meta.js'
 import { buildTree, renderTree, renderTreeMarkdown, validateTree } from './tree.js'
 import { normalizeConfig, defaultConfig, normalizeAgentSettings } from './config.js'
 import { isPlainMarkdownDocument, isXDocsDescriptorFile, isXDocsFile, scanProject } from './discovery.js'
-import { showCommandHelpDocs, showCommandHelpTree, showHelpDocs, showHelpTree } from './help.js'
+import { readPackageVersion, showCommandHelpDocs, showCommandHelpTree, showHelpDocs, showHelpTree } from './help.js'
 import { runCli } from './cli.js'
 import { detectNativeArch, readUpdateCache, resolveCachePath, upgradeSelf } from './self-management.js'
 import {
@@ -71,111 +70,6 @@ describe('invariant', () => {
     expect(() => invariant(undefined, 'fail')).toThrow(XDocsError)
     expect(() => invariant(0, 'fail')).toThrow(XDocsError)
     expect(() => invariant('', 'fail')).toThrow(XDocsError)
-  })
-})
-
-// ---------------------------------------------------------------------------
-// flags.ts
-// ---------------------------------------------------------------------------
-describe('parseArgs', () => {
-  test('parses a bare command', () => {
-    const result = parseArgs(['scan'])
-    expect(result.command).toBe('scan')
-    expect(result.positionals).toEqual([])
-    expect(result.flags).toEqual({})
-  })
-
-  test('parses a command with positional', () => {
-    const result = parseArgs(['generate', './src/auth'])
-    expect(result.command).toBe('generate')
-    expect(result.positionals).toEqual(['./src/auth'])
-  })
-
-  test('parses --flag=value style', () => {
-    const result = parseArgs(['prompt', '--name=write'])
-    expect(result.command).toBe('prompt')
-    expect(result.flags['name']).toBe('write')
-  })
-
-  test('parses --flag value style', () => {
-    const result = parseArgs(['prompt', '--name', 'write'])
-    expect(result.command).toBe('prompt')
-    expect(result.flags['name']).toBe('write')
-  })
-
-  test('parses boolean flags', () => {
-    const result = parseArgs(['scan', '--verbose'])
-    expect(result.flags['verbose']).toBe(true)
-  })
-
-  test('parses help tree and docs flags as booleans', () => {
-    const result = parseArgs(['scan', '--help-tree', '--help-docs'])
-    expect(result.flags['helpTree']).toBe(true)
-    expect(result.flags['helpDocs']).toBe(true)
-  })
-
-  test('parses upgrade --version as a value flag', () => {
-    const result = parseArgs(['upgrade', '--version', '0.5.0'])
-    expect(result.command).toBe('upgrade')
-    expect(result.flags['version']).toBe('0.5.0')
-  })
-
-  test('parses short flags -h and -v', () => {
-    expect(parseArgs(['-h']).flags['help']).toBe(true)
-    expect(parseArgs(['-v']).flags['version']).toBe(true)
-  })
-
-  test('parses list flags as comma-separated arrays', () => {
-    const result = parseArgs(['scan', '--extensions=.xdocs.md,.custom.md'])
-    expect(result.flags['extensions']).toEqual(['.xdocs.md', '.custom.md'])
-  })
-
-  test('returns undefined command when no args', () => {
-    const result = parseArgs([])
-    expect(result.command).toBeUndefined()
-  })
-
-  test('stops parsing after --', () => {
-    const result = parseArgs(['scan', '--', '--verbose', 'extra'])
-    expect(result.command).toBe('scan')
-    expect(result.positionals).toEqual(['--verbose', 'extra'])
-    expect(result.flags['verbose']).toBeUndefined()
-  })
-
-  test('throws on unknown short flag', () => {
-    expect(() => parseArgs(['-x'])).toThrow(XDocsError)
-  })
-
-  test('throws on missing value for value flag', () => {
-    expect(() => parseArgs(['prompt', '--name'])).toThrow(XDocsError)
-  })
-
-  test('normalizes kebab-case keys to camelCase', () => {
-    const result = parseArgs(['scan', '--some-flag=value'])
-    expect(result.flags['someFlag']).toBe('value')
-  })
-})
-
-describe('flag helpers', () => {
-  test('stringFlag returns string values', () => {
-    expect(stringFlag({ name: 'write' }, 'name')).toBe('write')
-  })
-
-  test('stringFlag returns undefined for non-string', () => {
-    expect(stringFlag({ verbose: true }, 'verbose')).toBeUndefined()
-    expect(stringFlag({}, 'missing')).toBeUndefined()
-  })
-
-  test('booleanFlag returns true/false', () => {
-    expect(booleanFlag({ verbose: true }, 'verbose')).toBe(true)
-    expect(booleanFlag({}, 'verbose')).toBe(false)
-    expect(booleanFlag({ verbose: 'yes' }, 'verbose')).toBe(false)
-  })
-
-  test('listFlag returns arrays', () => {
-    expect(listFlag({ ext: ['.md', '.txt'] }, 'ext')).toEqual(['.md', '.txt'])
-    expect(listFlag({ ext: 'single' }, 'ext')).toBeUndefined()
-    expect(listFlag({}, 'ext')).toBeUndefined()
   })
 })
 
@@ -248,16 +142,34 @@ describe('self management', () => {
   test('upgradeSelf dry-run selects the baseline x64 asset with an explicit self path', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'xdocs-upgrade-'))
     const previousSelfPath = process.env['XDOCS_SELF_PATH']
+    const originalStdoutWrite = process.stdout.write
     try {
       const executable = join(dir, process.platform === 'win32' ? 'xdocs.exe' : 'xdocs')
       await writeFile(executable, process.platform === 'win32' ? 'MZ' : '\x7fELF', 'binary')
       process.env['XDOCS_SELF_PATH'] = executable
+      const current = await upgradeSelf({ version: readPackageVersion(), arch: 'x64', cacheDir: dir, repo: 'CGuiho/xdocs' })
+      expect(current.upToDate).toBe(true)
+      expect(current.scheduled).toBe(false)
+      expect(current.asset).toBeUndefined()
+      expect(await readUpdateCache({ cacheDir: dir })).toBeNull()
+
+      const stdout: string[] = []
+      process.stdout.write = ((chunk: string | Uint8Array) => {
+        stdout.push(String(chunk))
+        return true
+      }) as typeof process.stdout.write
+      await runCli(['upgrade', '--version', readPackageVersion()])
+      expect(stdout.join('')).toContain('Already up to date.')
+      expect(stdout.join('')).not.toContain('Upgrade downloaded.')
+
       const result = await upgradeSelf({ version: '0.5.0', arch: 'x64', dryRun: true, repo: 'CGuiho/xdocs' })
 
+      expect(result.upToDate).toBe(false)
       expect(result.asset).toBe(process.platform === 'win32' ? 'xdocs-windows-x64-baseline.exe' : process.platform === 'darwin' ? 'xdocs-macos-x64-baseline' : 'xdocs-linux-x64-baseline')
       expect(result.url).toContain('%40guiho%2Fxdocs%400.5.0')
       expect(result.dryRun).toBe(true)
     } finally {
+      process.stdout.write = originalStdoutWrite
       if (previousSelfPath === undefined) {
         delete process.env['XDOCS_SELF_PATH']
       } else {
@@ -271,11 +183,13 @@ describe('self management', () => {
     const dir = await mkdtemp(join(tmpdir(), 'xdocs-cache-notice-'))
     const previousCacheDir = process.env['XDOCS_CACHE_DIR']
     const previousDisable = process.env['XDOCS_DISABLE_UPDATE_CHECK']
+    const previousAgentHome = process.env['XDOCS_AGENT_HOME']
     const originalStderrWrite = process.stderr.write
     const stderr: string[] = []
     try {
       process.env['XDOCS_CACHE_DIR'] = dir
       process.env['XDOCS_DISABLE_UPDATE_CHECK'] = '1'
+      process.env['XDOCS_AGENT_HOME'] = dir
       await writeFile(join(dir, 'update.json'), JSON.stringify({
         checkedAt: new Date().toISOString(),
         currentVersion: '0.0.0',
@@ -303,6 +217,11 @@ describe('self management', () => {
         delete process.env['XDOCS_DISABLE_UPDATE_CHECK']
       } else {
         process.env['XDOCS_DISABLE_UPDATE_CHECK'] = previousDisable
+      }
+      if (previousAgentHome === undefined) {
+        delete process.env['XDOCS_AGENT_HOME']
+      } else {
+        process.env['XDOCS_AGENT_HOME'] = previousAgentHome
       }
       await rm(dir, { recursive: true, force: true })
     }

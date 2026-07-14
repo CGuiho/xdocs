@@ -1,8 +1,8 @@
 ---
 name: guiho-s-xdocs
-version: 0.5.2
+version: 0.6.0-alpha.0
 metadata:
-  version: 0.5.2
+  version: 0.6.0-alpha.0
 purpose: Teach AI agents how to maintain xdocs descriptor files, companion Markdown documents, metadata, and tree integrity.
 description: Use this skill whenever the user works with xdocs (`@guiho/xdocs`) structured documentation, AND proactively whenever you create a new module or subdirectory or add/change/remove files in a directory of an xdocs project, so you create or update that directory's named `*.xdocs.md` descriptor as part of the change. This includes creating, updating, or regenerating `*.xdocs.md` descriptor files, companion Markdown documents, the root `XDOCS.md`, the project tree, metadata scans, context recommendations, doctor health checks, scanning documentation coverage, merging docs, or maintaining xdocs metadata and AGENTS.md guidance, even when the user only says "document this module", "update the docs", or "what does this folder do" without naming xdocs.
 created: 2026-07-06
@@ -41,7 +41,14 @@ Choose the installed native CLI first:
 
 When unsure, run a cheap availability check (`xdocs --help`) and then reuse the
 working command consistently. Run `xdocs --help`, `xdocs <command> --help`,
-`xdocs --help-tree`, or `xdocs <command> --help-docs` for command-specific
+`xdocs --help-tree`, or `xdocs <command> --help-docs` for command-specific help.
+
+The xdocs CLI uses one Citty command tree. Ordinary `-h`/`--help`, nested command
+routing, aliases, required values, and enum validation come from that tree;
+`--help-tree` and `--help-docs` are extended xdocs outputs. Invalid usage is
+reported with command-specific usage before descriptor scans or agent-file
+automation. Do not work around usage errors by falling back to handwritten flag
+parsing.
 
 xdocs ships as a native self-sufficient CLI. It can check for updates, print a
 cached upgrade notice, upgrade itself with `xdocs upgrade`, and remove its native

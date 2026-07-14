@@ -34,7 +34,8 @@
 - `xdocs agents install <local|global> [--tool <agents|claude|all>]` installs or refreshes the `guiho-s-xdocs` skill; `xdocs agents instructions` inserts/refreshes the xdocs section in `AGENTS.md`.
 - Skill install is standard-first: the default `agents` target is `AGENTS.md` + `.agents/skills` (local) / `~/.agents/skills` (global). The non-standard `claude` target (`.claude/skills`) is used only when `--tool` requests it or a `.claude`/`CLAUDE.md` is detected. Codex, Jules, and other AGENTS.md tools read the standard target.
 - A bare `xdocs` invocation and data commands (`scan`, `generate`, `merge`, `tree`, `list`, `meta`, `context`, `doctor`) run agent automation first: global skill refresh uses the standard `agents` target without config, and when an `xdocs.config.toml` is present, `[agents].auto_agents_md` keeps the AGENTS.md section fresh while `[agents].auto_skill_install` / `[agents].skill_tool` control global skill refresh from the bundled copy. Refresh removes legacy `guiho-as-xdocs` installs for that target.
-- Global flags: `--help`, `--version`, `--cwd <path>`, `--config <path>`, `--format <text|json|markdown>`, `--verbose`.
+- Citty owns CLI parsing, nested command routing, aliases, enum/required-value validation, and ordinary `--help` usage. `source/cli.ts` defines the single declarative command tree and adapts typed Citty values to focused command-handler inputs; do not reintroduce a handwritten parser or switch router.
+- Global flags: `--help`, `--help-tree`, `--help-docs`, `--version`, `--cwd <path>`, `--config <path>`, `--format <text|json|markdown>`, `--verbose`.
 
 ## Source Structure
 
@@ -44,7 +45,7 @@
 - `source/embedded-resources.ts` -- Bun text imports used only for native binary embedding
 - `scripts/xdocs-bin.ts` -- shipped Bun launcher used as the package `bin`; delegates to a native binary when present, falls back to source in checkouts, and installs the native binary on first run for published packages
 - `scripts/install-package.ts` -- package-manager install helper that downloads or copies the matching native binary into `vendor/`
-- `source/cli.ts` -- CLI argument parsing and command dispatch
+- `source/cli.ts` -- single declarative Citty command tree, library-safe `runCli(rawArgs)`, config-gated automation, extended-help routing, contextual usage errors, and process-facing error handling
 - `source/config.ts` -- TOML config loading, validation, and defaults
 - `source/context.ts` -- deterministic reading-set recommendation from xdocs metadata for `xdocs context`
 - `source/doctor.ts` -- CI-friendly xdocs health checks for descriptors, companion metadata, tree links, and documented files
@@ -53,8 +54,7 @@
 - `source/metadata.ts` -- YAML frontmatter parsing and validation
 - `source/tree.ts` -- tree assembly, integrity checks, and rendering
 - `source/prompts.ts` -- prompt loader (reads `.md` files from disk at runtime via `import.meta.url`)
-- `source/help.ts` -- help text and version display
-- `source/flags.ts` -- argument/flag parsing utilities
+- `source/help.ts` -- extended help-tree/Markdown help records, public help helpers, package-version reads, and version display; ordinary command usage comes from Citty
 - `source/errors.ts` -- XDocsError class and invariant helper
 - `source/types.ts` -- all TypeScript type definitions
 - `source/agents.ts` -- skill install (local/global, multi-tool), legacy skill-name removal, version/content refresh, AGENTS.md section, config-gated automation; reads `skills/guiho-s-xdocs/SKILL.md` from disk at runtime (`readFileSync` via `import.meta.url`)
@@ -71,7 +71,7 @@
 - Configuration lives in `xdocs.config.toml`. Sections: `extensions`, `ai`, `scan`, `project`, `agents`.
 - Agent automation (`[agents]`): `auto_agents_md` (keep the AGENTS.md section fresh), `auto_skill_install` (install or refresh the configured global skill from the bundled copy), and `skill_tool` (default install target: `agents` standard, or `claude`). All default on / `agents`.
 - AI mode (`ai.mode`): `"prompt"` (default, AI announces updates and waits) or `"auto"` (AI updates docs automatically).
-- Runtime parser dependencies: none. xdocs uses Bun-native `Bun.TOML.parse` and `Bun.YAML.parse`.
+- Runtime CLI dependency: `citty`. Descriptor/config content parsing remains dependency-free through Bun-native `Bun.TOML.parse` and `Bun.YAML.parse`.
 
 ## Gotchas
 

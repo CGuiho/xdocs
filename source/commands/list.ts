@@ -3,14 +3,18 @@
  */
 
 import { resolve, relative } from 'node:path'
-import type { XDocsCliOptions, XDocsParsedArgs } from '../types.js'
+import type { XDocsCliOptions } from '../types.js'
 import { loadConfigOrDefaults } from '../config.js'
 import { scanProject } from '../discovery.js'
 
+type XDocsListInput = {
+  targetPath?: string
+}
+
 /** Run the list command. */
-export const runList = async (options: XDocsCliOptions, parsed: XDocsParsedArgs): Promise<void> => {
+export const runList = async (options: XDocsCliOptions, input: XDocsListInput = {}): Promise<void> => {
   const config = await loadConfigOrDefaults(options)
-  const targetPath = parsed.positionals[0] ? resolve(options.cwd, parsed.positionals[0]) : options.cwd
+  const targetPath = input.targetPath ? resolve(options.cwd, input.targetPath) : options.cwd
 
   const result = await scanProject(config)
   const relevantFiles = result.xdocsFiles.filter(

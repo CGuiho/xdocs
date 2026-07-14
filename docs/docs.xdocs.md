@@ -4,6 +4,8 @@ description: Durable project documentation for xdocs behavior, design notes, and
 parent: xdocs-package
 children:
   - xdocs-decisions
+  - xdocs-plans
+  - xdocs-reviews
   - xdocs-todo
 files: {}
 documents:

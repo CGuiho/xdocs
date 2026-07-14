@@ -362,6 +362,8 @@ xdocs upgrade check
 xdocs upgrade list
 ```
 
+If the resolved target is already installed, xdocs reports `Already up to date.` without downloading or replacing the executable.
+
 #### `xdocs uninstall`
 
 Removes the installed native xdocs executable. On Windows, the removal is
@@ -386,6 +388,12 @@ All commands accept:
 | `--config <path>` | Path to `xdocs.config.toml`                  |
 | `--format <fmt>`  | Output format: `text`, `json`, or `markdown` |
 | `--verbose`       | Show detailed output                         |
+
+The command line is defined by one Citty command tree. Citty handles parsing,
+nested routing, aliases, required values, enum validation, and ordinary
+command-specific help. Invalid usage prints the relevant command usage without
+scanning or modifying a project. Extended `--help-tree` and `--help-docs`
+outputs remain available for agent and documentation workflows.
 
 ### Configuration (`xdocs.config.toml`)
 
@@ -449,6 +457,11 @@ A bare `xdocs` invocation and the normal data commands refresh the global skill 
 ## API Reference
 
 xdocs exposes a fully-typed TypeScript API for programmatic use.
+
+CLI parser internals are not part of that API. The former `parseArgs`,
+`stringFlag`, `booleanFlag`, `listFlag`, and `XDocsParsedArgs` exports were
+removed when the CLI migrated fully to Citty; use `runCli(rawArgs)` when a
+programmatic caller needs to invoke the CLI contract.
 
 ### Configuration
 

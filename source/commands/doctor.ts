@@ -2,19 +2,24 @@
  * @copyright Copyright (c) 2026 GUIHO Technologies as represented by Cristóvão GUIHO. All Rights Reserved.
  */
 
-import type { XDocsCliOptions, XDocsDoctorIssue, XDocsDoctorResult, XDocsParsedArgs } from '../types.js'
+import type { XDocsCliOptions, XDocsDoctorIssue, XDocsDoctorResult } from '../types.js'
 import { loadConfigOrDefaults } from '../config.js'
 import { XDocsError } from '../errors.js'
-import { booleanFlag } from '../flags.js'
 import { doctorProject } from '../doctor.js'
 
+type XDocsDoctorInput = {
+  targetPath?: string
+  includeDocuments?: boolean
+  warningsAsErrors?: boolean
+}
+
 /** Run the doctor command. */
-export const runDoctor = async (options: XDocsCliOptions, parsed: XDocsParsedArgs): Promise<void> => {
+export const runDoctor = async (options: XDocsCliOptions, input: XDocsDoctorInput = {}): Promise<void> => {
   const config = await loadConfigOrDefaults(options)
   const result = await doctorProject(config, {
-    targetPath: parsed.positionals[0],
-    includeDocuments: !booleanFlag(parsed.flags, 'no-documents'),
-    warningsAsErrors: booleanFlag(parsed.flags, 'warnings-as-errors'),
+    targetPath: input.targetPath,
+    includeDocuments: input.includeDocuments,
+    warningsAsErrors: input.warningsAsErrors,
   })
 
   if (options.format === 'json') {

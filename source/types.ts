@@ -236,13 +236,6 @@ export type XDocsTreeValidation = {
   errors: string[]
 }
 
-/** Parsed CLI arguments. */
-export type XDocsParsedArgs = {
-  command: string | undefined
-  positionals: string[]
-  flags: Record<string, string | boolean | string[]>
-}
-
 /** Options passed through the CLI to command handlers. */
 export type XDocsCliOptions = {
   cwd: string
@@ -321,11 +314,12 @@ export type XDocsNativeVariant = 'baseline' | 'default' | 'modern'
 export type XDocsUpgradeResult = {
   currentVersion: string
   targetVersion: string
-  asset: string
-  url: string
+  asset?: string
+  url?: string
   executablePath: string
   dryRun: boolean
   scheduled: boolean
+  upToDate: boolean
 }
 
 /** Result of a self-uninstall operation. */

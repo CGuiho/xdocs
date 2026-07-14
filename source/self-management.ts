@@ -114,7 +114,7 @@ async function scheduleBackgroundUpdateCheck(options: SelfManagementOptions = {}
   if (await isSourceCheckout()) return false
 
   try {
-    const proc = Bun.spawn([resolveExecutablePath(options), '--xdocs-update-check-worker'], {
+    const proc = Bun.spawn([resolveExecutablePath(options), 'xdocs-update-check-worker'], {
       stdin: 'ignore',
       stdout: 'ignore',
       stderr: 'ignore',
@@ -132,11 +132,14 @@ async function upgradeSelf(options: UpgradeOptions = {}): Promise<XDocsUpgradeRe
   await assertNativeInstall(executablePath, 'upgrade')
 
   const targetVersion = options.version ? normalizeVersion(options.version) : (await fetchLatestRelease(options.repo)).version
+  const currentVersion = readPackageVersion()
+  if (compareVersions(targetVersion, currentVersion) === 0) {
+    return { currentVersion, targetVersion, executablePath, dryRun: Boolean(options.dryRun), scheduled: false, upToDate: true }
+  }
   const platform = detectNativePlatform()
   const arch = detectNativeArch(options.arch)
   const variant = parseVariant(options.variant)
   const candidates = buildAssetCandidates(platform, arch, variant)
-  const currentVersion = readPackageVersion()
 
   let lastStatus = ''
   for (const asset of candidates) {
@@ -144,7 +147,7 @@ async function upgradeSelf(options: UpgradeOptions = {}): Promise<XDocsUpgradeRe
     const temporaryPath = join(dirname(executablePath), `.xdocs-upgrade-${process.pid}-${asset}`)
 
     if (options.dryRun) {
-      return { currentVersion, targetVersion, asset, url, executablePath, dryRun: true, scheduled: false }
+      return { currentVersion, targetVersion, asset, url, executablePath, dryRun: true, scheduled: false, upToDate: false }
     }
 
     const response = await fetch(url)
@@ -170,7 +173,7 @@ async function upgradeSelf(options: UpgradeOptions = {}): Promise<XDocsUpgradeRe
         releaseUrl: `https://github.com/${options.repo ?? process.env['XDOCS_REPO'] ?? defaultRepo}/releases/tag/${encodeURIComponent(`@guiho/xdocs@${targetVersion}`)}`,
       }, options)
       await scheduleWindowsReplacement(temporaryPath, executablePath)
-      return { currentVersion, targetVersion, asset, url, executablePath, dryRun: false, scheduled: true }
+      return { currentVersion, targetVersion, asset, url, executablePath, dryRun: false, scheduled: true, upToDate: false }
     }
 
     await chmod(temporaryPath, 0o755)
@@ -182,7 +185,7 @@ async function upgradeSelf(options: UpgradeOptions = {}): Promise<XDocsUpgradeRe
       updateAvailable: false,
       releaseUrl: `https://github.com/${options.repo ?? process.env['XDOCS_REPO'] ?? defaultRepo}/releases/tag/${encodeURIComponent(`@guiho/xdocs@${targetVersion}`)}`,
     }, options)
-    return { currentVersion, targetVersion, asset, url, executablePath, dryRun: false, scheduled: false }
+    return { currentVersion, targetVersion, asset, url, executablePath, dryRun: false, scheduled: false, upToDate: false }
   }
 
   throw new XDocsError(`No compatible xdocs binary found for ${platform}/${arch}. Last status: ${lastStatus || 'unknown'}`)

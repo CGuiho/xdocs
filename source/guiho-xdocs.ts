@@ -33,7 +33,6 @@ export type {
   XDocsMetaScanResult,
   XDocsMarkdownDocument,
   XDocsMetadata,
-  XDocsParsedArgs,
   XDocsPrompt,
   XDocsPromptName,
   XDocsRawConfig,
@@ -46,9 +45,6 @@ export type {
   XDocsUpdateCache,
   XDocsUpgradeResult,
 } from './types.js'
-
-// Flags
-export { parseArgs, stringFlag, booleanFlag, listFlag } from './flags.js'
 
 // Config
 export {

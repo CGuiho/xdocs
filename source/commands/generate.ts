@@ -5,17 +5,21 @@
 import { readdir } from 'node:fs/promises'
 import { relative, resolve } from 'node:path'
 import { writeFile } from 'node:fs/promises'
-import type { XDocsCliOptions, XDocsFile, XDocsParsedArgs } from '../types.js'
+import type { XDocsCliOptions, XDocsFile } from '../types.js'
 import { loadConfigOrDefaults } from '../config.js'
 import { scanProject } from '../discovery.js'
 import { buildTree, renderTree } from '../tree.js'
-import { stringFlag } from '../flags.js'
+
+type XDocsGenerateInput = {
+  targetPath?: string
+  outputPath?: string
+}
 
 /** Run the generate command. */
-export const runGenerate = async (options: XDocsCliOptions, parsed: XDocsParsedArgs): Promise<void> => {
+export const runGenerate = async (options: XDocsCliOptions, input: XDocsGenerateInput = {}): Promise<void> => {
   const config = await loadConfigOrDefaults(options)
-  const targetPath = parsed.positionals[0] ? resolve(options.cwd, parsed.positionals[0]) : options.cwd
-  const outputPath = stringFlag(parsed.flags, 'output')
+  const targetPath = input.targetPath ? resolve(options.cwd, input.targetPath) : options.cwd
+  const outputPath = input.outputPath
 
   const result = await scanProject(config)
 

@@ -2,14 +2,17 @@
  * @copyright Copyright (c) 2026 GUIHO Technologies as represented by Cristóvão GUIHO. All Rights Reserved.
  */
 
-import type { XDocsCliOptions, XDocsParsedArgs } from '../types.js'
+import type { XDocsCliOptions } from '../types.js'
 import { XDocsError } from '../errors.js'
-import { stringFlag } from '../flags.js'
 import { getPrompt, getPromptNames } from '../prompts.js'
 
+type XDocsPromptInput = {
+  name?: string
+}
+
 /** Run the prompt command. */
-export const runPrompt = async (_options: XDocsCliOptions, parsed: XDocsParsedArgs): Promise<void> => {
-  const name = stringFlag(parsed.flags, 'name')
+export const runPrompt = async (_options: XDocsCliOptions, input: XDocsPromptInput): Promise<void> => {
+  const name = input.name
   const available = getPromptNames().join(', ')
 
   if (!name) {

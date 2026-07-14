@@ -1,4 +1,4 @@
-﻿Copyright (c) 2026 GUIHO Technologies as represented by CristÃ³vÃ£o GUIHO
+﻿Copyright (c) 2026 GUIHO Technologies as represented by Cristóvão GUIHO
 All Rights Reserved.
 
 # GUIHO XDocs TODO List
@@ -18,7 +18,7 @@ All Rights Reserved.
 | in progress | 0 |
 | testing | 0 |
 | stopped | 0 |
-| completed | 0 |
+| completed | 1 |
 
 ## Tasks
 
@@ -29,3 +29,15 @@ All Rights Reserved.
 - Updated: `2026-07-09T19:25:00Z`
 - Outcome: Add consistent JSON output support for remaining xdocs commands and help/self-management flows where useful.
 - Spec: [docs/todo/improve-json-output-coverage.md](docs/todo/improve-json-output-coverage.md)
+
+### 2. Migrate CLI Parsing and Routing to Citty
+
+- Status: completed
+- Created: `2026-07-14`
+- Updated: `2026-07-14T22:43:55+02:00`
+- Outcome: Replace xdocs handwritten argument parsing and manual command routing with Citty while preserving command behavior, structured output, agent automation, native distribution, and library compatibility.
+- Spec: [docs/todo/citty-cli-migration.md](docs/todo/citty-cli-migration.md)
+- Related files:
+  - [docs/plans/citty-cli-migration.md](docs/plans/citty-cli-migration.md) - Approved executable migration plan.
+  - [docs/reviews/plans/citty-cli-migration-review.md](docs/reviews/plans/citty-cli-migration-review.md) - Plan readiness review.
+- Implementation: [docs/todo/citty-cli-migration-implementation.md](docs/todo/citty-cli-migration-implementation.md)

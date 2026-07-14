@@ -1,5 +1,11 @@
 # GUIHO XDocs Changelog
 
+## 0.6.0-alpha.0
+
+- Replace handwritten CLI parsing and manual switch routing with one declarative Citty command tree covering root commands, nested agent/self-management commands, aliases, required values, enum validation, default routes, hidden worker execution, and ordinary command usage.
+- Keep `runCli(rawArgs)` library-safe through Citty's `parseArgs`, `runCommand`, and `renderUsage` APIs while preserving command-specific extended help, agent-automation boundaries, structured outputs, package launcher behavior, and native binaries.
+- Remove the public `parseArgs`, `stringFlag`, `booleanFlag`, `listFlag`, and `XDocsParsedArgs` parser-internal API; command handlers now accept focused inputs independent of Citty.
+
 ## 0.5.2
 
 - Render `xdocs tree` text output with pipe-based branch scope markers (`|-` and `|  `) so nested module boundaries are visually clearer while preserving Markdown and JSON output formats.
@@ -8,8 +14,6 @@
 - Add `xdocs context <query>` to recommend a minimal AI reading set from descriptor, file, and companion-document metadata.
 - Add `xdocs doctor [path]` for CI-friendly xdocs health checks covering descriptor validity, companion-document metadata, tree integrity, and documented file existence.
 - Add `metadata.version` to the bundled `guiho-s-xdocs` skill frontmatter and document that skill versions stay aligned with the package version during release preparation.
-
-## Unreleased
 
 ## 0.5.1
 

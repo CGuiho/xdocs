@@ -2,14 +2,13 @@
  * @copyright Copyright (c) 2026 GUIHO Technologies as represented by Cristóvão GUIHO. All Rights Reserved.
  */
 
-import type { XDocsCliOptions, XDocsParsedArgs } from '../types.js'
-import { booleanFlag } from '../flags.js'
+import type { XDocsCliOptions } from '../types.js'
 import { uninstallSelf } from '../self-management.js'
 
 export { runUninstall }
 
-async function runUninstall(options: XDocsCliOptions, parsed: XDocsParsedArgs): Promise<void> {
-  const result = await uninstallSelf({ dryRun: booleanFlag(parsed.flags, 'dryRun') })
+async function runUninstall(options: XDocsCliOptions, input: { dryRun?: boolean } = {}): Promise<void> {
+  const result = await uninstallSelf({ dryRun: input.dryRun })
 
   if (options.format === 'json') {
     process.stdout.write(JSON.stringify(result, null, 2) + '\n')

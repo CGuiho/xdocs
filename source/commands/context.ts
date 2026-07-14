@@ -2,26 +2,33 @@
  * @copyright Copyright (c) 2026 GUIHO Technologies as represented by Cristóvão GUIHO. All Rights Reserved.
  */
 
-import type { XDocsCliOptions, XDocsContextEntry, XDocsContextResult, XDocsParsedArgs } from '../types.js'
+import type { XDocsCliOptions, XDocsContextEntry, XDocsContextResult } from '../types.js'
 import { loadConfigOrDefaults } from '../config.js'
-import { XDocsError } from '../errors.js'
-import { booleanFlag, stringFlag } from '../flags.js'
 import { findContext } from '../context.js'
 
-/** Run the context command. */
-export const runContext = async (options: XDocsCliOptions, parsed: XDocsParsedArgs): Promise<void> => {
-  const query = parsed.positionals[0]
-  if (!query) throw new XDocsError('xdocs context requires a query. Example: xdocs context "auth sessions"')
+type XDocsContextInput = {
+  query: string
+  targetPath?: string
+  includeDocuments?: boolean
+  includeFiles?: boolean
+  limit?: number
+  owner?: string
+  tag?: string
+  keyword?: string
+  explain?: boolean
+}
 
+/** Run the context command. */
+export const runContext = async (options: XDocsCliOptions, input: XDocsContextInput): Promise<void> => {
   const config = await loadConfigOrDefaults(options)
-  const result = await findContext(config, query, {
-    targetPath: parsed.positionals[1],
-    includeDocuments: booleanFlag(parsed.flags, 'documents'),
-    includeFiles: booleanFlag(parsed.flags, 'files'),
-    limit: parseLimit(stringFlag(parsed.flags, 'limit')),
-    owner: stringFlag(parsed.flags, 'owner'),
-    tag: stringFlag(parsed.flags, 'tag'),
-    keyword: stringFlag(parsed.flags, 'keyword'),
+  const result = await findContext(config, input.query, {
+    targetPath: input.targetPath,
+    includeDocuments: input.includeDocuments,
+    includeFiles: input.includeFiles,
+    limit: input.limit,
+    owner: input.owner,
+    tag: input.tag,
+    keyword: input.keyword,
   })
 
   if (options.format === 'json') {
@@ -30,18 +37,11 @@ export const runContext = async (options: XDocsCliOptions, parsed: XDocsParsedAr
   }
 
   if (options.format === 'markdown') {
-    process.stdout.write(renderContextMarkdown(result, booleanFlag(parsed.flags, 'explain')))
+    process.stdout.write(renderContextMarkdown(result, Boolean(input.explain)))
     return
   }
 
-  process.stdout.write(renderContextText(result, booleanFlag(parsed.flags, 'explain')))
-}
-
-const parseLimit = (value: string | undefined): number | undefined => {
-  if (!value) return undefined
-  const parsed = Number.parseInt(value, 10)
-  if (!Number.isFinite(parsed) || parsed <= 0) throw new XDocsError(`Invalid --limit value: "${value}". Expected a positive integer.`)
-  return parsed
+  process.stdout.write(renderContextText(result, Boolean(input.explain)))
 }
 
 const renderContextText = (result: XDocsContextResult, explain: boolean): string => {

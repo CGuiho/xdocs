@@ -5,7 +5,7 @@ parent: xdocs-skills
 children: []
 files: {}
 documents:
-  SKILL.md: Versioned xdocs workflow skill installed into .agents/skills or .claude/skills; defines descriptor, companion-document metadata, native CLI usage, metadata-only scans, context recommendations, doctor checks, scan, tree, and maintenance rules.
+  SKILL.md: Versioned xdocs workflow skill installed into .agents/skills or .claude/skills; defines descriptor maintenance, Citty-backed CLI usage/error expectations, metadata-only scans, context recommendations, doctor checks, and agent workflows.
 tags:
   - skills
   - agents
@@ -18,6 +18,7 @@ keywords:
   - doctor checks
   - agent workflow
   - native cli
+  - Citty
 flags: []
 status: stable
 ---
@@ -25,6 +26,8 @@ status: stable
 The `guiho-s-xdocs/` directory contains the bundled agent skill shipped with the
 package. The installer treats `SKILL.md` as the source of truth and refreshes
 installed copies when the bundled version or content changes.
+The skill describes ordinary Citty-generated help and contextual usage errors,
+while retaining extended `--help-tree` and `--help-docs` workflows.
 The skill also documents the standard frontmatter fields expected on ordinary
 companion Markdown documents: `name`, `purpose`, `description`, `created`,
 `flags`, `tags`, `keywords`, and `owner`. It includes both the legacy top-level

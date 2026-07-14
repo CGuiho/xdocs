@@ -2,12 +2,12 @@
  * @copyright Copyright (c) 2026 GUIHO Technologies as represented by Cristóvão GUIHO. All Rights Reserved.
  */
 
-import type { XDocsCliOptions, XDocsParsedArgs } from '../types.js'
+import type { XDocsCliOptions } from '../types.js'
 import { loadConfigOrDefaults } from '../config.js'
 import { scanProject } from '../discovery.js'
 
 /** Run the scan command. */
-export const runScan = async (options: XDocsCliOptions, _parsed: XDocsParsedArgs): Promise<void> => {
+export const runScan = async (options: XDocsCliOptions): Promise<void> => {
   const config = await loadConfigOrDefaults(options)
   const result = await scanProject(config)
 

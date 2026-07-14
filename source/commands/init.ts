@@ -5,10 +5,14 @@
 import { existsSync } from 'node:fs'
 import { writeFile } from 'node:fs/promises'
 import { basename, relative, resolve } from 'node:path'
-import type { XDocsCliOptions, XDocsParsedArgs } from '../types.js'
+import type { XDocsCliOptions } from '../types.js'
 import { writeDefaultConfig } from '../config.js'
-import { booleanFlag, stringFlag } from '../flags.js'
 import { ensureAgentsInstructions, findAgentsFile, installSkill, resolveInstallTools, xdocsSkillName } from '../agents.js'
+
+type XDocsInitInput = {
+  global?: boolean
+  tool?: string
+}
 
 /**
  * Build the root XDOCS.md content. There is exactly one `XDOCS.md` per
@@ -31,7 +35,7 @@ that is the top of that package's documentation tree.
 `
 
 /** Run the init command. */
-export const runInit = async (options: XDocsCliOptions, parsed: XDocsParsedArgs): Promise<void> => {
+export const runInit = async (options: XDocsCliOptions, input: XDocsInitInput = {}): Promise<void> => {
   const cwd = options.cwd
 
   // 1. Create xdocs.config.toml
@@ -65,8 +69,8 @@ export const runInit = async (options: XDocsCliOptions, parsed: XDocsParsedArgs)
 
   // 4. Install the guiho-s-xdocs agent skill (standard by default; non-standard
   //    tools only when explicitly requested via --tool or detected in the project)
-  const scope = booleanFlag(parsed.flags, 'global') ? 'global' : 'local'
-  const tools = resolveInstallTools(cwd, stringFlag(parsed.flags, 'tool'))
+  const scope = input.global ? 'global' : 'local'
+  const tools = resolveInstallTools(cwd, input.tool)
   for (const tool of tools) {
     const result = await installSkill(tool, scope, { cwd })
     const where = scope === 'local' ? relative(cwd, result.path) || result.path : result.path

@@ -213,6 +213,21 @@ This approach means:
 
 ### 7.2 Commands
 
+The CLI uses one declarative **Citty** command tree in `source/cli.ts`. Citty is
+the only argument parser and command router: it owns nested commands, aliases,
+required values and positionals, enum validation, and ordinary command usage.
+`runCli(rawArgs)` uses Citty's library-safe `parseArgs`, `runCommand`, and
+`renderUsage` APIs rather than `runMain`, so library callers and tests do not
+terminate the process. Executable entrypoints add process-facing error handling.
+
+Command handlers accept focused domain inputs and do not depend on Citty types.
+The `agents install` / `agents instructions` and `upgrade` / `upgrade check` /
+`upgrade list` routes are nested Citty commands. Bare invocation and direct
+upgrade use hidden default commands, and the background update worker is a hidden
+Citty route. Contextual usage failures occur before project scanning or agent
+automation. Extended `--help-tree` and `--help-docs` output remains in
+`source/help.ts`; ordinary `-h`/`--help` is generated from the Citty tree.
+
 All commands accept flags to modify their behavior.
 
 #### `xdocs init`

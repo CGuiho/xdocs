@@ -4,16 +4,20 @@
 
 import { resolve } from 'node:path'
 import { writeFile } from 'node:fs/promises'
-import type { XDocsCliOptions, XDocsParsedArgs } from '../types.js'
+import type { XDocsCliOptions } from '../types.js'
 import { loadConfigOrDefaults } from '../config.js'
 import { scanProject } from '../discovery.js'
-import { stringFlag } from '../flags.js'
+
+type XDocsMergeInput = {
+  targetPath?: string
+  outputPath?: string
+}
 
 /** Run the merge command. */
-export const runMerge = async (options: XDocsCliOptions, parsed: XDocsParsedArgs): Promise<void> => {
+export const runMerge = async (options: XDocsCliOptions, input: XDocsMergeInput = {}): Promise<void> => {
   const config = await loadConfigOrDefaults(options)
-  const targetPath = parsed.positionals[0] ? resolve(options.cwd, parsed.positionals[0]) : options.cwd
-  const outputPath = stringFlag(parsed.flags, 'output')
+  const targetPath = input.targetPath ? resolve(options.cwd, input.targetPath) : options.cwd
+  const outputPath = input.outputPath
 
   const result = await scanProject(config)
   const relevantFiles = result.xdocsFiles.filter(
