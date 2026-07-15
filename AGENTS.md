@@ -1,4 +1,10 @@
-﻿# Repository Notes
+# Repository Notes
+
+## Agent
+
+Always read this: /c/GUIHO/superiority/agents/guiho-a-0001-swe.AGENTS.md (C:\GUIHO\superiority\agents\guiho-a-0001-swe.AGENTS.md)
+Stop if you can not find it.
+
 
 - `xdocs` is almost always written lowercase (CLI, code, text). Only capitalize as `XDocs` when used in a title or heading.
 - The real package lives at the repository root; run package commands from `C:\GUIHO\xdocs`.
