@@ -1,6 +1,13 @@
 ---
 name: agents
+purpose: Guide an agent through applying the canonical managed xdocs instruction block.
 description: Update AGENTS.md with xdocs instructions for AI agents.
+created: 2026-06-02
+owner: xdocs-prompts
+flags: []
+tags:
+  - prompt
+  - agent-instructions
 keywords:
   - AGENTS.md
   - agent instructions
