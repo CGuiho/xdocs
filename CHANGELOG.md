@@ -18,6 +18,15 @@ keywords:
 
 ## Unreleased
 
+## 0.6.1 - 2026-07-19
+
+- Make root `-h`, `--help`, `--help-tree`, `--help-tree-depth`, and
+  `--help-docs` render the true public Citty catalog instead of a synthetic
+  startup command, reject the unintended `xdocs home` route, and include
+  examples generated from live command metadata.
+- Correct Darwin Bash PATH setup so installations use `.bash_profile` when
+  that login profile exists.
+
 ## 0.6.0 - 2026-07-18
 
 - Break xdocs onto the complete GUIHO RFC 0034 platform contract: Bun-only core, strict ESM TypeScript, raw Citty, TypeBox, YAML configuration, exact startup/cache behavior, and stable exit categories.
