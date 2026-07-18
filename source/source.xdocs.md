@@ -7,8 +7,8 @@ children:
   - xdocs-runtime
 files:
   agents.ts: Explicit both-target skill operations and exact idempotent AGENTS/CLAUDE instruction management.
-  cli.ts: Single raw Citty catalog, startup lifecycle, Developer Context help routing, configuration report, and error handling.
-  cli.spec.ts: RFC command catalog, startup, help, YAML, agent, prompt, and domain CLI tests.
+  cli.ts: Single raw Citty catalog whose root action owns no-argument startup while every root help mode renders the true public command tree.
+  cli.spec.ts: RFC command catalog, subprocess root-help, startup, YAML, agent, prompt, upgrade-routing, and domain CLI regressions.
   config.ts: YAML precedence, Bun parsing, TypeBox decoding, defaults, and writing.
   context.ts: Deterministic minimal reading-set recommendation.
   context-doctor.spec.ts: Context and doctor domain regression tests.
@@ -18,9 +18,9 @@ files:
   errors.ts: XDocsError with stable exit code and invariant helper.
   guiho-xdocs-bin.ts: Bun source CLI entrypoint.
   guiho-xdocs-native-bin.ts: Native entrypoint that registers embedded resources.
-  guiho-xdocs.spec.ts: TypeBox configuration/metadata and agent-resource tests.
+  guiho-xdocs.spec.ts: TypeBox configuration/metadata, exact YAML precedence, and agent-resource tests.
   guiho-xdocs.ts: Public Bun-first library export surface.
-  help.ts: Unicode tree and Markdown documentation generated from live Citty definitions.
+  help.ts: Unicode tree and Markdown documentation generated from live Citty definitions while excluding hidden internal commands.
   meta.ts: Metadata-only scanning and filters.
   metadata.ts: YAML frontmatter parsing and TypeBox descriptor validation.
   npm-bootstrap.spec.ts: Node-only bootstrap smoke tests without Bun in PATH.
