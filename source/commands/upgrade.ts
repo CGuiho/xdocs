@@ -17,6 +17,12 @@ type XDocsUpgradeInput = {
   dryRun?: boolean
 }
 
+type XDocsUpgradeListInput = {
+  page?: number
+  perPage?: number
+  preReleases?: boolean
+}
+
 async function runUpgradeCheck(options: XDocsCliOptions): Promise<void> {
   const result = await checkForLatestVersion()
   if (options.format === 'json') {
@@ -24,16 +30,20 @@ async function runUpgradeCheck(options: XDocsCliOptions): Promise<void> {
     return
   }
 
-  process.stdout.write(`current: ${result.currentVersion}\n`)
+  process.stdout.write(`current: ${readPackageVersion()}\n`)
   process.stdout.write(`latest: ${result.latestVersion}\n`)
-  process.stdout.write(`update_available: ${result.updateAvailable}\n`)
-  if (result.updateAvailable) process.stdout.write('Run: xdocs upgrade\n')
+  process.stdout.write(`update_available: ${result.newVersionAvailable}\n`)
+  if (result.newVersionAvailable) process.stdout.write('Run: xdocs upgrade\n')
 }
 
-async function runUpgradeList(options: XDocsCliOptions): Promise<void> {
+async function runUpgradeList(options: XDocsCliOptions, input: XDocsUpgradeListInput = {}): Promise<void> {
   const platform = detectNativePlatform()
   const arch = detectNativeArch()
-  const releases = await fetchReleaseCatalog({ platform, arch })
+  const allReleases = await fetchReleaseCatalog({ platform, arch })
+  const filtered = input.preReleases ? allReleases : allReleases.filter((release) => !release.prerelease)
+  const page = input.page ?? 1
+  const perPage = input.perPage ?? 30
+  const releases = filtered.slice((page - 1) * perPage, page * perPage)
   const envelope = buildUpgradeListEnvelope(readPackageVersion(), releases)
   if (options.format === 'json') {
     process.stdout.write(JSON.stringify(envelope, null, 2) + '\n')
@@ -79,7 +89,7 @@ async function runUpgrade(options: XDocsCliOptions, input: XDocsUpgradeInput = {
   }
 
   if (result.outcome === 'failed' || result.outcome === 'rolled-back') {
-    throw new XDocsError(result.error?.message ?? 'xdocs upgrade failed.')
+    throw new XDocsError(result.error?.message ?? 'xdocs upgrade failed.', result.plan ? 5 : 4)
   }
 }
 
