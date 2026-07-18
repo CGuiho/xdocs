@@ -2,7 +2,8 @@
 name: Improve JSON Output Coverage
 purpose: Define the follow-up work for consistent JSON output across xdocs commands.
 description: Captures the requested future task to expand machine-readable JSON output beyond the current command coverage.
-created: 2026-07-09T19:25:00Z
+created: 2026-07-09
+owner: xdocs-todo
 flags:
   - todo
 tags:
