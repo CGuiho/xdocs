@@ -404,23 +404,8 @@ xdocs agents instructions             # insert/refresh the AGENTS.md section
 
 When refreshing the `AGENTS.md` section, XDocs compares the existing section to
 the canonical section while ignoring blank-only lines and trailing whitespace.
-This means Markdown formatters that add blank lines around the section markers do
-not cause repeated rewrites. Real text changes are still replaced with the
-canonical section.
-
-Flags: `--tool <agents|claude|all>`, `--format <text|json>`, `--cwd`.
-
-When `--tool` is omitted, XDocs installs the standard target and adds the Claude target only when a `.claude/` directory or `CLAUDE.md` is detected in the project. Global skill installation uses the user home directory; tests and automation can override that home root with `XDOCS_AGENT_HOME`.
-
-### `xdocs upgrade`
-
-Upgrades the installed native xdocs binary from GitHub Releases. It chooses the
-current OS and architecture automatically. On x64, it prefers the `baseline`
-variant first, then falls back to the default and `modern` assets. Source
-checkouts intentionally refuse self-upgrade so development commands do not
-replace Bun or a source launcher by mistake.
-
-When the resolved target matches the installed version, xdocs prints `Already up to date.` and exits successfully without downloading a binary, writing update cache state, or scheduling executable replacement. JSON output reports `upToDate: true`.
+This means Markdown for…655 tokens truncated…f using a
+mutable `latest` target.
 
 ```bash
 xdocs upgrade
@@ -433,9 +418,9 @@ xdocs upgrade list
 
 - `xdocs upgrade`: Download and replace the current installed native binary.
 - `xdocs upgrade check`: Fetch latest release metadata and report whether a newer version exists.
-- `xdocs upgrade list`: List available GitHub Release versions.
+- `xdocs upgrade list`: Follow every GitHub Releases page and list all valid semantic versions newest first with stable/alpha/beta/RC/other channels, publication dates, assets, current, and latest-stable markers.
 
-Flags: `--version <version>`, `--arch <x64|arm64>`, `--variant <baseline|default|modern>`, `--dry-run`, `--format <text|json>`.
+Flags: `--version <version>`, `--arch <x64|arm64>`, `--variant <baseline|default|modern>`, `--dry-run`, `--format <text|json|markdown>`.
 
 ### `xdocs uninstall`
 
@@ -630,6 +615,8 @@ The API uses the same configuration discovery and validation as the CLI.
 - `source/embedded-resources.ts`: prompt, skill, and package metadata text imports used only for native binary embedding.
 - `source/cli.ts`: single declarative Citty command tree, library-safe raw-argument execution, config-gated automation, extended-help routing, contextual usage errors, and process-facing error handling.
 - `source/self-management.ts`: background update checks, update cache, native binary upgrade, and uninstall helpers.
+- `source/upgrade-catalog.ts`: complete paginated release discovery, strict SemVer ordering/channel classification, compatible assets, list envelopes, and exact recovery commands.
+- `source/upgrade-transaction.ts`: lock/journal ownership, native candidate preflight, immediate canonical swap, absolute-path verification, rollback, post-verification cache commit, and backup cleanup.
 - `source/config.ts`: TOML discovery, schema validation, defaulting, default config generation, and agent-settings normalization.
 - `source/context.ts`: deterministic reading-set recommendation from xdocs metadata for `xdocs context`.
 - `source/doctor.ts`: health checks for descriptor validity, companion-document metadata, tree integrity, and documented file existence.
