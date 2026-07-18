@@ -2,9 +2,8 @@
  * @copyright Copyright (c) 2026 GUIHO Technologies as represented by Cristóvão GUIHO. All Rights Reserved.
  */
 
-import { readdir } from 'node:fs/promises'
-import { relative, resolve } from 'node:path'
-import { writeFile } from 'node:fs/promises'
+import { readDirectory as readdir, writeText as writeFile } from '../runtime/fs.js'
+import { relativePath as relative, resolvePath as resolve } from '../runtime/path.js'
 import type { XDocsCliOptions, XDocsFile } from '../types.js'
 import { loadConfigOrDefaults } from '../config.js'
 import { scanProject } from '../discovery.js'
@@ -112,7 +111,7 @@ const generateModuleDoc = async (moduleName: string, xdocsFiles: XDocsFile[], _c
   let dirEntries: string[] = []
   try {
     const entries = await readdir(targetPath)
-    dirEntries = entries.filter((e) => !e.startsWith('.'))
+    dirEntries = entries.map((entry) => entry.name).filter((name) => !name.startsWith('.'))
   } catch {
     // Directory might not exist
   }
