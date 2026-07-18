@@ -3,6 +3,7 @@ name: xdocs RFC 0034 CLI Compliance Migration Validation
 purpose: Record reproducible evidence for the completed xdocs breaking migration.
 description: Commands, results, skipped remote operations, residual risks, and readiness verdict.
 created: 2026-07-18
+updated: 2026-07-19
 owner: xdocs-validation
 flags:
   - passed
@@ -20,15 +21,16 @@ keywords:
 
 ## Summary
 
-All local completion-gate checks passed. The implementation is ready for
-Mirror-managed versioning and push.
+All local completion-gate checks passed after the independent root-help and
+Darwin installer correction. The implementation is ready for Mirror-managed
+`0.6.1` patch versioning and push.
 
 ## Results
 
 | Check | Result |
 | --- | --- |
 | `bun run typecheck` | Passed |
-| `bun test` | Passed, 47 tests |
+| `bun test` | Passed, 50 tests |
 | `bun run build` | Passed |
 | `bun run bundle` | Passed |
 | `bun run binary` | Passed |
@@ -36,11 +38,14 @@ Mirror-managed versioning and push.
 | Compiled banner/version/prompt/help/config smoke | Passed |
 | Compiled latest/current-version upgrade dry-runs | Passed; nested `--version` routes to `upgrade` |
 | Compiled cached-notice-before-banner ordering | Passed |
+| Root usage/tree/depth/Markdown catalog and `home` rejection | Passed in subprocess tests and compiled live smoke |
+| Explicit/project/global YAML precedence | Passed |
 | Node bootstrap without Bun in PATH | Passed |
 | Running Windows executable replacement | Passed |
 | Prohibited core Node imports | Passed, zero |
 | Exact release asset assertion | Passed |
 | Installer regression/syntax | Passed |
+| Darwin Bash login-profile selection | Passed |
 | Repository-wide strict metadata/tree/doctor | Passed |
 | `git diff --check` | Passed |
 
@@ -70,4 +75,4 @@ native binaries, and workflow exact-set checks cover the implementation paths.
 
 ## Readiness
 
-Ready for Mirror-managed versioning, per-file commits, and push.
+Ready for Mirror-managed `0.6.1` versioning, per-file commits, and push.
