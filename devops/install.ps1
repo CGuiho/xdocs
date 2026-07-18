@@ -239,7 +239,12 @@ $backupFile = Join-Path $InstallDir ".xdocs-backup-$transactionId.exe"
 
 foreach ($asset in $assetCandidates) {
   $url = Get-DownloadUrl -Asset $asset
-  Write-Host "  Trying $url"
+  Write-Host 'Initiating GUIHO CLI Upgrade / Installation Sequence...'
+  Write-Host "Target Version: v$(Get-NormalizedVersion -Value $Version)"
+  Write-Host "Architecture:   $detectedArch"
+  Write-Host "Variant:        $variant"
+  Write-Host "Source URL:     $url"
+  Write-Host "Downloading native binary with progress..."
   try {
     Invoke-WebRequest -Uri $url -OutFile $temporaryFile -UseBasicParsing -ErrorAction Stop
     Unblock-File -LiteralPath $temporaryFile -ErrorAction SilentlyContinue
@@ -280,6 +285,35 @@ foreach ($asset in $assetCandidates) {
     }
     Write-Host "Installed xdocs to $destination"
 
+    $skillUrl = Get-DownloadUrl -Asset 'guiho-s-xdocs'
+    $promptUrl = Get-DownloadUrl -Asset 'guiho-i-xdocs'
+    $skillTemp = Join-Path $InstallDir ".guiho-s-xdocs-$transactionId"
+    $promptTemp = Join-Path $InstallDir ".guiho-i-xdocs-$transactionId"
+    Write-Host "Downloading skill asset: $skillUrl"
+    Invoke-WebRequest -Uri $skillUrl -OutFile $skillTemp -UseBasicParsing -ErrorAction Stop
+    Write-Host "Downloading instruction/prompt asset: $promptUrl"
+    Invoke-WebRequest -Uri $promptUrl -OutFile $promptTemp -UseBasicParsing -ErrorAction Stop
+    if ((Get-Item -LiteralPath $skillTemp).Length -eq 0 -or (Get-Item -LiteralPath $promptTemp).Length -eq 0) {
+      throw 'Downloaded agent assets were empty.'
+    }
+    $agentSkill = Join-Path $HOME '.agents\skills\guiho-s-xdocs'
+    $claudeSkill = Join-Path $HOME '.claude\skills\guiho-s-xdocs'
+    foreach ($skillDestination in @($agentSkill, $claudeSkill)) {
+      New-Item -ItemType Directory -Force -Path $skillDestination | Out-Null
+      Copy-Item -LiteralPath $skillTemp -Destination (Join-Path $skillDestination 'SKILL.md') -Force
+      Write-Host "Installed skill: $skillDestination"
+    }
+    Remove-Item -LiteralPath $skillTemp, $promptTemp -Force
+    foreach ($instructionFile in @('AGENTS.md', 'CLAUDE.md')) {
+      $instructionPath = Join-Path (Get-Location) $instructionFile
+      if (Test-Path -LiteralPath $instructionPath) {
+        Write-Host "Discovered instruction file: $instructionPath"
+      }
+    }
+    Write-Host 'Reconciling project instruction blocks...'
+    & $destination agent instruction update
+    if ($LASTEXITCODE -ne 0) { throw 'xdocs instruction reconciliation failed.' }
+
     if ($env:XDOCS_SKIP_PATH_UPDATE -ne '1') {
       Add-InstallDirToPath -Directory $InstallDir
       Test-Shadowing -ExpectedPath $destination
@@ -289,6 +323,7 @@ foreach ($asset in $assetCandidates) {
       Remove-Item -LiteralPath $temporaryFile -Force
     }
 
+    Write-Host "Final verification: $destination --version"
     Write-Host "Verified: $destination --version -> $installedVersion"
     return
   } catch {
