@@ -1,66 +1,54 @@
 ---
 subject: xdocs-source
-description: TypeScript source for the Citty-based xdocs CLI, library exports, focused command handlers, metadata parsing, tree building, and agent automation.
+description: Bun-first TypeScript implementation of the RFC 0034 CLI and structured-documentation library.
 parent: xdocs-package
 children:
   - xdocs-commands
+  - xdocs-runtime
 files:
-  guiho-xdocs.ts: Public library export surface for xdocs domain types/functions, CLI runner, self-management, and skill helpers; parser internals are intentionally private.
-  guiho-xdocs-bin.ts: Bun source CLI entrypoint used in development checkouts.
-  guiho-xdocs-native-bin.ts: Bun-compiled native binary entrypoint that registers embedded resources before importing the CLI.
-  embedded-resources.ts: Bun text imports for embedding prompts, the versioned agent skill, and package version into native binaries.
-  cli.ts: Single declarative Citty command tree, focused handler adapters, default/hidden routes, library-safe raw-argument execution, contextual usage errors, and config-gated automation.
-  cli.spec.ts: Colocated Citty CLI coverage for help/routing/validation plus upgrade JSON, streamed text/Markdown plans, and pinned recovery ordering.
-  context.ts: Deterministic reading-set recommendation from descriptor, file, and companion-document metadata for `xdocs context`.
-  doctor.ts: CI-friendly xdocs health checks for descriptor validity, companion metadata, tree integrity, and documented file existence.
-  self-management.ts: Native self-management planner that resolves exact catalog assets/recovery, delegates verified upgrade transactions, maintains post-verification cache state, and supports update checks/uninstall.
-  upgrade-catalog.ts: Pure paginated GitHub release catalog, SemVer ordering/channel classification, compatible-asset selection, list envelope, and exact recovery-command generation.
-  upgrade-catalog.spec.ts: Colocated coverage for pagination, partial-page failure, SemVer precedence, channels, compatible assets, deduplication, and exact recovery commands.
-  upgrade-transaction.ts: Locking and journal-aware upgrade transaction that downloads, validates, immediately swaps, verifies, commits cache state, rolls back failures, accepts a verified current or target canonical after interruption, and defers backup cleanup only.
-  upgrade-transaction.spec.ts: Colocated coverage for pre-wait event ordering, canonical replacement/verification, post-verification cache commits, rollback, lock contention, downgrade prevention, ambiguous-journal preservation, completed-target journal recovery, and bounded verification.
-  windows-upgrade.spec.ts: Windows-only end-to-end regression that keeps a real executable image running while the canonical path is synchronously replaced and verified before return, with backup cleanup proven to be the only scheduled operation.
-  config.ts: TOML configuration discovery, Bun-native TOML parsing, validation, defaults, and [agents] settings normalization.
-  discovery.ts: Project scanning, named xdocs descriptor discovery, sibling Markdown document discovery, and descriptor/document validation.
-  meta.ts: Metadata-only top-down scanning for descriptor and associated companion-document frontmatter, with strict validation and owner/tag/keyword filters.
-  metadata.ts: YAML frontmatter extraction, bounded frontmatter-only file reads, Bun-native YAML parsing, xdocs metadata validation including required keywords, and nameless descriptor rejection.
-  tree.ts: Parent-child hierarchy construction, validation, branch-lined text rendering with visual scope markers, and Markdown rendering.
-  prompts.ts: Runtime prompt loader for package-manager/library use; native binaries can use embedded resources.
-  agents.ts: Versioned agent skill installation, metadata.version-aware skill version reads, legacy skill-name removal, AGENTS.md section management, tool detection, and automation.
-  help.ts: Extended versioned help-tree and Markdown help-doc rendering, including verified upgrade/release-list contracts; ordinary CLI usage comes from Citty.
-  errors.ts: XDocsError and invariant helper.
-  types.ts: Public and internal TypeScript types, including metadata, agent automation, release catalog/list envelopes, upgrade plans/events/results, and recovery guidance.
-  context-doctor.spec.ts: Bun tests for deterministic context recommendations and doctor health checks.
-  guiho-xdocs.spec.ts: Bun test suite covering package metadata, metadata parsing, metadata-only scans, descriptor/document discovery, tree, config, agents, CLI automation, self-management helpers including explicit asset fallback and pre-plan recovery, skill migration/version refresh, and resource behavior.
+  agents.ts: Explicit both-target skill operations and exact idempotent AGENTS/CLAUDE instruction management.
+  cli.ts: Single raw Citty catalog, startup lifecycle, Developer Context help routing, configuration report, and error handling.
+  cli.spec.ts: RFC command catalog, startup, help, YAML, agent, prompt, and domain CLI tests.
+  config.ts: YAML precedence, Bun parsing, TypeBox decoding, defaults, and writing.
+  context.ts: Deterministic minimal reading-set recommendation.
+  context-doctor.spec.ts: Context and doctor domain regression tests.
+  discovery.ts: Descriptor and companion-document discovery.
+  doctor.ts: CI-friendly structured-documentation health checks.
+  embedded-resources.ts: Bun text imports for native skill, prompt catalog, prompt bodies, and version resources.
+  errors.ts: XDocsError with stable exit code and invariant helper.
+  guiho-xdocs-bin.ts: Bun source CLI entrypoint.
+  guiho-xdocs-native-bin.ts: Native entrypoint that registers embedded resources.
+  guiho-xdocs.spec.ts: TypeBox configuration/metadata and agent-resource tests.
+  guiho-xdocs.ts: Public Bun-first library export surface.
+  help.ts: Unicode tree and Markdown documentation generated from live Citty definitions.
+  meta.ts: Metadata-only scanning and filters.
+  metadata.ts: YAML frontmatter parsing and TypeBox descriptor validation.
+  npm-bootstrap.spec.ts: Node-only bootstrap smoke tests without Bun in PATH.
+  prompts.ts: TypeBox-decoded embedded prompt catalog.
+  release-assets.spec.ts: Exact fourteen-asset and prohibited-import tests.
+  release-assets.ts: Exact native and agent release asset contract.
+  schemas.ts: TypeBox schemas and shared decoding diagnostics.
+  self-management.ts: RFC cache, detached worker, upgrade, agent reconciliation, and uninstall orchestration.
+  tree.ts: Containment tree assembly, validation, and rendering.
+  types.ts: Public and internal domain/platform TypeScript types.
+  upgrade-catalog.spec.ts: GitHub pagination, TypeBox response, SemVer, channel, and asset-selection tests.
+  upgrade-catalog.ts: TypeBox-decoded GitHub release catalog and recovery commands.
+  upgrade-transaction.spec.ts: Upgrade transaction, rollback, cache, locking, and recovery tests.
+  upgrade-transaction.ts: Observable journaled replacement, verification, rollback, and cleanup.
+  windows-upgrade.spec.ts: Running-Windows-executable replacement regression.
 documents: {}
 tags:
   - source
   - typescript
   - cli
 keywords:
-  - TypeScript
-  - CLI
-  - metadata parsing
-  - metadata-only scanning
-  - context recommendations
-  - doctor health checks
-  - agent automation
-  - self management
-  - release catalog
-  - recovery command
+  - Bun
+  - Citty
+  - TypeBox
+  - RFC 0034
+  - structured documentation
 flags: []
 status: stable
 ---
 
-The `source/` directory is the TypeScript implementation for both the source CLI
-path and native compiled CLI path. One Citty command tree owns parsing, aliases,
-validation, nested/default/hidden routing, and ordinary usage; focused command
-handlers remain independent of Citty types. The source CLI entrypoint runs through
-Bun in development checkouts; the native entrypoint embeds prompt/skill/package resources so
-direct installer binaries do not require adjacent files at runtime. Agent skill
-installation now treats the bundled `guiho-s-xdocs` skill as source of truth,
-removing legacy `guiho-as-xdocs` installs and replacing stale copies when the
-bundled version or content differs. Bare CLI invocations also run that global
-skill refresh before printing help, using standard defaults when no config is
-present. Native binary installs can also check for updates in the background,
-cache update notices, upgrade themselves from GitHub Releases, and uninstall the
-current executable.
+Core source is Bun-only. The npm bootstrap is isolated under `scripts/`.
