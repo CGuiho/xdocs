@@ -131,9 +131,20 @@ Self-manage the installed native CLI:
 ```bash
 xdocs upgrade              # upgrade to the latest GitHub Release binary
 xdocs upgrade check        # check for a newer version now
-xdocs upgrade list         # list available release versions
+xdocs upgrade list         # list every stable and prerelease version, newest first
 xdocs uninstall --dry-run  # preview the executable that would be removed
 ```
+
+A successful upgrade prints its current/target version, platform, architecture,
+selected binary, canonical path, and exact download URL before the asset body is
+downloaded. It then streams `Downloading`, `Validating`, `Replacing`, `Verifying`,
+cache, and cleanup phases. The canonical executable is replaced and verified
+before the command returns; only deletion of the renamed old backup may be
+deferred on Windows. Every outcome prints an exact-version reinstall command and
+a separate optional process-stop command. Version checks are time-bounded,
+downgrades are refused, and ambiguous interrupted transactions preserve their
+backup and journal for recovery. Refused downgrades are not described as release
+discovery failures.
 
 A bare `xdocs` invocation never waits on network update checks. It starts a
 background update check when appropriate, writes the result to the user cache,
@@ -362,7 +373,16 @@ xdocs upgrade check
 xdocs upgrade list
 ```
 
-If the resolved target is already installed, xdocs reports `Already up to date.` without downloading or replacing the executable.
+If the resolved target is already installed, xdocs reports `Already up to date.`
+without downloading or replacing the executable, then still prints the pinned
+reinstall and optional process-stop recovery commands. `--format markdown` streams
+the same plan and phases as Markdown. `--format json` emits one schema-versioned
+envelope with the plan, ordered events, result, recovery, and error.
+
+`xdocs upgrade list` follows every GitHub Releases page, validates and sorts
+semantic versions newest first, labels stable/alpha/beta/RC/other prereleases,
+and shows publication dates, compatible assets, the current version, and latest
+stable version. JSON returns the complete release and asset records.
 
 #### `xdocs uninstall`
 
