@@ -12,6 +12,7 @@ import { XDocsError } from './errors.js'
 import { readPackageVersion, showCommandHelpDocs, showCommandHelpTree, showHelpDocs, showHelpTree, showVersion } from './help.js'
 import { runAgentAutomation } from './agents.js'
 import { readUpdateCache, runBackgroundUpdateCheck, scheduleBackgroundUpdateCheck } from './self-management.js'
+import { compareSemanticVersions } from './upgrade-catalog.js'
 import { runInit } from './commands/init.js'
 import { runScan } from './commands/scan.js'
 import { runGenerate } from './commands/generate.js'
@@ -618,20 +619,7 @@ function staticSubCommands(command: AnyCommand): Record<string, AnyCommand> | un
 async function printCachedUpdateNotice(): Promise<void> {
   const cache = await readUpdateCache()
   if (!cache?.updateAvailable) return
-  if (compareVersions(cache.latestVersion, readPackageVersion()) <= 0) return
+  if (compareSemanticVersions(cache.latestVersion, readPackageVersion()) <= 0) return
 
   process.stderr.write(`notice: xdocs ${cache.latestVersion} is available. Run \`xdocs upgrade\` to update.\n`)
-}
-
-function compareVersions(a: string, b: string): number {
-  const left = a.split(/[.+-]/).map((part) => Number.parseInt(part, 10) || 0)
-  const right = b.split(/[.+-]/).map((part) => Number.parseInt(part, 10) || 0)
-  const length = Math.max(left.length, right.length)
-
-  for (let index = 0; index < length; index += 1) {
-    const diff = (left[index] ?? 0) - (right[index] ?? 0)
-    if (diff !== 0) return diff
-  }
-
-  return 0
 }
