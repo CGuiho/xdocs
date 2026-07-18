@@ -13,6 +13,12 @@ const fixtureVersion = '9.0.0-alpha.1'
 const installerTestTimeoutMilliseconds = 60_000
 const repositoryRoot = resolve(import.meta.dir, '..')
 
+test('uses the Darwin runtime label when selecting the macOS Bash profile', async () => {
+  const installer = await Bun.file(join(repositoryRoot, 'devops', 'install.sh')).text()
+  expect(installer).toContain('[[ "$OS" == "darwin"')
+  expect(installer).not.toContain('[[ "$OS" == "macos"')
+})
+
 if (process.platform === 'win32') {
   test('printed Windows recovery command works from PowerShell and Git Bash', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'xdocs-powershell-installer-'))
