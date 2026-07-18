@@ -1,0 +1,18 @@
+schema: 1
+extensions:
+  supported:
+    - .xdocs.md
+ai:
+  mode: auto
+scan:
+  exclude:
+    - node_modules
+    - .git
+    - dist
+    - build
+    - library
+    - bin
+    - bundle
+    - vendor
+project:
+  name: xdocs
