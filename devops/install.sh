@@ -268,7 +268,7 @@ shell_profile_path() {
     fish) printf '%s/.config/fish/config.fish\n' "$HOME" ;;
     zsh) printf '%s/.zshrc\n' "$HOME" ;;
     bash)
-      if [[ "$OS" == "macos" && -f "$HOME/.bash_profile" ]]; then
+      if [[ "$OS" == "darwin" && -f "$HOME/.bash_profile" ]]; then
         printf '%s/.bash_profile\n' "$HOME"
       else
         printf '%s/.bashrc\n' "$HOME"
