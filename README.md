@@ -168,7 +168,10 @@ xdocs <scope> --help-tree-depth 2
 xdocs <scope> --help-docs
 ```
 
-Only `-h` and the root `-v` are short aliases.
+Root help renders the complete public command catalog; nested help renders the
+selected subtree. Usage and Markdown help include examples from the same live
+Citty definitions. Internal worker routing is hidden and `xdocs home` is not a
+public command. Only `-h` and the root `-v` are short aliases.
 
 ## Upgrade
 
