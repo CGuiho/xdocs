@@ -6,6 +6,11 @@ import type { ArgDef, CommandDef } from 'citty'
 import packageJson from '../package.json' with { type: 'json' }
 
 type AnyCommand = CommandDef<any>
+type XDocsCommandMeta = {
+  description?: string
+  hidden?: boolean
+  examples?: readonly string[]
+}
 
 export function readPackageVersion(): string {
   const embedded = globalThis.__XDOCS_EMBEDDED_RESOURCES__?.version
@@ -32,7 +37,7 @@ function renderTree(
   maxDepth?: number,
 ): string[] {
   const branch = level === 0 ? '' : last ? '└── ' : '├── '
-  const meta = command.meta as { description?: string } | undefined
+  const meta = command.meta as XDocsCommandMeta | undefined
   const description = meta?.description ? `  ${meta.description}` : ''
   const lines = [`${prefix}${branch}${label}${description}`]
   if (maxDepth !== undefined && level >= maxDepth) return lines
@@ -44,7 +49,7 @@ function renderTree(
     entries.push({ label: formatFlag(name, arg), description: arg.description ?? '' })
   }
   for (const [name, child] of Object.entries(staticSubCommands(command))) {
-    const childMeta = child.meta as { description?: string } | undefined
+    const childMeta = child.meta as XDocsCommandMeta | undefined
     entries.push({ label: name, command: child, description: childMeta?.description ?? '' })
   }
 
@@ -63,7 +68,7 @@ function renderDocs(command: AnyCommand, path: string, level: number, maxDepth?:
   const lines = [
     `${'#'.repeat(Math.min(level + 1, 6))} ${path}`,
     '',
-    (command.meta as { description?: string } | undefined)?.description ?? '',
+    (command.meta as XDocsCommandMeta | undefined)?.description ?? '',
     '',
     '## Syntax',
     '',
@@ -79,7 +84,13 @@ function renderDocs(command: AnyCommand, path: string, level: number, maxDepth?:
   const children = Object.entries(staticSubCommands(command))
   if (children.length > 0) {
     lines.push('## Subcommands', '')
-    for (const [name, child] of children) lines.push(`- \`${name}\`: ${(child.meta as { description?: string } | undefined)?.description ?? ''}`)
+    for (const [name, child] of children) lines.push(`- \`${name}\`: ${(child.meta as XDocsCommandMeta | undefined)?.description ?? ''}`)
+    lines.push('')
+  }
+  const examples = (command.meta as XDocsCommandMeta | undefined)?.examples ?? []
+  if (examples.length > 0) {
+    lines.push('## Examples', '')
+    for (const example of examples) lines.push(`- \`${example}\``)
     lines.push('')
   }
   if (maxDepth === undefined || level < maxDepth) {
@@ -108,5 +119,8 @@ function formatFlag(name: string, arg: ArgDef): string {
 function staticSubCommands(command: AnyCommand): Record<string, AnyCommand> {
   const value = command.subCommands
   if (!value || typeof value === 'function' || value instanceof Promise) return {}
-  return value as Record<string, AnyCommand>
+  return Object.fromEntries(
+    Object.entries(value as Record<string, AnyCommand>)
+      .filter(([, child]) => !(child.meta as XDocsCommandMeta | undefined)?.hidden),
+  )
 }
