@@ -2,9 +2,11 @@
 name: Package Launcher Source Fallback
 purpose: Record the immediate repair decisions for broken xdocs package execution after the package moved to the repository root.
 description: Explains why the package launcher now falls back to the TypeScript CLI in source checkouts and why root package metadata/docs were corrected together.
-created: 2026-07-09T18:38:18Z
+created: 2026-07-09
+owner: xdocs-decisions
 flags:
   - decision
+  - superseded
 tags:
   - cli
   - package
@@ -19,6 +21,10 @@ keywords:
 ---
 
 # Package Launcher Source Fallback
+
+> Superseded on 2026-07-18 by the approved RFC 0034 CLI migration. The package
+> now ships `scripts/xdocs-bin.mjs`, a Node-compatible native bootstrap with no
+> Bun/source fallback or postinstall helper.
 
 ## Summary
 
