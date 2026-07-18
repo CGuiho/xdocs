@@ -44,7 +44,14 @@ describe('upgrade release catalog', () => {
       return Response.json([
         release('2.0.0-alpha.1', 'xdocs-windows-x64-baseline.exe'),
         release('1.0.99', 'xdocs-windows-x64-baseline.exe'),
-        { tag_name: 'unrelated@9.9.9', assets: [] },
+        {
+          tag_name: 'unrelated@9.9.9',
+          html_url: 'https://example.test/unrelated',
+          published_at: null,
+          prerelease: false,
+          draft: false,
+          assets: [],
+        },
       ])
     })
 
@@ -87,6 +94,7 @@ function release(version: string, assetName: string): Record<string, unknown> {
     tag_name: tag,
     html_url: `https://github.com/CGuiho/xdocs/releases/tag/${encodeURIComponent(tag)}`,
     published_at: `2026-07-${String((Number(version.split('.')[2]?.split('-')[0]) % 28) + 1).padStart(2, '0')}T00:00:00Z`,
+    prerelease: version.includes('-'),
     draft: false,
     assets: [{ name: assetName, browser_download_url: `https://example.test/${assetName}`, size: 42 }],
   }
