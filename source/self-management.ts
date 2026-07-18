@@ -2,11 +2,6 @@
  * @copyright Copyright (c) 2026 GUIHO Technologies as represented by Cristóvão GUIHO. All Rights Reserved.
  */
 
-import { existsSync } from 'node:fs'
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
-import { dirname, join, resolve } from 'node:path'
-import { homedir } from 'node:os'
-
 import type {
   XDocsNativeArch,
   XDocsNativePlatform,
@@ -21,6 +16,11 @@ import { XDocsError } from './errors.js'
 import { readPackageVersion } from './help.js'
 import { buildUpgradeRecovery, compareSemanticVersions, fetchReleaseCatalog, normalizeXDocsVersion } from './upgrade-catalog.js'
 import { executeUpgradeTransaction } from './upgrade-transaction.js'
+import { XDocsUpdateCacheSchema, decodeWithSchema } from './schemas.js'
+import { homeDirectory } from './runtime/home.js'
+import { pathExists, readText, removePath, writeText } from './runtime/fs.js'
+import { dirname, joinPath, resolvePath } from './runtime/path.js'
+import { updateInstructions, updateSkills } from './agents.js'
 
 export {
   checkForLatestVersion,
@@ -64,17 +64,8 @@ type UninstallOptions = SelfManagementOptions & {
 
 async function readUpdateCache(options: SelfManagementOptions = {}): Promise<XDocsUpdateCache | null> {
   try {
-    const content = await readFile(resolveCachePath(options), 'utf8')
-    const parsed = JSON.parse(content) as Partial<XDocsUpdateCache>
-    if (!parsed.checkedAt || !parsed.currentVersion || !parsed.latestVersion || typeof parsed.updateAvailable !== 'boolean') return null
-
-    return {
-      checkedAt: parsed.checkedAt,
-      currentVersion: parsed.currentVersion,
-      latestVersion: parsed.latestVersion,
-      updateAvailable: parsed.updateAvailable,
-      releaseUrl: parsed.releaseUrl ?? '',
-    }
+    const content = await readText(resolveCachePath(options))
+    return decodeWithSchema<XDocsUpdateCache>(XDocsUpdateCacheSchema, JSON.parse(content), 'xdocs update cache')
   } catch {
     return null
   }
@@ -82,13 +73,12 @@ async function readUpdateCache(options: SelfManagementOptions = {}): Promise<XDo
 
 async function writeUpdateCache(cache: XDocsUpdateCache, options: SelfManagementOptions = {}): Promise<void> {
   const path = resolveCachePath(options)
-  await mkdir(dirname(path), { recursive: true })
-  await writeFile(path, JSON.stringify(cache, null, 2) + '\n', 'utf8')
+  await writeText(path, JSON.stringify(cache, null, 2) + '\n')
 }
 
 function resolveCachePath(options: SelfManagementOptions = {}): string {
-  const cacheDirectory = options.cacheDir ?? process.env['XDOCS_CACHE_DIR'] ?? defaultCacheDirectory()
-  return join(cacheDirectory, 'update.json')
+  const cacheDirectory = options.cacheDir ?? process.env['XDOCS_CACHE_DIR'] ?? joinPath(homeDirectory(), '.guiho', 'xdocs')
+  return joinPath(cacheDirectory, 'cache.json')
 }
 
 async function checkForLatestVersion(options: SelfManagementOptions = {}): Promise<XDocsUpdateCache> {
@@ -102,11 +92,10 @@ async function checkForLatestVersion(options: SelfManagementOptions = {}): Promi
   if (!latest) throw new XDocsError('No compatible published xdocs release is available.')
   const latestVersion = latest.version
   const cache: XDocsUpdateCache = {
-    checkedAt: new Date().toISOString(),
-    currentVersion,
+    newVersionAvailable: compareSemanticVersions(latestVersion, currentVersion) > 0,
     latestVersion,
-    updateAvailable: compareSemanticVersions(latestVersion, currentVersion) > 0,
-    releaseUrl: latest.releaseUrl,
+    upgradeCommand: 'xdocs upgrade',
+    lastCheck: new Date().toISOString(),
   }
 
   await writeUpdateCache(cache, options)
@@ -121,11 +110,12 @@ async function scheduleBackgroundUpdateCheck(options: SelfManagementOptions = {}
   if (process.env['XDOCS_DISABLE_UPDATE_CHECK'] === '1') return false
 
   const cache = await readUpdateCache(options)
-  if (cache && Date.now() - Date.parse(cache.checkedAt) < cacheTtlMilliseconds) return false
+  if (cache && Date.now() - Date.parse(cache.lastCheck) < cacheTtlMilliseconds) return false
   if (await isSourceCheckout()) return false
 
   try {
-    const proc = Bun.spawn([resolveExecutablePath(options), 'xdocs-update-check-worker'], {
+    const proc = Bun.spawn([resolveExecutablePath(options), '--check-updates-worker'], {
+      detached: true,
       stdin: 'ignore',
       stdout: 'ignore',
       stderr: 'ignore',
@@ -143,7 +133,7 @@ async function upgradeSelf(options: UpgradeOptions = {}): Promise<XDocsUpgradeEn
   const recoveryPlatform: XDocsNativePlatform = process.platform === 'win32'
     ? 'windows'
     : process.platform === 'darwin'
-      ? 'macos'
+      ? 'darwin'
       : 'linux'
   const repo = options.repo ?? process.env['XDOCS_REPO'] ?? defaultRepo
   const requestedVersion = options.version ? normalizeXDocsVersion(options.version) : null
@@ -177,8 +167,8 @@ async function upgradeSelf(options: UpgradeOptions = {}): Promise<XDocsUpgradeEn
       assetName: asset,
       downloadUrl: release?.compatibleAsset?.downloadUrl ?? explicitAsset?.url ?? buildDownloadUrl(asset, targetVersion, repo),
       executablePath,
-      temporaryPath: join(dirname(executablePath), `.xdocs-upgrade-${transactionId}${extension}`),
-      backupPath: join(dirname(executablePath), `.xdocs-backup-${transactionId}${extension}`),
+      temporaryPath: joinPath(dirname(executablePath), `.xdocs-upgrade-${transactionId}${extension}`),
+      backupPath: joinPath(dirname(executablePath), `.xdocs-backup-${transactionId}${extension}`),
       releaseUrl: release?.releaseUrl ?? `https://github.com/${repo}/releases/tag/${encodeURIComponent(`@guiho/xdocs@${targetVersion}`)}`,
     }
     const recovery = buildUpgradeRecovery({
@@ -187,7 +177,7 @@ async function upgradeSelf(options: UpgradeOptions = {}): Promise<XDocsUpgradeEn
       targetSource: targetComparison < 0 ? 'fallback-current' : requestedVersion ? 'explicit' : 'release',
     })
     options.onPlan?.(plan)
-    return executeUpgradeTransaction({
+    const result = await executeUpgradeTransaction({
       plan,
       recovery,
       dryRun: options.dryRun,
@@ -196,13 +186,16 @@ async function upgradeSelf(options: UpgradeOptions = {}): Promise<XDocsUpgradeEn
       verifyExecutable: options.verifyExecutable,
       platform,
       commitCache: async () => writeUpdateCache({
-        checkedAt: new Date().toISOString(),
-        currentVersion: targetVersion,
+        newVersionAvailable: false,
         latestVersion: targetVersion,
-        updateAvailable: false,
-        releaseUrl: plan.releaseUrl,
+        lastCheck: new Date().toISOString(),
       }, options),
     })
+    if (result.outcome === 'upgraded') {
+      await updateSkills('global')
+      await updateInstructions(process.cwd())
+    }
+    return result
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     const recovery = buildUpgradeRecovery({
@@ -258,7 +251,7 @@ async function uninstallSelf(options: UninstallOptions = {}): Promise<XDocsUnins
     return { executablePath, dryRun: false, scheduled: true }
   }
 
-  await rm(executablePath, { force: true })
+  await removePath(executablePath, { force: true })
   return { executablePath, dryRun: false, scheduled: false }
 }
 
@@ -272,12 +265,12 @@ async function listAvailableVersions(options: SelfManagementOptions = {}): Promi
 
 function resolveExecutablePath(options: SelfManagementOptions = {}): string {
   const override = options.executablePath ?? process.env['XDOCS_SELF_PATH']
-  return override ? resolve(override) : process.execPath
+  return override ? resolvePath(override) : process.execPath
 }
 
 function detectNativePlatform(): XDocsNativePlatform {
   if (process.platform === 'linux') return 'linux'
-  if (process.platform === 'darwin') return 'macos'
+  if (process.platform === 'darwin') return 'darwin'
   if (process.platform === 'win32') return 'windows'
   throw new XDocsError(`Unsupported OS: ${process.platform}`)
 }
@@ -313,7 +306,7 @@ function buildDownloadUrl(asset: string, version: string, repo?: string): string
 async function assertNativeInstall(executablePath: string, action: string): Promise<void> {
   if (process.env['XDOCS_SELF_PATH']) return
   if (await isSourceCheckout()) throw new XDocsError(`xdocs ${action} is only available from an installed native xdocs binary.`)
-  if (!existsSync(executablePath)) throw new XDocsError(`Cannot find current xdocs executable at ${executablePath}`)
+  if (!(await pathExists(executablePath))) throw new XDocsError(`Cannot find current xdocs executable at ${executablePath}`)
 }
 
 async function isSourceCheckout(): Promise<boolean> {
@@ -331,8 +324,8 @@ async function scheduleWindowsRemoval(path: string): Promise<void> {
     `Remove-Item -LiteralPath ${quotePowerShell(path)} -Force`,
     'Remove-Item -LiteralPath $MyInvocation.MyCommand.Path -Force',
   ].join('\n')
-  const scriptPath = join(dirname(path), `.xdocs-uninstall-${process.pid}.ps1`)
-  await writeFile(scriptPath, script, 'utf8')
+  const scriptPath = joinPath(dirname(path), `.xdocs-uninstall-${process.pid}.ps1`)
+  await writeText(scriptPath, script)
   const proc = Bun.spawn(['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', scriptPath], {
     stdin: 'ignore',
     stdout: 'ignore',
@@ -343,9 +336,4 @@ async function scheduleWindowsRemoval(path: string): Promise<void> {
 
 function quotePowerShell(value: string): string {
   return `'${value.replaceAll("'", "''")}'`
-}
-
-function defaultCacheDirectory(): string {
-  if (process.platform === 'win32') return join(process.env['LOCALAPPDATA'] ?? homedir(), 'xdocs')
-  return join(process.env['XDG_CACHE_HOME'] ?? join(homedir(), '.cache'), 'xdocs')
 }
