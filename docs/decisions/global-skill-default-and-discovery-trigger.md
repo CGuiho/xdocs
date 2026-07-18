@@ -5,7 +5,7 @@ description: Records the global-by-default initialization behavior, explicit loc
 created: 2026-07-14
 flags:
   - decision
-  - approved
+  - superseded
 tags:
   - cli
   - agents
@@ -21,6 +21,11 @@ owner: xdocs-decisions
 ---
 
 # Global Skill Default and Discovery Trigger
+
+> Superseded on 2026-07-18 by the approved RFC 0034 CLI migration. `xdocs init`
+> no longer mutates agent files. Explicit `xdocs agent skill` actions default
+> global, use `--local` for project scope, and always target both supported
+> skill directories.
 
 ## Summary
 
