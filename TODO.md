@@ -76,8 +76,8 @@ All Rights Reserved.
 
 - Status: completed
 - Created: `2026-07-18T18:48:11+02:00`
-- Updated: `2026-07-18T23:59:00+02:00`
-- Outcome: xdocs fully implements the approved breaking GUIHO RFC 0034 CLI contract across Bun-only source, TypeBox validation, YAML configuration, startup, help, agents, prompts, upgrades, installers, npm distribution, release assets, tests, and documentation.
+- Updated: `2026-07-19T00:09:04+02:00`
+- Outcome: xdocs fully implements the approved breaking GUIHO RFC 0034 CLI contract, including true root-catalog help without a synthetic `home` route, across Bun-only source, TypeBox validation, YAML configuration, agents, prompts, upgrades, installers, npm distribution, release assets, tests, and documentation.
 - Spec: [docs/todo/rfc-0034-cli-compliance-migration.md](docs/todo/rfc-0034-cli-compliance-migration.md)
 - Related files:
   - [docs/plans/rfc-0034-cli-compliance-migration.md](docs/plans/rfc-0034-cli-compliance-migration.md) - Approved step-by-step migration plan.
