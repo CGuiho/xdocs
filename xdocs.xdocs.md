@@ -16,7 +16,7 @@ files:
   tsconfig.build.json: Build-specific TypeScript settings for library output, including Bun and Node types.
   mirror.config.toml: GUIHO Mirror release/versioning configuration for package.json, jsr.json, and Git tag outputs.
 documents:
-  AGENTS.md: Repository instructions for agents working on xdocs, including commands, context recommendations, doctor checks, metadata-only scans, source structure, release rules, and xdocs metadata requirements.
+  AGENTS.md: Repository instructions requiring the GUIHO SWE agent and CLI engineer skill for xdocs CLI work, including commands, metadata workflows, release rules, and the approved breaking RFC 0034 migration.
   ARCHITECTURE.md: Architecture and technical design notes for xdocs file conventions, metadata, CLI behavior, distribution, and agent workflows.
   BRAINSTORM.md: Product and design brainstorming notes for the xdocs structured documentation model and future directions.
   CHANGELOG.md: Release changelog including immediate verified upgrade, complete release catalog, recovery, and installer hardening changes.
@@ -40,6 +40,8 @@ keywords:
   - self management
   - verified upgrade
   - exact recovery
+  - RFC 0034
+  - cli engineer
 flags: []
 status: stable
 ---
