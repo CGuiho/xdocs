@@ -10,11 +10,12 @@ children:
   - xdocs-prompts
   - xdocs-docs
 files:
-  package.json: npm package metadata, Citty runtime dependency, CLI bin mapping, build/test scripts, and package publish file list.
+  package.json: npm package metadata, Citty and TypeBox dependencies, Node bootstrap bin mapping, build/test scripts, and publish file list.
   jsr.json: JSR package metadata and publish include list.
   tsconfig.json: Strict TypeScript settings for source development.
   tsconfig.build.json: Build-specific TypeScript settings for library output, including Bun and Node types.
   mirror.config.toml: GUIHO Mirror release/versioning configuration for package.json, jsr.json, and Git tag outputs.
+  xdocs.yaml: YAML configuration for xdocs documentation workflows in this repository.
 documents:
   AGENTS.md: Repository instructions requiring the GUIHO SWE agent and CLI engineer skill for xdocs CLI work, including commands, metadata workflows, release rules, and the approved breaking RFC 0034 migration.
   ARCHITECTURE.md: Architecture and technical design notes for xdocs file conventions, metadata, CLI behavior, distribution, and agent workflows.
@@ -46,7 +47,6 @@ flags: []
 status: stable
 ---
 
-The repository root is the actual `@guiho/xdocs` package. It contains the
-Citty-based TypeScript CLI implementation, package metadata, bundled prompt and skill resources,
-package-manager launcher/install scripts, and Bun-native release binary tooling.
-It is versioned by GUIHO Mirror using `mirror.config.toml`.
+The repository root is the actual `@guiho/xdocs` package. Core implementation
+uses Bun, strict ESM TypeScript, raw Citty, and TypeBox. A thin Node bootstrap
+supports npm users. Mirror owns versioning through `mirror.config.toml`.
