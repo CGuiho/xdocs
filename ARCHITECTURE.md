@@ -107,7 +107,8 @@ directory contains exactly those fourteen unique names.
 
 The Bash and PowerShell installers show progress, install the binary globally,
 configure PATH, install both skill copies, discover instruction files,
-reconcile instructions, and verify the final executable.
+reconcile instructions, and verify the final executable. Darwin Bash installs
+prefer an existing `.bash_profile` for login-shell PATH configuration.
 
 ## Exit discipline
 
