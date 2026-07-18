@@ -310,17 +310,104 @@ export type XDocsNativeArch = 'x64' | 'arm64'
 /** x64 binary variant preference. */
 export type XDocsNativeVariant = 'baseline' | 'default' | 'modern'
 
-/** Result of a self-upgrade operation. */
-export type XDocsUpgradeResult = {
+/** Release channel derived from a semantic version. */
+export type XDocsReleaseChannel = 'stable' | 'alpha' | 'beta' | 'rc' | 'prerelease'
+
+/** One native asset attached to an xdocs GitHub release. */
+export type XDocsReleaseAsset = {
+  name: string
+  downloadUrl: string
+  size: number | null
+}
+
+/** One normalized xdocs GitHub release. */
+export type XDocsRelease = {
+  version: string
+  tag: string
+  channel: XDocsReleaseChannel
+  prerelease: boolean
+  publishedAt: string | null
+  releaseUrl: string
+  assets: XDocsReleaseAsset[]
+  compatibleAsset: XDocsReleaseAsset | null
+}
+
+/** Complete machine-readable release-catalog response. */
+export type XDocsUpgradeListEnvelope = {
+  schemaVersion: 1
+  command: 'xdocs upgrade list'
+  currentVersion: string
+  latestStableVersion: string | null
+  releases: XDocsRelease[]
+}
+
+/** Immutable plan resolved before an upgrade asset body is downloaded. */
+export type XDocsUpgradePlan = {
   currentVersion: string
   targetVersion: string
-  asset?: string
-  url?: string
+  platform: XDocsNativePlatform
+  arch: XDocsNativeArch
+  variant: XDocsNativeVariant | null
+  assetName: string
+  downloadUrl: string
   executablePath: string
-  dryRun: boolean
-  scheduled: boolean
-  upToDate: boolean
+  temporaryPath: string
+  backupPath: string
+  releaseUrl: string
 }
+
+/** Ordered upgrade transaction phase. */
+export type XDocsUpgradePhase = 'plan' | 'download' | 'validate' | 'replace' | 'verify' | 'cache' | 'cleanup'
+
+/** One stable upgrade transaction event. */
+export type XDocsUpgradeEvent = {
+  sequence: number
+  phase: XDocsUpgradePhase
+  status: 'started' | 'succeeded' | 'skipped' | 'failed'
+  message: string
+}
+
+/** Exact recovery guidance shown after every upgrade result. */
+export type XDocsUpgradeRecovery = {
+  targetVersion: string
+  targetSource: 'release' | 'explicit' | 'fallback-current'
+  installCommand: string
+  stopProcessCommand: string
+}
+
+/** Stable machine-readable upgrade error. */
+export type XDocsUpgradeError = {
+  code: string
+  message: string
+}
+
+/** Verified mutation and cleanup details. */
+export type XDocsUpgradeMutationResult = {
+  verifiedVersion: string | null
+  cacheUpdated: boolean
+  cleanup: {
+    backupPath: string | null
+    scheduled: boolean
+  }
+}
+
+/** Terminal self-upgrade outcome. */
+export type XDocsUpgradeOutcome = 'upgraded' | 'up-to-date' | 'dry-run' | 'rolled-back' | 'failed'
+
+/** Fixed schema version 1 self-upgrade envelope. */
+export type XDocsUpgradeEnvelope = {
+  schemaVersion: 1
+  command: 'xdocs upgrade'
+  outcome: XDocsUpgradeOutcome
+  plan: XDocsUpgradePlan | null
+  events: XDocsUpgradeEvent[]
+  result: XDocsUpgradeMutationResult | null
+  recovery: XDocsUpgradeRecovery
+  error: XDocsUpgradeError | null
+}
+
+/** Public self-upgrade result alias for the fixed schema version 1 envelope. */
+export type XDocsUpgradeResult = XDocsUpgradeEnvelope
 
 /** Result of a self-uninstall operation. */
 export type XDocsUninstallResult = {
