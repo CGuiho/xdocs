@@ -36,6 +36,9 @@ export type {
   XDocsPrompt,
   XDocsPromptName,
   XDocsRawConfig,
+  XDocsRelease,
+  XDocsReleaseAsset,
+  XDocsReleaseChannel,
   XDocsScanResult,
   XDocsSkillInstallResult,
   XDocsSkillScope,
@@ -44,6 +47,15 @@ export type {
   XDocsUninstallResult,
   XDocsUpdateCache,
   XDocsUpgradeResult,
+  XDocsUpgradeError,
+  XDocsUpgradeEnvelope,
+  XDocsUpgradeEvent,
+  XDocsUpgradeListEnvelope,
+  XDocsUpgradeMutationResult,
+  XDocsUpgradeOutcome,
+  XDocsUpgradePhase,
+  XDocsUpgradePlan,
+  XDocsUpgradeRecovery,
 } from './types.js'
 
 // Config
@@ -98,6 +110,23 @@ export {
   uninstallSelf,
   upgradeSelf,
 } from './self-management.js'
+
+// Upgrade release catalog and recovery
+export {
+  buildUpgradeListEnvelope,
+  buildUpgradeRecovery,
+  classifyReleaseChannel,
+  compareSemanticVersions,
+  fetchReleaseCatalog,
+  normalizeXDocsVersion,
+} from './upgrade-catalog.js'
+
+// Verified upgrade transaction
+export {
+  executeUpgradeTransaction,
+  recoverInterruptedUpgrade,
+  verifyExecutableVersion,
+} from './upgrade-transaction.js'
 
 // Agents
 export {
