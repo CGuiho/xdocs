@@ -90,7 +90,10 @@ files change only through explicit `xdocs agent` commands.
 - `--format <text|json|markdown>`: supported output.
 - `--verbose`: detailed diagnostics.
 
-No other short aliases exist.
+Every help form is generated from the same live Citty definition, includes
+practical examples, and exposes the approved public catalog. The internal
+update worker is hidden and there is no public `home` command. No other short
+aliases exist.
 
 ## Domain commands
 
