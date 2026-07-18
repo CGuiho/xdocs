@@ -2,8 +2,8 @@
  * @copyright Copyright (c) 2026 GUIHO Technologies as represented by Cristóvão GUIHO. All Rights Reserved.
  */
 
-import { stat } from 'node:fs/promises'
-import { basename, join, relative, resolve } from 'node:path'
+import { statPath as stat } from './runtime/fs.js'
+import { basename, joinPath as join, relativePath as relative, resolvePath as resolve } from './runtime/path.js'
 import type { XDocsConfig, XDocsDoctorIssue, XDocsDoctorOptions, XDocsDoctorResult } from './types.js'
 import { scanProject } from './discovery.js'
 import { scanMetadata } from './meta.js'
