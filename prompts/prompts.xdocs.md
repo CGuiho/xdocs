@@ -1,27 +1,25 @@
 ---
 subject: xdocs-prompts
-description: Runtime prompt templates used by xdocs prompt commands and embedded into native binaries.
+description: Embedded four-prompt catalog and canonical guiho-i-xdocs release manifest.
 parent: xdocs-package
 children: []
 files: {}
 documents:
-  agents.md: Prompt for updating AGENTS.md with xdocs instructions.
-  generate.md: Prompt for generating comprehensive documentation from xdocs metadata.
-  update.md: Prompt for updating existing xdocs descriptors after code or document changes.
-  write.md: Prompt for writing a named xdocs descriptor for a module.
+  guiho-i-xdocs.md: Canonical release manifest for the single prompt catalog artifact.
+  agents.md: Raw prompt for updating agent instructions.
+  generate.md: Raw prompt for generating documentation.
+  update.md: Raw prompt for updating descriptors after changes.
+  write.md: Raw prompt for writing a named descriptor.
 tags:
   - prompts
   - ai
-  - documentation
 keywords:
-  - prompts
-  - AI instructions
-  - documentation generation
+  - guiho-i-xdocs
+  - embedded prompts
+  - prompt catalog
 flags: []
 status: stable
 ---
 
-The `prompts/` directory contains Markdown prompt templates loaded by
-`source/prompts.ts` at runtime and embedded by `source/embedded-resources.ts` for
-native binaries. They are plain companion documents, so this descriptor lists
-each prompt under `documents`.
+Native binaries embed the manifest and all four bodies. Releases package them
+together as the single `guiho-i-xdocs` asset.
