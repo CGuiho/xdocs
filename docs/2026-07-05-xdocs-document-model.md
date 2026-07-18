@@ -3,6 +3,12 @@ name: xdocs Document Model
 purpose: Record the descriptor-plus-companion-document model for future xdocs implementation work.
 description: Explains how named xdocs descriptors, root XDOCS.md, and same-directory Markdown companion documents work together for AI navigation.
 created: 2026-07-05
+owner: xdocs-docs
+flags:
+  - decision-input
+tags:
+  - documentation
+  - design
 keywords:
   - xdocs descriptors
   - companion documents
