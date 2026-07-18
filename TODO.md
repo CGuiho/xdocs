@@ -14,7 +14,7 @@ All Rights Reserved.
 
 | Status | Count |
 | --- | ---: |
-| todo | 1 |
+| todo | 2 |
 | in progress | 0 |
 | testing | 1 |
 | stopped | 0 |
@@ -55,3 +55,14 @@ All Rights Reserved.
   - [docs/reviews/plans/upgrade-reliability-implementation-review.md](docs/reviews/plans/upgrade-reliability-implementation-review.md) - Plan readiness review.
 - External: GitHub issues [CGuiho/xdocs#9](https://github.com/CGuiho/xdocs/issues/9) and [CGuiho/xdocs#10](https://github.com/CGuiho/xdocs/issues/10)
 - Implementation: [docs/todo/upgrade-reliability-implementation.md](docs/todo/upgrade-reliability-implementation.md)
+
+### 4. Migrate xdocs To Full RFC 0034 Compliance
+
+- Status: todo
+- Created: `2026-07-18T18:48:11+02:00`
+- Updated: `2026-07-18T18:48:11+02:00`
+- Outcome: xdocs fully implements the approved breaking GUIHO RFC 0034 CLI contract across Bun-only source, TypeBox validation, YAML configuration, startup, help, agents, prompts, upgrades, installers, npm distribution, release assets, tests, and documentation.
+- Spec: [docs/todo/rfc-0034-cli-compliance-migration.md](docs/todo/rfc-0034-cli-compliance-migration.md)
+- Related files:
+  - [docs/plans/rfc-0034-cli-compliance-migration.md](docs/plans/rfc-0034-cli-compliance-migration.md) - Approved step-by-step migration plan.
+  - [docs/reviews/plans/rfc-0034-cli-compliance-migration-review.md](docs/reviews/plans/rfc-0034-cli-compliance-migration-review.md) - Ready-for-execution plan review.
