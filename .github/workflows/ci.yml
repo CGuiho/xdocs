@@ -32,3 +32,30 @@ jobs:
       - run: bun run build
       - run: bun run binary
       - run: bun run binaries
+      - name: Validate Bash recovery installer syntax
+        run: bash -n devops/install.sh
+
+  windows-upgrade:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        shell: pwsh
+        run: |
+          git init .
+          git remote add origin "${env:GITHUB_SERVER_URL}/${env:GITHUB_REPOSITORY}.git"
+          git fetch --depth=1 origin "${env:GITHUB_REF}"
+          git checkout --detach FETCH_HEAD
+
+      - name: Install Bun
+        shell: pwsh
+        run: |
+          powershell -NoProfile -Command "irm bun.sh/install.ps1 | iex"
+          "$env:USERPROFILE\.bun\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun test
+      - name: Validate PowerShell recovery installer syntax
+        shell: pwsh
+        run: |
+          [scriptblock]::Create((Get-Content -LiteralPath devops/install.ps1 -Raw)) | Out-Null
