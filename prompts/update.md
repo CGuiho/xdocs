@@ -1,6 +1,13 @@
 ---
 name: update
+purpose: Guide an agent through synchronizing existing xdocs descriptors after repository changes.
 description: Update existing xdocs descriptors after code or document changes.
+created: 2026-06-02
+owner: xdocs-prompts
+flags: []
+tags:
+  - prompt
+  - documentation-maintenance
 keywords:
   - update descriptor
   - synchronize metadata
