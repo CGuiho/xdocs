@@ -2,8 +2,8 @@
  * @copyright Copyright (c) 2026 GUIHO Technologies as represented by Cristóvão GUIHO. All Rights Reserved.
  */
 
-import { resolve } from 'node:path'
-import { writeFile } from 'node:fs/promises'
+import { resolvePath as resolve } from '../runtime/path.js'
+import { writeText as writeFile } from '../runtime/fs.js'
 import type { XDocsCliOptions } from '../types.js'
 import { loadConfigOrDefaults } from '../config.js'
 import { scanProject } from '../discovery.js'
