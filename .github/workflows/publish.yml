@@ -34,24 +34,25 @@ jobs:
       - run: bun run build
       - run: bun run binaries
 
-      - name: Publish native binaries to GitHub release
+      - name: Publish exact RFC 0034 assets to GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
-            gh release upload "${GITHUB_REF_NAME}" bin/xdocs-* --clobber
+            gh release upload "${GITHUB_REF_NAME}" bin/* --clobber
           else
-            gh release create "${GITHUB_REF_NAME}" bin/xdocs-* --title "${GITHUB_REF_NAME}" --notes-file CHANGELOG.md
+            gh release create "${GITHUB_REF_NAME}" bin/* --title "${GITHUB_REF_NAME}" --notes-file CHANGELOG.md
           fi
 
-      - name: Verify GitHub release binary assets
+      - name: Verify exact fourteen-asset GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          COUNT=$(gh release view "${GITHUB_REF_NAME}" --json assets --jq '[.assets[] | select(.name | startswith("xdocs-"))] | length')
-
-          if [ "$COUNT" -ne 12 ]; then
-            echo "Expected 12 xdocs native binary assets, found $COUNT" >&2
-            gh release view "${GITHUB_REF_NAME}" --json assets --jq '.assets[].name' >&2
+          EXPECTED=$(find bin -maxdepth 1 -type f -printf '%f\n' | sort)
+          ACTUAL=$(gh release view "${GITHUB_REF_NAME}" --json assets --jq '.assets[].name' | sort)
+          test "$(printf '%s\n' "$EXPECTED" | sed '/^$/d' | wc -l)" -eq 14
+          if [ "$EXPECTED" != "$ACTUAL" ]; then
+            echo "GitHub release does not contain the exact RFC 0034 fourteen-asset set." >&2
+            diff -u <(printf '%s\n' "$EXPECTED") <(printf '%s\n' "$ACTUAL") >&2 || true
             exit 1
           fi
