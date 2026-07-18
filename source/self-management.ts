@@ -3,7 +3,7 @@
  */
 
 import { existsSync } from 'node:fs'
-import { chmod, mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { homedir } from 'node:os'
 
@@ -13,10 +13,14 @@ import type {
   XDocsNativeVariant,
   XDocsUninstallResult,
   XDocsUpdateCache,
-  XDocsUpgradeResult,
+  XDocsUpgradeEnvelope,
+  XDocsUpgradeEvent,
+  XDocsUpgradePlan,
 } from './types.js'
 import { XDocsError } from './errors.js'
 import { readPackageVersion } from './help.js'
+import { buildUpgradeRecovery, compareSemanticVersions, fetchReleaseCatalog, normalizeXDocsVersion } from './upgrade-catalog.js'
+import { executeUpgradeTransaction } from './upgrade-transaction.js'
 
 export {
   checkForLatestVersion,
@@ -35,22 +39,23 @@ export {
 const defaultRepo = 'CGuiho/xdocs'
 const cacheTtlMilliseconds = 4 * 60 * 60 * 1000
 
-type GitHubRelease = {
-  readonly tag_name?: string
-  readonly html_url?: string
-}
-
 type SelfManagementOptions = {
   readonly repo?: string
   readonly cacheDir?: string
   readonly executablePath?: string
 }
 
+type UpgradeFetcher = (input: string | URL | Request, init?: RequestInit) => Promise<Response>
+
 type UpgradeOptions = SelfManagementOptions & {
   readonly version?: string
   readonly arch?: string
   readonly variant?: string
   readonly dryRun?: boolean
+  readonly onPlan?: (plan: XDocsUpgradePlan) => void
+  readonly onEvent?: (event: XDocsUpgradeEvent) => void
+  readonly fetcher?: UpgradeFetcher
+  readonly verifyExecutable?: (path: string, expectedVersion: string) => Promise<void>
 }
 
 type UninstallOptions = SelfManagementOptions & {
@@ -88,14 +93,20 @@ function resolveCachePath(options: SelfManagementOptions = {}): string {
 
 async function checkForLatestVersion(options: SelfManagementOptions = {}): Promise<XDocsUpdateCache> {
   const currentVersion = readPackageVersion()
-  const latest = await fetchLatestRelease(options.repo)
-  const latestVersion = normalizeVersion(latest.version)
+  const releases = await fetchReleaseCatalog({
+    repo: options.repo,
+    platform: detectNativePlatform(),
+    arch: detectNativeArch(),
+  })
+  const latest = releases.find((release) => release.compatibleAsset)
+  if (!latest) throw new XDocsError('No compatible published xdocs release is available.')
+  const latestVersion = latest.version
   const cache: XDocsUpdateCache = {
     checkedAt: new Date().toISOString(),
     currentVersion,
     latestVersion,
-    updateAvailable: compareVersions(latestVersion, currentVersion) > 0,
-    releaseUrl: latest.url,
+    updateAvailable: compareSemanticVersions(latestVersion, currentVersion) > 0,
+    releaseUrl: latest.releaseUrl,
   }
 
   await writeUpdateCache(cache, options)
@@ -127,68 +138,113 @@ async function scheduleBackgroundUpdateCheck(options: SelfManagementOptions = {}
   }
 }
 
-async function upgradeSelf(options: UpgradeOptions = {}): Promise<XDocsUpgradeResult> {
-  const executablePath = resolveExecutablePath(options)
-  await assertNativeInstall(executablePath, 'upgrade')
-
-  const targetVersion = options.version ? normalizeVersion(options.version) : (await fetchLatestRelease(options.repo)).version
+async function upgradeSelf(options: UpgradeOptions = {}): Promise<XDocsUpgradeEnvelope> {
   const currentVersion = readPackageVersion()
-  if (compareVersions(targetVersion, currentVersion) === 0) {
-    return { currentVersion, targetVersion, executablePath, dryRun: Boolean(options.dryRun), scheduled: false, upToDate: true }
-  }
-  const platform = detectNativePlatform()
-  const arch = detectNativeArch(options.arch)
-  const variant = parseVariant(options.variant)
-  const candidates = buildAssetCandidates(platform, arch, variant)
-
-  let lastStatus = ''
-  for (const asset of candidates) {
-    const url = buildDownloadUrl(asset, targetVersion, options.repo)
-    const temporaryPath = join(dirname(executablePath), `.xdocs-upgrade-${process.pid}-${asset}`)
-
-    if (options.dryRun) {
-      return { currentVersion, targetVersion, asset, url, executablePath, dryRun: true, scheduled: false, upToDate: false }
+  const recoveryPlatform: XDocsNativePlatform = process.platform === 'win32'
+    ? 'windows'
+    : process.platform === 'darwin'
+      ? 'macos'
+      : 'linux'
+  const repo = options.repo ?? process.env['XDOCS_REPO'] ?? defaultRepo
+  const requestedVersion = options.version ? normalizeXDocsVersion(options.version) : null
+  try {
+    const executablePath = resolveExecutablePath(options)
+    await assertNativeInstall(executablePath, 'upgrade')
+    const platform = detectNativePlatform()
+    const arch = detectNativeArch(options.arch)
+    const variant = parseVariant(options.variant)
+    if (options.version && !requestedVersion) throw new XDocsError(`Invalid xdocs semantic version: ${options.version}`)
+    const release = requestedVersion
+      ? null
+      : (await fetchReleaseCatalog({ repo, platform, arch, variant, fetcher: options.fetcher })).find((candidate) => candidate.compatibleAsset)
+    if (!requestedVersion && !release) throw new XDocsError(`No compatible xdocs releases are available for ${platform}/${arch}.`)
+    const targetVersion = requestedVersion ?? release?.version ?? currentVersion
+    const targetComparison = compareSemanticVersions(targetVersion, currentVersion)
+    const candidates = buildAssetCandidates(platform, arch, variant)
+    const explicitAsset = requestedVersion && targetComparison > 0 && !options.dryRun
+      ? await resolveExplicitAsset(candidates, targetVersion, repo, options.fetcher)
+      : null
+    const asset = release?.compatibleAsset?.name ?? explicitAsset?.asset ?? candidates[0]
+    if (!asset) throw new XDocsError(`No compatible xdocs asset is available for ${platform}/${arch}.`)
+    const transactionId = `${process.pid}-${Date.now()}`
+    const extension = platform === 'windows' ? '.exe' : ''
+    const plan: XDocsUpgradePlan = {
+      currentVersion,
+      targetVersion,
+      platform,
+      arch,
+      variant: arch === 'x64' ? variant : null,
+      assetName: asset,
+      downloadUrl: release?.compatibleAsset?.downloadUrl ?? explicitAsset?.url ?? buildDownloadUrl(asset, targetVersion, repo),
+      executablePath,
+      temporaryPath: join(dirname(executablePath), `.xdocs-upgrade-${transactionId}${extension}`),
+      backupPath: join(dirname(executablePath), `.xdocs-backup-${transactionId}${extension}`),
+      releaseUrl: release?.releaseUrl ?? `https://github.com/${repo}/releases/tag/${encodeURIComponent(`@guiho/xdocs@${targetVersion}`)}`,
     }
-
-    const response = await fetch(url)
-    if (!response.ok) {
-      lastStatus = `${response.status} ${response.statusText}`
-      continue
-    }
-
-    await Bun.write(temporaryPath, response)
-    const valid = await isNativeBinary(temporaryPath, platform)
-    if (!valid) {
-      await rm(temporaryPath, { force: true })
-      lastStatus = 'download was not a native binary'
-      continue
-    }
-
-    if (platform === 'windows') {
-      await writeUpdateCache({
+    const recovery = buildUpgradeRecovery({
+      platform,
+      targetVersion: targetComparison < 0 ? currentVersion : targetVersion,
+      targetSource: targetComparison < 0 ? 'fallback-current' : requestedVersion ? 'explicit' : 'release',
+    })
+    options.onPlan?.(plan)
+    return executeUpgradeTransaction({
+      plan,
+      recovery,
+      dryRun: options.dryRun,
+      onEvent: options.onEvent,
+      fetcher: options.fetcher,
+      verifyExecutable: options.verifyExecutable,
+      platform,
+      commitCache: async () => writeUpdateCache({
         checkedAt: new Date().toISOString(),
         currentVersion: targetVersion,
         latestVersion: targetVersion,
         updateAvailable: false,
-        releaseUrl: `https://github.com/${options.repo ?? process.env['XDOCS_REPO'] ?? defaultRepo}/releases/tag/${encodeURIComponent(`@guiho/xdocs@${targetVersion}`)}`,
-      }, options)
-      await scheduleWindowsReplacement(temporaryPath, executablePath)
-      return { currentVersion, targetVersion, asset, url, executablePath, dryRun: false, scheduled: true, upToDate: false }
+        releaseUrl: plan.releaseUrl,
+      }, options),
+    })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    const recovery = buildUpgradeRecovery({
+      platform: recoveryPlatform,
+      targetVersion: requestedVersion ?? currentVersion,
+      targetSource: requestedVersion ? 'explicit' : 'fallback-current',
+    })
+    return {
+      schemaVersion: 1,
+      command: 'xdocs upgrade',
+      outcome: 'failed',
+      plan: null,
+      events: [
+        { sequence: 1, phase: 'plan', status: 'started', message: 'Resolving upgrade target.' },
+        { sequence: 2, phase: 'plan', status: 'failed', message },
+      ],
+      result: null,
+      recovery,
+      error: { code: 'upgrade-target-unavailable', message },
     }
-
-    await chmod(temporaryPath, 0o755)
-    await rename(temporaryPath, executablePath)
-    await writeUpdateCache({
-      checkedAt: new Date().toISOString(),
-      currentVersion: targetVersion,
-      latestVersion: targetVersion,
-      updateAvailable: false,
-      releaseUrl: `https://github.com/${options.repo ?? process.env['XDOCS_REPO'] ?? defaultRepo}/releases/tag/${encodeURIComponent(`@guiho/xdocs@${targetVersion}`)}`,
-    }, options)
-    return { currentVersion, targetVersion, asset, url, executablePath, dryRun: false, scheduled: false, upToDate: false }
   }
+}
 
-  throw new XDocsError(`No compatible xdocs binary found for ${platform}/${arch}. Last status: ${lastStatus || 'unknown'}`)
+async function resolveExplicitAsset(
+  candidates: string[],
+  targetVersion: string,
+  repo: string,
+  fetcher: UpgradeFetcher = fetch,
+): Promise<{ asset: string, url: string }> {
+  for (const asset of candidates) {
+    const url = buildDownloadUrl(asset, targetVersion, repo)
+    let response: Response
+    try {
+      response = await fetcher(url, { method: 'HEAD', headers: { 'User-Agent': 'xdocs-cli' } })
+    } catch {
+      return { asset, url }
+    }
+    await response.body?.cancel().catch(() => undefined)
+    if (response.ok) return { asset, url }
+    if (response.status !== 404) return { asset, url }
+  }
+  throw new XDocsError(`No compatible xdocs ${targetVersion} binary is available.`)
 }
 
 async function uninstallSelf(options: UninstallOptions = {}): Promise<XDocsUninstallResult> {
@@ -207,18 +263,11 @@ async function uninstallSelf(options: UninstallOptions = {}): Promise<XDocsUnins
 }
 
 async function listAvailableVersions(options: SelfManagementOptions = {}): Promise<string[]> {
-  const repo = options.repo ?? process.env['XDOCS_REPO'] ?? defaultRepo
-  const response = await fetch(`https://api.github.com/repos/${repo}/releases`, {
-    headers: { 'User-Agent': 'xdocs-cli' },
-  })
-
-  if (!response.ok) throw new XDocsError(`Failed to fetch xdocs releases: ${response.status} ${response.statusText}`)
-
-  const releases = await response.json() as GitHubRelease[]
-  return releases
-    .map((release) => release.tag_name)
-    .filter((tag): tag is string => typeof tag === 'string')
-    .map(normalizeVersion)
+  return (await fetchReleaseCatalog({
+    repo: options.repo,
+    platform: detectNativePlatform(),
+    arch: detectNativeArch(),
+  })).map((release) => release.version)
 }
 
 function resolveExecutablePath(options: SelfManagementOptions = {}): string {
@@ -261,50 +310,6 @@ function buildDownloadUrl(asset: string, version: string, repo?: string): string
   return `https://github.com/${resolvedRepo}/releases/download/${tag}/${asset}`
 }
 
-function normalizeVersion(version: string): string {
-  return version.replace(/^@guiho\/xdocs@/, '').replace(/^v/, '')
-}
-
-function compareVersions(a: string, b: string): number {
-  const left = normalizeVersion(a).split(/[.+-]/).map((part) => Number.parseInt(part, 10) || 0)
-  const right = normalizeVersion(b).split(/[.+-]/).map((part) => Number.parseInt(part, 10) || 0)
-  const length = Math.max(left.length, right.length)
-
-  for (let index = 0; index < length; index += 1) {
-    const diff = (left[index] ?? 0) - (right[index] ?? 0)
-    if (diff !== 0) return diff
-  }
-
-  return 0
-}
-
-async function fetchLatestRelease(repo?: string): Promise<{ version: string, url: string }> {
-  const resolvedRepo = repo ?? process.env['XDOCS_REPO'] ?? defaultRepo
-  const response = await fetch(`https://api.github.com/repos/${resolvedRepo}/releases/latest`, {
-    headers: { 'User-Agent': 'xdocs-cli' },
-  })
-
-  if (!response.ok) throw new XDocsError(`Failed to fetch latest xdocs release: ${response.status} ${response.statusText}`)
-
-  const release = await response.json() as GitHubRelease
-  if (!release.tag_name) throw new XDocsError('Latest xdocs release did not include a tag name')
-  return { version: normalizeVersion(release.tag_name), url: release.html_url ?? `https://github.com/${resolvedRepo}/releases/latest` }
-}
-
-async function isNativeBinary(path: string, platform: XDocsNativePlatform): Promise<boolean> {
-  const bytes = new Uint8Array(await Bun.file(path).slice(0, 4).arrayBuffer())
-  if (platform === 'windows') return bytes[0] === 0x4d && bytes[1] === 0x5a
-  if (platform === 'linux') return bytes[0] === 0x7f && bytes[1] === 0x45 && bytes[2] === 0x4c && bytes[3] === 0x46
-  return [
-    [0xcf, 0xfa, 0xed, 0xfe],
-    [0xce, 0xfa, 0xed, 0xfe],
-    [0xfe, 0xed, 0xfa, 0xcf],
-    [0xfe, 0xed, 0xfa, 0xce],
-    [0xca, 0xfe, 0xba, 0xbe],
-    [0xbe, 0xba, 0xfe, 0xca],
-  ].some((magic) => magic.every((value, index) => bytes[index] === value))
-}
-
 async function assertNativeInstall(executablePath: string, action: string): Promise<void> {
   if (process.env['XDOCS_SELF_PATH']) return
   if (await isSourceCheckout()) throw new XDocsError(`xdocs ${action} is only available from an installed native xdocs binary.`)
@@ -317,23 +322,6 @@ async function isSourceCheckout(): Promise<boolean> {
   } catch {
     return false
   }
-}
-
-async function scheduleWindowsReplacement(source: string, destination: string): Promise<void> {
-  const script = [
-    `$pidToWait = ${process.pid}`,
-    'Wait-Process -Id $pidToWait -ErrorAction SilentlyContinue',
-    `Move-Item -LiteralPath ${quotePowerShell(source)} -Destination ${quotePowerShell(destination)} -Force`,
-    'Remove-Item -LiteralPath $MyInvocation.MyCommand.Path -Force',
-  ].join('\n')
-  const scriptPath = join(dirname(source), `.xdocs-upgrade-${process.pid}.ps1`)
-  await writeFile(scriptPath, script, 'utf8')
-  const proc = Bun.spawn(['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', scriptPath], {
-    stdin: 'ignore',
-    stdout: 'ignore',
-    stderr: 'ignore',
-  })
-  ;(proc as unknown as { unref?: () => void }).unref?.()
 }
 
 async function scheduleWindowsRemoval(path: string): Promise<void> {
