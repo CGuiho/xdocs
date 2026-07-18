@@ -6,8 +6,8 @@ children: []
 files:
   build-binaries.ts: Bun-only builder for twelve Linux, Darwin, and Windows binaries plus guiho-s-xdocs and guiho-i-xdocs, with exact-set verification.
   install.ps1: Progress-visible Windows installer for binary, PATH, both skill destinations, instruction reconciliation, rollback, and final verification.
-  install.sh: Progress-visible Linux/Darwin installer for binary, PATH, both skill destinations, instruction reconciliation, rollback, and final verification.
-  installers.spec.ts: Isolated recovery-installer regression coverage including paths with spaces.
+  install.sh: Progress-visible Linux/Darwin installer with Darwin-aware shell-profile PATH setup, both skill destinations, instruction reconciliation, rollback, and final verification.
+  installers.spec.ts: Isolated recovery-installer regression coverage including paths with spaces and Darwin Bash profile selection.
 documents: {}
 tags:
   - devops
