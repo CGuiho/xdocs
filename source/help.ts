@@ -228,17 +228,17 @@ const commandHelpRecords: readonly HelpRecord[] = [
     name: 'upgrade',
     summary: 'Upgrade the installed xdocs native binary.',
     usage: ['xdocs upgrade [--version <version>] [--variant <baseline|default|modern>]', 'xdocs upgrade check', 'xdocs upgrade list'],
-    description: 'Downloads the latest compatible GitHub Release binary and replaces the current installed xdocs binary. x64 installs prefer baseline by default.',
+    description: 'Prints the exact plan, downloads a compatible release, immediately replaces and verifies the canonical binary, rolls back failure, and always prints pinned recovery guidance.',
     flags: [
       { name: '--version <version>', description: 'Install a specific version instead of latest.' },
       { name: '--arch <x64|arm64>', description: 'Override detected architecture.' },
       { name: '--variant <baseline|default|modern>', description: 'Override x64 variant preference. Defaults to baseline.' },
       { name: '--dry-run', description: 'Print the selected asset and URL without replacing the binary.' },
-      { name: '--format <text|json>', description: 'Output format. Defaults to text.' },
+      { name: '--format <text|json|markdown>', description: 'Output format. Defaults to text.' },
     ],
     subcommands: [
       subcommand('check', 'Fetch latest release metadata and report whether an update is available.', ['xdocs upgrade check']),
-      subcommand('list', 'List available GitHub Release versions.', ['xdocs upgrade list']),
+      subcommand('list', 'List every paginated stable and prerelease version newest first.', ['xdocs upgrade list']),
     ],
     examples: [
       { command: 'xdocs upgrade', description: 'Upgrade to latest compatible release.' },
