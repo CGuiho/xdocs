@@ -6,6 +6,7 @@ children: []
 files: {}
 documents:
   citty-cli-migration.md: Executable unit-by-unit plan for replacing handwritten CLI parsing and routing with Citty.
+  rfc-0034-cli-compliance-migration.md: Approved breaking migration plan for Bun-only source, TypeBox, YAML, startup, help, agents, prompts, upgrades, distribution, fourteen assets, docs, and validation.
   upgrade-reliability-implementation.md: Executable plan for complete release discovery, immediate verified self-upgrade, recovery guidance, installer hardening, and validation.
 tags:
   - plans
@@ -13,6 +14,11 @@ tags:
 keywords:
   - Citty
   - CLI migration
+  - RFC 0034
+  - TypeBox
+  - xdocs.yaml
+  - agent prompt catalog
+  - fourteen release assets
   - execution plan
   - upgrade reliability
 flags: []
