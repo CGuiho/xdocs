@@ -234,12 +234,6 @@ function createXDocsCommand(): AnyCommand {
     variant: { type: 'enum', options: variantOptions, description: 'Override x64 variant.' },
     'dry-run': { type: 'boolean', description: 'Preview without replacing the binary.' },
   } satisfies ArgsDef
-  const upgradeApply = leaf('apply', 'Apply an xdocs native upgrade.', upgradeArgs, 'xdocs upgrade', (args) => runUpgrade(options(args), {
-    version: optionalString(args['version']),
-    arch: optionalString(args['arch']),
-    variant: optionalString(args['variant']),
-    dryRun: Boolean(args['dryRun']),
-  }))
   const upgradeCheck = leaf('check', 'Check whether a newer release exists.', executionArgs, 'xdocs upgrade check', (args) =>
     runUpgradeCheck(options(args)))
   const upgradeList = leaf('list', 'List available releases.', {
@@ -255,7 +249,12 @@ function createXDocsCommand(): AnyCommand {
   const upgrade = group('upgrade', 'Upgrade the installed xdocs binary.', upgradeArgs, 'xdocs upgrade', {
     check: upgradeCheck,
     list: upgradeList,
-  }, upgradeApply)
+  }, (args) => runUpgrade(options(args), {
+    version: optionalString(args['version']),
+    arch: optionalString(args['arch']),
+    variant: optionalString(args['variant']),
+    dryRun: Boolean(args['dryRun']),
+  }))
   const uninstall = leaf('uninstall', 'Remove the installed native xdocs binary.', {
     ...executionArgs,
     'dry-run': { type: 'boolean', description: 'Preview without removing the binary.' },
@@ -303,14 +302,13 @@ function group(
   args: ArgsDef,
   path: string,
   subCommands: Record<string, AnyCommand>,
-  defaultCommand?: AnyCommand,
+  defaultAction?: (args: ParsedArgs) => Promise<void> | void,
 ): AnyCommand {
   let command: AnyCommand
   command = defineCommand({
     meta: { name, description },
     args,
-    subCommands: defaultCommand ? { apply: defaultCommand, ...subCommands } : subCommands,
-    default: defaultCommand ? 'apply' : undefined,
+    subCommands,
     run: async ({ args: parsed, rawArgs }) => {
       if (Array.isArray(parsed._) && parsed._.length > 0) return
       if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
@@ -318,6 +316,18 @@ function group(
         return
       }
       if (handleDeveloperHelp(parsed, command, path)) return
+      if (defaultAction) {
+        const resolvedOptions = {
+          cwd: resolvePath(optionalString(parsed['cwd']) ?? process.cwd()),
+          config: optionalString(parsed['config']),
+          format: (optionalString(parsed['format']) ?? 'text') as XDocsFormat,
+          verbose: Boolean(parsed['verbose']),
+        }
+        await reportCachedUpdateNotice(resolvedOptions.format)
+        void scheduleBackgroundUpdateCheck()
+        await defaultAction(parsed)
+        return
+      }
       process.stdout.write(await renderUsage(command) + '\n')
     },
   })
