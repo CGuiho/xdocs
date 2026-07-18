@@ -4,6 +4,7 @@ description: Structured reviews of xdocs architecture, plans, and implementation
 parent: xdocs-docs
 children:
   - xdocs-plan-reviews
+  - xdocs-implementation-reviews
 files: {}
 documents: {}
 tags:
