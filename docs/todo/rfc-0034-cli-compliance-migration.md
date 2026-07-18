@@ -31,7 +31,7 @@ commands, plural agent commands, automatic agent writes, old cache paths,
 ## Todo Index
 
 - Task: `4. Migrate xdocs To Full RFC 0034 Compliance`
-- Status: todo
+- Status: completed
 - Index: [TODO.md](../../TODO.md)
 
 ## Outcome
@@ -129,6 +129,13 @@ namespace; and publishes exactly twelve RFC binaries plus `guiho-s-xdocs` and
 - Update docs, the bundled skill, tests, TODO/implementation notes, and xdocs
   descriptors in the same unit.
 - Stop before remote release, Mirror, push, or real global installation actions.
+
+## Completion evidence
+
+- [Implementation notes](./rfc-0034-cli-compliance-migration-implementation.md)
+- [Implementation review](../reviews/implementation/rfc-0034-cli-compliance-migration-review.md)
+- [Validation report](../validation/rfc-0034-cli-compliance-migration.md)
+- [Downstream handoff](../migrations/xdocs-yaml-downstream-handoff.md)
 
 ## After Finishing
 
