@@ -9,7 +9,7 @@ export type XDocsFormat = 'text' | 'json' | 'markdown'
 export type XDocsAiMode = 'prompt' | 'auto'
 
 /** Command names recognized by the CLI. */
-export type XDocsCommand = 'init' | 'scan' | 'generate' | 'prompt' | 'merge' | 'tree' | 'list' | 'meta' | 'context' | 'doctor' | 'agents' | 'upgrade' | 'uninstall'
+export type XDocsCommand = 'init' | 'scan' | 'generate' | 'merge' | 'tree' | 'list' | 'meta' | 'context' | 'doctor' | 'agent' | 'upgrade' | 'uninstall'
 
 /** AI tools the guiho-s-xdocs skill can be installed for.
  *
@@ -21,7 +21,7 @@ export type XDocsAgentTool = 'agents' | 'claude'
 /** Scope of an agent-skill installation. */
 export type XDocsSkillScope = 'local' | 'global'
 
-/** Raw configuration as parsed from xdocs.config.toml. */
+/** Raw configuration as parsed from xdocs.yaml. */
 export type XDocsRawConfig = Partial<{
   schema: number
   extensions: Partial<{
@@ -35,11 +35,6 @@ export type XDocsRawConfig = Partial<{
   }>
   project: Partial<{
     name: string
-  }>
-  agents: Partial<{
-    auto_agents_md: boolean
-    auto_skill_install: boolean
-    skill_tool: string
   }>
 }>
 
@@ -60,14 +55,6 @@ export type XDocsConfig = {
   project: {
     name: string
   }
-  agents: XDocsAgentSettings
-}
-
-/** Normalized agent automation settings. */
-export type XDocsAgentSettings = {
-  autoAgentsMd: boolean
-  autoSkillInstall: boolean
-  skillTool: XDocsAgentTool
 }
 
 /** YAML frontmatter metadata from an xdocs descriptor. */
@@ -256,7 +243,7 @@ export type XDocsScanResult = {
   uncoveredPaths: string[]
 }
 
-/** Available prompt names for xdocs prompt --name. */
+/** Available embedded prompt identifiers. */
 export type XDocsPromptName = 'write' | 'update' | 'agents' | 'generate'
 
 /** A parsed prompt loaded from a .md file. */
@@ -285,24 +272,16 @@ export type XDocsAgentsInstructionsResult = {
   changed: boolean
 }
 
-/** Result of the config-gated agent automation that runs on normal commands. */
-export type XDocsAgentAutomationResult = {
-  settings: XDocsAgentSettings
-  agentsMd?: XDocsAgentsInstructionsResult
-  globalSkill?: XDocsSkillInstallResult
-}
-
 /** Cached latest-version information written by the background update checker. */
 export type XDocsUpdateCache = {
-  checkedAt: string
-  currentVersion: string
+  newVersionAvailable: boolean
   latestVersion: string
-  updateAvailable: boolean
-  releaseUrl: string
+  upgradeCommand?: string
+  lastCheck: string
 }
 
 /** Supported native binary platform labels. */
-export type XDocsNativePlatform = 'linux' | 'macos' | 'windows'
+export type XDocsNativePlatform = 'linux' | 'darwin' | 'windows'
 
 /** Supported native binary architecture labels. */
 export type XDocsNativeArch = 'x64' | 'arm64'
