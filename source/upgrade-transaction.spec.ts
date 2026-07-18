@@ -210,7 +210,7 @@ describe('upgrade transaction', () => {
       const dir = await mkdtemp(join(tmpdir(), 'xdocs-verification-timeout-'))
       const executable = join(dir, 'xdocs-hung')
       try {
-        await writeFile(executable, '#!/bin/sh\nsleep 30\n', 'utf8')
+        await writeFile(executable, '#!/bin/sh\nexec sleep 30\n', 'utf8')
         await chmod(executable, 0o755)
         await expect(verifyExecutableVersion(executable, '1.0.0', 50)).rejects.toThrow('timed out')
       } finally {
