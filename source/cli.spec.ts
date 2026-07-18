@@ -18,10 +18,14 @@ afterEach(async () => {
 describe('RFC 0034 Citty catalog', () => {
   test('exposes only the final public root catalog', () => {
     const root = createXDocsCommand()
-    const names = Object.keys(root.subCommands as Record<string, unknown>).filter((name) => !['home', '--check-updates-worker'].includes(name))
+    const commands = root.subCommands as Record<string, { meta?: { hidden?: boolean } }>
+    const names = Object.entries(commands)
+      .filter(([, command]) => !command.meta?.hidden)
+      .map(([name]) => name)
     expect(names).toEqual(['init', 'scan', 'generate', 'merge', 'tree', 'list', 'meta', 'context', 'doctor', 'agent', 'upgrade', 'uninstall'])
     expect(names).not.toContain('prompt')
     expect(names).not.toContain('agents')
+    expect(names).not.toContain('home')
   })
 
   test.serial('prints the exact no-argument banner and root versions', async () => {
@@ -48,6 +52,48 @@ describe('RFC 0034 Citty catalog', () => {
     expect(depth.stdout).not.toContain('install')
     const docs = await capture(() => runCli(['agent', 'prompt', '--help-docs']))
     expect(docs.stdout).toStartWith('# xdocs agent prompt')
+  })
+
+  test.serial('renders the real public catalog from every root help mode and rejects synthetic home', async () => {
+    const help = await runSourceCli(['-h'])
+    expect(help.exitCode).toBe(0)
+    expect(help.stdout).toContain('init')
+    expect(help.stdout).toContain('agent')
+    expect(help.stdout).toContain('upgrade')
+    expect(help.stdout).toContain('EXAMPLES')
+    expect(help.stdout).toContain('xdocs scan')
+    expect(help.stdout).not.toContain('\nhome')
+    expect(help.stdout).not.toContain('--check-updates-worker')
+
+    const tree = await runSourceCli(['--help-tree'])
+    expect(tree.exitCode).toBe(0)
+    expect(tree.stdout).toStartWith('COMMAND TREE\n\nxdocs')
+    expect(tree.stdout).toContain('├── init')
+    expect(tree.stdout).toContain('├── agent')
+    expect(tree.stdout).toContain('├── upgrade')
+    expect(tree.stdout).not.toContain('home')
+    expect(tree.stdout).not.toContain('--check-updates-worker')
+
+    const depth = await runSourceCli(['--help-tree-depth', '1'])
+    expect(depth.exitCode).toBe(0)
+    expect(depth.stdout).toContain('agent')
+    expect(depth.stdout).not.toContain('skill')
+
+    const docs = await runSourceCli(['--help-docs'])
+    expect(docs.exitCode).toBe(0)
+    expect(docs.stdout).toStartWith('# xdocs\n')
+    expect(docs.stdout).toContain('## Subcommands')
+    expect(docs.stdout).toContain('- `agent`')
+    expect(docs.stdout).toContain('- `upgrade`')
+    expect(docs.stdout).toContain('## Examples')
+    expect(docs.stdout).toContain('`xdocs scan`')
+    expect(docs.stdout).not.toContain('home')
+    expect(docs.stdout).not.toContain('--check-updates-worker')
+
+    const home = await runSourceCli(['home'])
+    expect(home.exitCode).toBe(2)
+    expect(home.stdout).toBe('')
+    expect(home.stderr).toContain('Unknown command')
   })
 
   test.serial('preserves all four prompts in the singular agent namespace', async () => {
@@ -160,10 +206,28 @@ describe('RFC 0034 Citty catalog', () => {
   test('keeps only the hidden worker internal and the final upgrade subtree public', () => {
     const root = createXDocsCommand()
     const commands = root.subCommands as Record<string, { subCommands?: Record<string, unknown> }>
-    expect(root.default).toBe('home')
+    expect(root.default).toBeUndefined()
+    expect(root.run).toBeFunction()
+    expect(commands['home']).toBeUndefined()
     expect(Object.keys(commands['upgrade']?.subCommands ?? {})).toEqual(['check', 'list'])
   })
 })
+
+async function runSourceCli(args: string[]): Promise<{ stdout: string, stderr: string, exitCode: number }> {
+  const entrypoint = Bun.fileURLToPath(new URL('./guiho-xdocs-bin.ts', import.meta.url))
+  const child = Bun.spawn([process.execPath, entrypoint, ...args], {
+    cwd: import.meta.dir,
+    env: { ...Bun.env, XDOCS_DISABLE_UPDATE_CHECK: '1' },
+    stdout: 'pipe',
+    stderr: 'pipe',
+  })
+  const [stdout, stderr, exitCode] = await Promise.all([
+    new Response(child.stdout).text(),
+    new Response(child.stderr).text(),
+    child.exited,
+  ])
+  return { stdout, stderr, exitCode }
+}
 
 async function temp(): Promise<string> {
   const path = await mkdtemp(join(tmpdir(), 'xdocs-rfc-cli-'))
