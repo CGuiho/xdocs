@@ -6,6 +6,7 @@ children: []
 files: {}
 documents:
   citty-cli-migration.md: Executable unit-by-unit plan for replacing handwritten CLI parsing and routing with Citty.
+  upgrade-reliability-implementation.md: Executable plan for complete release discovery, immediate verified self-upgrade, recovery guidance, installer hardening, and validation.
 tags:
   - plans
   - implementation
@@ -13,6 +14,7 @@ keywords:
   - Citty
   - CLI migration
   - execution plan
+  - upgrade reliability
 flags: []
 status: stable
 ---
