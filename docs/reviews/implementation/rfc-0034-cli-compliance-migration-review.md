@@ -19,13 +19,22 @@ keywords:
 
 ## Verdict
 
-Accepted for versioning and push. Package publication and GitHub release
-creation remain separate operations and were not performed.
+Accepted for `0.6.1` patch versioning and push after the independent corrective
+audit. Package publication and GitHub release creation remain separate
+operations and were not performed.
 
 ## Findings
 
-No blocking, high, medium, or low implementation findings remain after the
-final correction pass.
+No open blocking, high, medium, or low implementation findings remain.
+
+Resolved during the independent audit:
+
+- High: root `-h`, `--help`, tree, depth, and Markdown help were routed through
+  a synthetic `home` command and omitted the approved public catalog; the
+  synthetic route was also publicly callable.
+- Medium: standard and Markdown help did not include examples.
+- Low: Darwin Bash PATH setup checked `macos` after normalizing the platform to
+  `darwin`, preventing `.bash_profile` selection.
 
 ## Acceptance criteria check
 
@@ -34,10 +43,12 @@ final correction pass.
 - YAML configuration and exact precedence/reporting: passed.
 - Final Citty catalog and breaking removals: passed.
 - Startup banner, cache, and detached worker: passed.
-- Standard/tree/depth/Markdown help at nested scopes: passed.
+- Standard/tree/depth/Markdown help with live examples at root and nested
+  scopes: passed.
 - Complete explicit agent skill/instruction/prompt namespace: passed.
 - Upgrade pagination, transactional reliability, and reconciliation: passed.
 - Bash/PowerShell installers and Node bootstrap: passed.
+- Exact explicit/project/global YAML precedence: passed.
 - Exact twelve native plus two agent assets: passed.
 - Documentation, TODO, descriptors, and downstream handoff: passed.
 
