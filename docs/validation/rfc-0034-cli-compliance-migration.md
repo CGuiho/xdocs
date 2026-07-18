@@ -28,12 +28,14 @@ Mirror-managed versioning and push.
 | Check | Result |
 | --- | --- |
 | `bun run typecheck` | Passed |
-| `bun test` | Passed, 46 tests |
+| `bun test` | Passed, 47 tests |
 | `bun run build` | Passed |
 | `bun run bundle` | Passed |
 | `bun run binary` | Passed |
 | `bun run binaries` | Passed; exact fourteen assets |
 | Compiled banner/version/prompt/help/config smoke | Passed |
+| Compiled latest/current-version upgrade dry-runs | Passed; nested `--version` routes to `upgrade` |
+| Compiled cached-notice-before-banner ordering | Passed |
 | Node bootstrap without Bun in PATH | Passed |
 | Running Windows executable replacement | Passed |
 | Prohibited core Node imports | Passed, zero |
