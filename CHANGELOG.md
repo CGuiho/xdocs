@@ -1,5 +1,16 @@
 # GUIHO XDocs Changelog
 
+## Unreleased
+
+- Replace deferred Windows self-upgrade installation with a locked, journaled, immediate canonical rename/swap that preflights the candidate, verifies the installed absolute path, commits cache state only afterward, restores failures, and defers backup deletion only.
+- Print and flush the full upgrade plan before downloading, stream ordered phases in text and Markdown, and return a fixed JSON envelope with plan, events, result, recovery, and stable errors.
+- Always print a full-version pinned reinstall command followed by a separate optional process-stop command, including an explicitly labeled current-version repair fallback when target discovery fails.
+- Make `xdocs upgrade list` paginate every GitHub release, validate/deduplicate/sort SemVer, classify stable/alpha/beta/RC/other channels, and report dates, assets, current, and latest-stable markers.
+- Harden PowerShell, Bash, and package-manager installers with same-directory candidates, native and exact-version preflight, canonical verification, rollback, cleanup, and shadowing guidance.
+- Bound every candidate and canonical version check, preserve backups and journals when rollback state is ambiguous, refuse downgrade through `upgrade`, resolve explicit-version asset fallbacks before download, and validate installer magic for the detected operating system.
+- Run the complete test suite on Windows CI and exercise replacement of a real running Windows executable before the upgrade transaction returns.
+- Recover a verified target when backup cleanup completed before journal cleanup, keep package-installer rollback failure terminal, distinguish refused downgrades from discovery failure, and execute generated recovery commands from PowerShell, Git Bash, and Bash fixtures.
+
 ## 0.6.0-alpha.0
 
 - Replace handwritten CLI parsing and manual switch routing with one declarative Citty command tree covering root commands, nested agent/self-management commands, aliases, required values, enum validation, default routes, hidden worker execution, and ordinary command usage.
