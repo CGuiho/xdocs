@@ -13,6 +13,8 @@ import { executeUpgradeTransaction, verifyExecutableVersion } from './upgrade-tr
 
 if (process.platform === 'win32') {
   test('replaces a running real Windows executable before returning', async () => {
+    const previousDisableCleanup = process.env['XDOCS_DISABLE_SCHEDULED_CLEANUP']
+    process.env['XDOCS_DISABLE_SCHEDULED_CLEANUP'] = '1'
     const dir = await mkdtemp(join(tmpdir(), 'xdocs-windows-upgrade-'))
     const canonicalPath = join(dir, 'xdocs.exe')
     const plan: XDocsUpgradePlan = {
@@ -55,6 +57,8 @@ if (process.platform === 'win32') {
       expect(isProcessRunning(runningOldImage.pid)).toBe(true)
       await verifyExecutableVersion(canonicalPath, Bun.version)
     } finally {
+      if (previousDisableCleanup === undefined) delete process.env['XDOCS_DISABLE_SCHEDULED_CLEANUP']
+      else process.env['XDOCS_DISABLE_SCHEDULED_CLEANUP'] = previousDisableCleanup
       runningOldImage.kill()
       await runningOldImage.exited
       await Bun.sleep(250)
