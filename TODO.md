@@ -1,4 +1,20 @@
-﻿Copyright (c) 2026 GUIHO Technologies as represented by Cristóvão GUIHO
+---
+name: xdocs-todo
+purpose: Track repository-owned xdocs implementation, testing, documentation, and release tasks.
+description: Durable task ledger and status summary for the @guiho/xdocs repository.
+created: 2026-06-01
+owner: xdocs-package
+flags: []
+tags:
+  - todo
+  - project-management
+keywords:
+  - xdocs tasks
+  - implementation status
+  - RFC 0034
+---
+
+Copyright (c) 2026 GUIHO Technologies as represented by Cristóvão GUIHO
 All Rights Reserved.
 
 # GUIHO XDocs TODO List
@@ -14,11 +30,11 @@ All Rights Reserved.
 
 | Status | Count |
 | --- | ---: |
-| todo | 2 |
+| todo | 1 |
 | in progress | 0 |
-| testing | 1 |
+| testing | 0 |
 | stopped | 0 |
-| completed | 1 |
+| completed | 3 |
 
 ## Tasks
 
@@ -44,9 +60,9 @@ All Rights Reserved.
 
 ### 3. Make Self-Upgrade Reliable and Recoverable
 
-- Status: testing
+- Status: completed
 - Created: `2026-07-15`
-- Updated: `2026-07-18`
+- Updated: `2026-07-18T23:59:00+02:00`
 - Outcome: Make native self-upgrade observable, immediately verified and rollback-safe, with complete release listing and exact recovery commands.
 - Spec: [docs/todo/upgrade-reliability.md](docs/todo/upgrade-reliability.md)
 - Related files:
@@ -58,11 +74,15 @@ All Rights Reserved.
 
 ### 4. Migrate xdocs To Full RFC 0034 Compliance
 
-- Status: todo
+- Status: completed
 - Created: `2026-07-18T18:48:11+02:00`
-- Updated: `2026-07-18T18:48:11+02:00`
+- Updated: `2026-07-18T23:59:00+02:00`
 - Outcome: xdocs fully implements the approved breaking GUIHO RFC 0034 CLI contract across Bun-only source, TypeBox validation, YAML configuration, startup, help, agents, prompts, upgrades, installers, npm distribution, release assets, tests, and documentation.
 - Spec: [docs/todo/rfc-0034-cli-compliance-migration.md](docs/todo/rfc-0034-cli-compliance-migration.md)
 - Related files:
   - [docs/plans/rfc-0034-cli-compliance-migration.md](docs/plans/rfc-0034-cli-compliance-migration.md) - Approved step-by-step migration plan.
   - [docs/reviews/plans/rfc-0034-cli-compliance-migration-review.md](docs/reviews/plans/rfc-0034-cli-compliance-migration-review.md) - Ready-for-execution plan review.
+- Implementation: [docs/todo/rfc-0034-cli-compliance-migration-implementation.md](docs/todo/rfc-0034-cli-compliance-migration-implementation.md)
+- Review: [docs/reviews/implementation/rfc-0034-cli-compliance-migration-review.md](docs/reviews/implementation/rfc-0034-cli-compliance-migration-review.md)
+- Validation: [docs/validation/rfc-0034-cli-compliance-migration.md](docs/validation/rfc-0034-cli-compliance-migration.md)
+- Downstream handoff: [docs/migrations/xdocs-yaml-downstream-handoff.md](docs/migrations/xdocs-yaml-downstream-handoff.md)
