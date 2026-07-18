@@ -1,6 +1,13 @@
 ---
 name: generate
+purpose: Guide an agent through generating comprehensive documentation from xdocs descriptors and implementation context.
 description: Generate comprehensive documentation for a domain or entire project.
+created: 2026-06-02
+owner: xdocs-prompts
+flags: []
+tags:
+  - prompt
+  - documentation-generation
 keywords:
   - generate documentation
   - comprehensive docs
