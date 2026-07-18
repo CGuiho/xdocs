@@ -2,10 +2,6 @@
  * @copyright Copyright (c) 2026 GUIHO Technologies as represented by Cristóvão GUIHO. All Rights Reserved.
  */
 
-import { constants, existsSync } from 'node:fs'
-import { access, chmod, readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
-import { dirname, join } from 'node:path'
-
 import type {
   XDocsNativePlatform,
   XDocsUpgradeEnvelope,
@@ -15,6 +11,16 @@ import type {
 } from './types.js'
 import { XDocsError } from './errors.js'
 import { buildUpgradeRecovery, compareSemanticVersions } from './upgrade-catalog.js'
+import {
+  chmodPath as chmod,
+  movePath as rename,
+  pathExists,
+  readText as readFile,
+  removePath as rm,
+  statPath as stat,
+  writeText as writeFile,
+} from './runtime/fs.js'
+import { dirname, joinPath as join } from './runtime/path.js'
 
 export {
   executeUpgradeTransaction,
@@ -83,13 +89,9 @@ async function executeUpgradeTransaction(options: UpgradeTransactionOptions): Pr
 
   try {
     await recoverInterruptedUpgrade(plan.executablePath, verify)
-    try {
-      await writeFile(lockPath, JSON.stringify({ pid: process.pid, targetVersion: plan.targetVersion }) + '\n', { encoding: 'utf8', flag: 'wx' })
-      ownsLock = true
-    } catch (error) {
-      if (isCode(error, 'EEXIST')) throw new XDocsError(`Another xdocs upgrade owns ${plan.executablePath}.`)
-      throw error
-    }
+    if (await pathExists(lockPath)) throw new XDocsError(`Another xdocs upgrade owns ${plan.executablePath}.`)
+    await writeFile(lockPath, JSON.stringify({ pid: process.pid, targetVersion: plan.targetVersion }) + '\n')
+    ownsLock = true
 
     emit('download', 'started', 'Downloading upgrade asset.')
     const response = await (options.fetcher ?? fetch)(plan.downloadUrl, { headers: { 'User-Agent': 'xdocs-cli' } })
@@ -189,7 +191,7 @@ async function recoverInterruptedUpgrade(executablePath: string, verify: Executa
   const directory = dirname(executablePath)
   const journalPath = join(directory, '.xdocs-upgrade.json')
   const lockPath = join(directory, '.xdocs-upgrade.lock')
-  if (!existsSync(journalPath)) return false
+  if (!(await pathExists(journalPath))) return false
 
   const journal = JSON.parse(await readFile(journalPath, 'utf8')) as Partial<UpgradeJournal>
   if (!journal.canonicalPath || !journal.backupPath || !journal.temporaryPath || !journal.currentVersion) {
@@ -199,8 +201,8 @@ async function recoverInterruptedUpgrade(executablePath: string, verify: Executa
     throw new XDocsError(`An xdocs upgrade transaction is still active for ${executablePath}.`)
   }
 
-  const canonicalExists = existsSync(journal.canonicalPath)
-  const backupExists = existsSync(journal.backupPath)
+  const canonicalExists = await pathExists(journal.canonicalPath)
+  const backupExists = await pathExists(journal.backupPath)
   if (canonicalExists && backupExists) {
     throw new XDocsError(
       `Interrupted xdocs upgrade is ambiguous: both canonical and backup executables exist. `
@@ -240,7 +242,7 @@ async function verifyExecutableVersion(
   expectedVersion: string,
   timeoutMilliseconds = executableVerificationTimeoutMilliseconds,
 ): Promise<void> {
-  await access(path, constants.X_OK)
+  if (!(await pathExists(path))) throw new XDocsError(`Executable verification path does not exist: ${path}`)
   const proc = Bun.spawn([path, '--version'], {
     stdin: 'ignore',
     stdout: 'pipe',
@@ -285,6 +287,9 @@ async function cleanupBackup(backupPath: string, platform: XDocsNativePlatform):
     return { backupPath: null, scheduled: false }
   } catch (error) {
     if (platform !== 'windows') throw error
+    if (process.env['XDOCS_DISABLE_SCHEDULED_CLEANUP'] === '1') {
+      return { backupPath, scheduled: true }
+    }
     const scriptPath = join(dirname(backupPath), `.xdocs-cleanup-${process.pid}.ps1`)
     const script = [
       `$pidToWait = ${process.pid}`,
@@ -322,10 +327,6 @@ function errorCode(error: Error): string {
   if (error.message.includes('download')) return 'upgrade-download-failed'
   if (error.message.includes('verification')) return 'upgrade-verification-failed'
   return 'upgrade-failed'
-}
-
-function isCode(error: unknown, code: string): boolean {
-  return Boolean(error && typeof error === 'object' && 'code' in error && error.code === code)
 }
 
 function isProcessRunning(pid: number): boolean {
