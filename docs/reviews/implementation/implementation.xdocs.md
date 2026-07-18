@@ -5,7 +5,7 @@ parent: xdocs-reviews
 children: []
 files: {}
 documents:
-  rfc-0034-cli-compliance-migration-review.md: Acceptance and residual-risk review for the full RFC 0034 migration.
+  rfc-0034-cli-compliance-migration-review.md: Findings-first acceptance review including the resolved root-help, live examples, and Darwin installer corrections.
 tags:
   - reviews
   - implementation
