@@ -5,7 +5,7 @@ parent: xdocs-docs
 children: []
 files: {}
 documents:
-  rfc-0034-cli-compliance-migration.md: Full local validation evidence and release-readiness verdict for RFC 0034.
+  rfc-0034-cli-compliance-migration.md: Full local validation evidence for the 50-test corrective RFC 0034 gate and 0.6.1 readiness verdict.
 tags:
   - validation
 keywords:
