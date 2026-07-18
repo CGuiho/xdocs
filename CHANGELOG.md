@@ -18,6 +18,8 @@ keywords:
 
 ## Unreleased
 
+## 0.6.0 - 2026-07-18
+
 - Break xdocs onto the complete GUIHO RFC 0034 platform contract: Bun-only core, strict ESM TypeScript, raw Citty, TypeBox, YAML configuration, exact startup/cache behavior, and stable exit categories.
 - Replace `xdocs.config.toml` with `xdocs.yaml` using explicit/project/global precedence and remove configuration-driven agent mutations.
 - Replace root prompt and plural agents commands with the complete singular `xdocs agent skill|instruction|prompt` namespace, preserving all four embedded prompt bodies.
