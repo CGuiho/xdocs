@@ -5,7 +5,7 @@ parent: xdocs-skills
 children: []
 files: {}
 documents:
-  SKILL.md: Versioned xdocs workflow skill installed into .agents/skills or .claude/skills; defines descriptor maintenance, Citty-backed CLI usage/error expectations, metadata-only scans, context recommendations, doctor checks, and agent workflows.
+  SKILL.md: Versioned xdocs workflow skill defining descriptor maintenance, Citty usage, metadata/context/doctor workflows, and observable verified upgrade/release-list behavior.
 tags:
   - skills
   - agents
@@ -19,6 +19,8 @@ keywords:
   - agent workflow
   - native cli
   - Citty
+  - upgrade recovery
+  - release catalog
 flags: []
 status: stable
 ---
