@@ -150,7 +150,28 @@ describe('Citty CLI', () => {
       expect(prompt.stdout).toContain('xdocs')
 
       const upgrade = await captureOutput(() => runCli(['upgrade', '--version', readPackageVersion(), '--format', 'json']))
-      expect(JSON.parse(upgrade.stdout).upToDate).toBe(true)
+      const upgradeJson = JSON.parse(upgrade.stdout)
+      expect(upgradeJson.outcome).toBe('up-to-date')
+      expect(upgradeJson.schemaVersion).toBe(1)
+      expect(upgradeJson.recovery.installCommand).toContain(readPackageVersion())
+
+      const upgradeText = await captureOutput(() => runCli(['upgrade', '--version', readPackageVersion()]))
+      expect(upgradeText.stdout.indexOf('Upgrading the CLI...')).toBeLessThan(upgradeText.stdout.indexOf('current :'))
+      expect(upgradeText.stdout.indexOf('current :')).toBeLessThan(upgradeText.stdout.indexOf('Already up to date.'))
+      expect(upgradeText.stdout).toContain('If the upgrade did not take effect')
+      const installToken = process.platform === 'win32' ? 'install.ps1' : 'install.sh'
+      const stopToken = process.platform === 'win32' ? 'Get-Process xdocs' : 'pkill -x xdocs'
+      expect(upgradeText.stdout.indexOf(installToken)).toBeLessThan(upgradeText.stdout.indexOf(stopToken))
+
+      const upgradeMarkdown = await captureOutput(() => runCli(['upgrade', '--version', readPackageVersion(), '--format', 'markdown']))
+      expect(upgradeMarkdown.stdout).toContain('# xdocs upgrade')
+      expect(upgradeMarkdown.stdout).toContain('| current |')
+      expect(upgradeMarkdown.stdout).toContain('```text')
+
+      const downgrade = await captureOutput(() => runCli(['upgrade', '--version', '0.0.0']))
+      expect(downgrade.stdout).toContain('Already up to date.')
+      expect(downgrade.stdout).not.toContain('Target discovery failed.')
+      expect(downgrade.stdout).toContain(readPackageVersion())
 
       const uninstall = await captureOutput(() => runCli(['uninstall', '--dry-run', '--format', 'json']))
       expect(JSON.parse(uninstall.stdout).dryRun).toBe(true)
