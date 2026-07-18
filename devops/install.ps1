@@ -91,6 +91,10 @@ $assetCandidates = if ($detectedArch -eq 'x64') {
 function Get-DownloadUrl {
   param([string]$Asset)
 
+  if ($env:XDOCS_DOWNLOAD_BASE_URL) {
+    return "$($env:XDOCS_DOWNLOAD_BASE_URL.TrimEnd('/'))/$Asset"
+  }
+
   if ($Version -eq 'latest') {
     return "https://github.com/$Repo/releases/latest/download/$Asset"
   }
@@ -158,6 +162,56 @@ function Test-NativeBinary {
   return $bytes[0] -eq 0x4D -and $bytes[1] -eq 0x5A
 }
 
+function Get-NormalizedVersion {
+  param([string]$Value)
+  return $Value.Replace('@guiho/xdocs@', '').TrimStart('v')
+}
+
+function Get-ExecutableVersion {
+  param([string]$Path)
+
+  $previousDisableUpdateCheck = $env:XDOCS_DISABLE_UPDATE_CHECK
+  $process = $null
+  try {
+    $env:XDOCS_DISABLE_UPDATE_CHECK = '1'
+    $startInfo = New-Object System.Diagnostics.ProcessStartInfo
+    $startInfo.FileName = $Path
+    $startInfo.Arguments = '--version'
+    $startInfo.UseShellExecute = $false
+    $startInfo.CreateNoWindow = $true
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
+    $process = New-Object System.Diagnostics.Process
+    $process.StartInfo = $startInfo
+    if (-not $process.Start()) {
+      throw "Could not launch $Path --version."
+    }
+    if (-not $process.WaitForExit(15000)) {
+      $process.Kill()
+      $process.WaitForExit()
+      throw "Executable verification timed out for $Path after 15 seconds."
+    }
+    $output = $process.StandardOutput.ReadToEnd().Trim()
+    $errorOutput = $process.StandardError.ReadToEnd().Trim()
+    if ($process.ExitCode -ne 0) {
+      throw "Executable verification failed for $Path with exit code $($process.ExitCode)`: $errorOutput"
+    }
+  } finally {
+    if ($null -ne $process) {
+      $process.Dispose()
+    }
+    if ($null -eq $previousDisableUpdateCheck) {
+      Remove-Item Env:XDOCS_DISABLE_UPDATE_CHECK -ErrorAction SilentlyContinue
+    } else {
+      $env:XDOCS_DISABLE_UPDATE_CHECK = $previousDisableUpdateCheck
+    }
+  }
+  if ($output -notmatch '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$') {
+    throw "Executable verification did not return exactly one semantic version for $Path`: $output"
+  }
+  return $output
+}
+
 function Test-Shadowing {
   param([string]$ExpectedPath)
 
@@ -179,37 +233,83 @@ Write-Host "xdocs: $Version  os=windows  arch=$detectedArch$variantLabel"
 New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
 $InstallDir = (Resolve-Path -LiteralPath $InstallDir).Path
 $destination = Join-Path $InstallDir 'xdocs.exe'
-$temporaryFile = Join-Path ([System.IO.Path]::GetTempPath()) ([System.IO.Path]::GetRandomFileName())
+$transactionId = "$PID-$([Guid]::NewGuid().ToString('N'))"
+$temporaryFile = Join-Path $InstallDir ".xdocs-install-$transactionId.exe"
+$backupFile = Join-Path $InstallDir ".xdocs-backup-$transactionId.exe"
 
 foreach ($asset in $assetCandidates) {
   $url = Get-DownloadUrl -Asset $asset
   Write-Host "  Trying $url"
   try {
     Invoke-WebRequest -Uri $url -OutFile $temporaryFile -UseBasicParsing -ErrorAction Stop
+    Unblock-File -LiteralPath $temporaryFile -ErrorAction SilentlyContinue
     if (-not (Test-NativeBinary -Path $temporaryFile)) {
       Write-Host "  $asset was not a native Windows binary, trying next..."
+      Remove-Item -LiteralPath $temporaryFile -Force -ErrorAction SilentlyContinue
       continue
     }
 
-    Move-Item -Force -Path $temporaryFile -Destination $destination
+    $candidateVersion = Get-ExecutableVersion -Path $temporaryFile
+    if ($Version -ne 'latest' -and $candidateVersion -ne (Get-NormalizedVersion -Value $Version)) {
+      throw "Downloaded $asset reports $candidateVersion, expected $(Get-NormalizedVersion -Value $Version)."
+    }
+
+    $backupCreated = $false
+    try {
+      if (Test-Path -LiteralPath $destination) {
+        Move-Item -LiteralPath $destination -Destination $backupFile -Force
+        $backupCreated = $true
+      }
+      Move-Item -LiteralPath $temporaryFile -Destination $destination -Force
+      $installedVersion = Get-ExecutableVersion -Path $destination
+      if ($installedVersion -ne $candidateVersion) {
+        throw "Installed xdocs reports $installedVersion, expected $candidateVersion."
+      }
+      Remove-Item -LiteralPath $backupFile -Force -ErrorAction SilentlyContinue
+    } catch {
+      $installationError = $_.Exception.Message
+      Remove-Item -LiteralPath $destination -Force -ErrorAction SilentlyContinue
+      if ($backupCreated -and (Test-Path -LiteralPath $backupFile)) {
+        try {
+          Move-Item -LiteralPath $backupFile -Destination $destination -Force
+        } catch {
+          throw "Installation failed: $installationError Rollback also failed: $($_.Exception.Message). Preserved backup: $backupFile"
+        }
+      }
+      throw $installationError
+    }
     Write-Host "Installed xdocs to $destination"
 
-    Add-InstallDirToPath -Directory $InstallDir
-    Test-Shadowing -ExpectedPath $destination
+    if ($env:XDOCS_SKIP_PATH_UPDATE -ne '1') {
+      Add-InstallDirToPath -Directory $InstallDir
+      Test-Shadowing -ExpectedPath $destination
+    }
 
     if (Test-Path -LiteralPath $temporaryFile) {
       Remove-Item -LiteralPath $temporaryFile -Force
     }
 
-    Write-Host 'Run: xdocs --version'
+    Write-Host "Verified: $destination --version -> $installedVersion"
     return
   } catch {
-    Write-Host "  not available, trying next..."
+    Remove-Item -LiteralPath $temporaryFile -Force -ErrorAction SilentlyContinue
+    if (Test-Path -LiteralPath $backupFile) {
+      throw "xdocs installation stopped because rollback could not safely complete. Preserved backup: $backupFile. Error: $($_.Exception.Message)"
+    }
+    Write-Host "  failed: $($_.Exception.Message)"
+    Write-Host "  trying next candidate..."
   }
 }
 
 if (Test-Path -LiteralPath $temporaryFile) {
   Remove-Item -LiteralPath $temporaryFile -Force
+}
+if (Test-Path -LiteralPath $backupFile) {
+  if (-not (Test-Path -LiteralPath $destination)) {
+    Move-Item -LiteralPath $backupFile -Destination $destination -Force
+  } else {
+    throw "xdocs installation could not determine a safe canonical executable. Preserved both destination and backup: $backupFile"
+  }
 }
 
 throw "No compatible xdocs binary found. Check available assets at: https://github.com/$Repo/releases"

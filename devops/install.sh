@@ -10,10 +10,21 @@ OS=""
 ARCH=""
 CANDIDATES=()
 TMP=""
+INSTALL_CANDIDATE=""
+INSTALL_BACKUP=""
+INSTALL_DESTINATION=""
 
 cleanup() {
   if [[ -n "$TMP" ]]; then
     rm -rf -- "$TMP"
+  fi
+  [[ -z "$INSTALL_CANDIDATE" ]] || rm -f -- "$INSTALL_CANDIDATE"
+  if [[ -n "$INSTALL_BACKUP" && -e "$INSTALL_BACKUP" ]]; then
+    if [[ -n "$INSTALL_DESTINATION" && ! -e "$INSTALL_DESTINATION" ]]; then
+      mv -f -- "$INSTALL_BACKUP" "$INSTALL_DESTINATION"
+    else
+      printf 'warning: preserving xdocs backup because rollback state is ambiguous: %s\n' "$INSTALL_BACKUP" >&2
+    fi
   fi
 }
 
@@ -158,6 +169,11 @@ build_candidates() {
 build_url() {
   local asset="$1"
 
+  if [[ -n "${XDOCS_DOWNLOAD_BASE_URL:-}" ]]; then
+    printf '%s/%s\n' "${XDOCS_DOWNLOAD_BASE_URL%/}" "$asset"
+    return
+  fi
+
   if [[ "$VERSION" == "latest" ]]; then
     printf 'https://github.com/%s/releases/latest/download/%s\n' "$REPO" "$asset"
     return
@@ -183,17 +199,66 @@ verify_native_binary() {
   magic2="$(LC_ALL=C head -c 2 "$path" 2>/dev/null || true)"
   magic4="$(LC_ALL=C head -c 4 "$path" 2>/dev/null || true)"
 
-  case "$magic4" in
-    $'\177ELF' | $'\xcf\xfa\xed\xfe' | $'\xce\xfa\xed\xfe' | $'\xca\xfe\xba\xbe') return 0 ;;
-    '<!DO' | '<htm') return 1 ;;
+  case "$OS" in
+    linux)
+      [[ "$magic4" == $'\177ELF' ]]
+      ;;
+    macos)
+      case "$magic4" in
+        $'\xcf\xfa\xed\xfe' | $'\xce\xfa\xed\xfe' | $'\xfe\xed\xfa\xcf' | $'\xfe\xed\xfa\xce' | $'\xca\xfe\xba\xbe' | $'\xbe\xba\xfe\xca') return 0 ;;
+        *) return 1 ;;
+      esac
+      ;;
+    *)
+      return 1
+      ;;
   esac
+}
 
-  case "$magic2" in
-    MZ) return 0 ;;
-    '#!') return 1 ;;
-  esac
+normalize_version() {
+  local value="$1"
+  value="${value#@guiho/xdocs@}"
+  value="${value#v}"
+  printf '%s\n' "$value"
+}
 
-  return 2
+executable_version() {
+  local path="$1"
+  local output
+  local output_file
+  output_file="$(mktemp)"
+  XDOCS_DISABLE_UPDATE_CHECK=1 "$path" --version >"$output_file" 2>&1 &
+  local verification_pid=$!
+  local attempts=0
+  while kill -0 "$verification_pid" 2>/dev/null; do
+    if [[ "$attempts" -ge 150 ]]; then
+      kill -TERM "$verification_pid" 2>/dev/null || true
+      sleep 0.1
+      kill -KILL "$verification_pid" 2>/dev/null || true
+      wait "$verification_pid" 2>/dev/null || true
+      output="$(cat "$output_file")"
+      rm -f -- "$output_file"
+      printf 'executable verification timed out for %s after 15 seconds: %s\n' "$path" "$output" >&2
+      return 1
+    fi
+    sleep 0.1
+    attempts=$((attempts + 1))
+  done
+  local exit_code=0
+  wait "$verification_pid" || exit_code=$?
+  output="$(cat "$output_file")"
+  rm -f -- "$output_file"
+  if [[ "$exit_code" -ne 0 ]]; then
+    printf 'executable verification failed for %s: %s\n' "$path" "$output" >&2
+    return 1
+  fi
+  local version
+  version="$(printf '%s\n' "$output" | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?' | head -n 1)"
+  if [[ -z "$version" ]]; then
+    printf 'executable verification did not return a semantic version for %s: %s\n' "$path" "$output" >&2
+    return 1
+  fi
+  printf '%s\n' "$version"
 }
 
 shell_profile_path() {
@@ -272,6 +337,15 @@ check_shadowing() {
 
 install_binary() {
   TMP="$(mktemp -d)"
+  mkdir -p "$INSTALL_DIR"
+
+  local destination="$INSTALL_DIR/xdocs"
+  local transaction_id="$$-${RANDOM:-0}"
+  local candidate="$INSTALL_DIR/.xdocs-install-${transaction_id}"
+  local backup="$INSTALL_DIR/.xdocs-backup-${transaction_id}"
+  INSTALL_DESTINATION="$destination"
+  INSTALL_CANDIDATE="$candidate"
+  INSTALL_BACKUP="$backup"
 
   for asset in "${CANDIDATES[@]}"; do
     local url
@@ -284,12 +358,42 @@ install_binary() {
         continue
       fi
 
-      mkdir -p "$INSTALL_DIR"
-      install -m 0755 "$TMP/xdocs" "$INSTALL_DIR/xdocs"
-      printf 'Installed xdocs to %s/xdocs\n' "$INSTALL_DIR"
-      ensure_path
-      check_shadowing
-      printf 'Run: xdocs --version\n'
+      install -m 0755 "$TMP/xdocs" "$candidate"
+      local candidate_version
+      if ! candidate_version="$(executable_version "$candidate")"; then
+        rm -f -- "$candidate"
+        printf '  %s failed executable verification; trying next candidate...\n' "$asset" >&2
+        continue
+      fi
+      if [[ "$VERSION" != "latest" && "$candidate_version" != "$(normalize_version "$VERSION")" ]]; then
+        rm -f -- "$candidate"
+        printf '  %s reports %s, expected %s; trying next candidate...\n' "$asset" "$candidate_version" "$(normalize_version "$VERSION")" >&2
+        continue
+      fi
+
+      local backup_created=0
+      if [[ -e "$destination" ]]; then
+        mv -f -- "$destination" "$backup"
+        backup_created=1
+      fi
+      if ! mv -f -- "$candidate" "$destination"; then
+        [[ "$backup_created" -eq 0 ]] || mv -f -- "$backup" "$destination"
+        fail "failed to install the candidate at $destination"
+      fi
+
+      local installed_version=""
+      if ! installed_version="$(executable_version "$destination")" || [[ "$installed_version" != "$candidate_version" ]]; then
+        rm -f -- "$destination"
+        [[ "$backup_created" -eq 0 ]] || mv -f -- "$backup" "$destination"
+        fail "installed xdocs verification failed; the previous executable was restored"
+      fi
+      rm -f -- "$backup"
+      printf 'Installed xdocs to %s\n' "$destination"
+      if [[ "${XDOCS_SKIP_PATH_UPDATE:-0}" != "1" ]]; then
+        ensure_path
+        check_shadowing
+      fi
+      printf 'Verified: %s --version -> %s\n' "$destination" "$installed_version"
       return 0
     fi
 
@@ -305,6 +409,7 @@ main() {
   require_command grep
   require_command head
   require_command install
+  require_command mv
   require_command mktemp
   require_command uname
 

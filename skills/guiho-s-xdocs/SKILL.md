@@ -362,7 +362,8 @@ xdocs list <path>              # list files and companion documents with descrip
 xdocs generate [path]          # draft documentation for a directory or the whole project
 xdocs merge [path]             # merge a directory's xdocs descriptors into one document
 xdocs prompt --name=<name>     # print a ready-made AI prompt (write|update|agents|generate)
-xdocs upgrade                  # upgrade the installed native xdocs binary
+xdocs upgrade                  # stream and verify an immediate native binary upgrade
+xdocs upgrade list             # list all stable/prerelease versions newest first
 xdocs uninstall --dry-run      # preview native binary removal
 xdocs agents install local     # install guiho-s-xdocs into this project (.agents/skills/...)
 xdocs agents install global    # install guiho-s-xdocs into the user home skills directory
@@ -370,6 +371,14 @@ xdocs agents instructions      # insert/refresh the xdocs section in AGENTS.md
 ```
 
 Global flags: `--help`, `--help-tree`, `--help-docs`, `--version`, `--cwd <path>`, `--config <path>`, `--format <text|json|markdown>`, `--verbose`. `xdocs meta` also accepts `--documents`, `--strict`, `--owner <subject>`, `--tag <tag>`, and `--keyword <keyword>`. `xdocs context` accepts `--documents`, `--files`, `--limit <n>`, `--owner <subject>`, `--tag <tag>`, `--keyword <keyword>`, and `--explain`. `xdocs doctor` accepts `--no-documents` and `--warnings-as-errors`. The `agents install` command also accepts `--tool <agents|claude|all>`.
+
+`xdocs upgrade` prints the resolved versions, platform, architecture, asset,
+canonical path, and exact URL before the asset-body wait. It streams download,
+validation, replacement, verification, cache, and cleanup phases; replaces and
+verifies the canonical executable before returning; rolls back failures; and
+always prints an exact-version reinstall command before a separate optional stop
+command. `xdocs upgrade list` follows every release page and labels stable, alpha,
+beta, RC, and other prerelease versions in descending semantic-version order.
 
 ## Agent Skill Installation
 

@@ -148,9 +148,9 @@ describe('self management', () => {
       await writeFile(executable, process.platform === 'win32' ? 'MZ' : '\x7fELF', 'binary')
       process.env['XDOCS_SELF_PATH'] = executable
       const current = await upgradeSelf({ version: readPackageVersion(), arch: 'x64', cacheDir: dir, repo: 'CGuiho/xdocs' })
-      expect(current.upToDate).toBe(true)
-      expect(current.scheduled).toBe(false)
-      expect(current.asset).toBeUndefined()
+      expect(current.outcome).toBe('up-to-date')
+      expect(current.plan?.targetVersion).toBe(readPackageVersion())
+      expect(current.result?.verifiedVersion).toBe(readPackageVersion())
       expect(await readUpdateCache({ cacheDir: dir })).toBeNull()
 
       const stdout: string[] = []
@@ -162,12 +162,13 @@ describe('self management', () => {
       expect(stdout.join('')).toContain('Already up to date.')
       expect(stdout.join('')).not.toContain('Upgrade downloaded.')
 
-      const result = await upgradeSelf({ version: '0.5.0', arch: 'x64', dryRun: true, repo: 'CGuiho/xdocs' })
+      const dryRunTarget = nextMajorFixtureVersion('dry-run.1')
+      const result = await upgradeSelf({ version: dryRunTarget, arch: 'x64', dryRun: true, repo: 'CGuiho/xdocs' })
 
-      expect(result.upToDate).toBe(false)
-      expect(result.asset).toBe(process.platform === 'win32' ? 'xdocs-windows-x64-baseline.exe' : process.platform === 'darwin' ? 'xdocs-macos-x64-baseline' : 'xdocs-linux-x64-baseline')
-      expect(result.url).toContain('%40guiho%2Fxdocs%400.5.0')
-      expect(result.dryRun).toBe(true)
+      expect(result.outcome).toBe('dry-run')
+      expect(result.plan?.assetName).toBe(process.platform === 'win32' ? 'xdocs-windows-x64-baseline.exe' : process.platform === 'darwin' ? 'xdocs-macos-x64-baseline' : 'xdocs-linux-x64-baseline')
+      expect(result.plan?.downloadUrl).toContain(encodeURIComponent(`@guiho/xdocs@${dryRunTarget}`))
+      expect(result.recovery.installCommand).toContain(dryRunTarget)
     } finally {
       process.stdout.write = originalStdoutWrite
       if (previousSelfPath === undefined) {
@@ -175,6 +176,92 @@ describe('self management', () => {
       } else {
         process.env['XDOCS_SELF_PATH'] = previousSelfPath
       }
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('explicit upgrade resolves an available fallback asset before downloading', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-explicit-fallback-'))
+    const previousSelfPath = process.env['XDOCS_SELF_PATH']
+    const executable = join(dir, process.platform === 'win32' ? 'xdocs.exe' : 'xdocs')
+    const calls: Array<{ url: string, method: string }> = []
+    const platform = process.platform === 'win32' ? 'windows' : process.platform === 'darwin' ? 'macos' : 'linux'
+    const baseline = `xdocs-${platform}-x64-baseline${platform === 'windows' ? '.exe' : ''}`
+    const defaultAsset = `xdocs-${platform}-x64${platform === 'windows' ? '.exe' : ''}`
+    const body = platform === 'windows'
+      ? new Uint8Array([0x4d, 0x5a, 1, 2])
+      : platform === 'linux'
+        ? new Uint8Array([0x7f, 0x45, 0x4c, 0x46])
+        : new Uint8Array([0xcf, 0xfa, 0xed, 0xfe])
+    try {
+      await writeFile(executable, body)
+      process.env['XDOCS_SELF_PATH'] = executable
+      const targetVersion = nextMajorFixtureVersion('fallback.1')
+      const result = await upgradeSelf({
+        version: targetVersion,
+        arch: 'x64',
+        cacheDir: dir,
+        repo: 'CGuiho/xdocs',
+        fetcher: async (input, init) => {
+          const url = String(input)
+          const method = init?.method ?? 'GET'
+          calls.push({ url, method })
+          if (method === 'HEAD' && url.endsWith(baseline)) return new Response(null, { status: 404 })
+          if (method === 'HEAD' && url.endsWith(defaultAsset)) return new Response(null, { status: 200 })
+          if (method === 'GET' && url.endsWith(defaultAsset)) return new Response(body)
+          return new Response(null, { status: 500 })
+        },
+        verifyExecutable: async () => undefined,
+      })
+      expect(result.outcome).toBe('upgraded')
+      expect(result.plan?.assetName).toBe(defaultAsset)
+      expect(calls.map((call) => call.method)).toEqual(['HEAD', 'HEAD', 'GET'])
+      expect(result.recovery.targetVersion).toBe(targetVersion)
+    } finally {
+      if (previousSelfPath === undefined) delete process.env['XDOCS_SELF_PATH']
+      else process.env['XDOCS_SELF_PATH'] = previousSelfPath
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('pre-plan native-install failure still returns pinned recovery guidance', async () => {
+    const previousSelfPath = process.env['XDOCS_SELF_PATH']
+    try {
+      delete process.env['XDOCS_SELF_PATH']
+      const result = await upgradeSelf()
+      expect(result.outcome).toBe('failed')
+      expect(Object.keys(result)).toEqual([
+        'schemaVersion', 'command', 'outcome', 'plan', 'events', 'result', 'recovery', 'error',
+      ])
+      expect(result.plan).toBeNull()
+      expect(result.events).toEqual([
+        { sequence: 1, phase: 'plan', status: 'started', message: 'Resolving upgrade target.' },
+        expect.objectContaining({ sequence: 2, phase: 'plan', status: 'failed' }),
+      ])
+      expect(result.recovery.targetSource).toBe('fallback-current')
+      expect(result.recovery.targetVersion).toBe(readPackageVersion())
+      expect(result.recovery.installCommand).toContain(readPackageVersion())
+      expect(result.recovery.stopProcessCommand).toContain('xdocs')
+    } finally {
+      if (previousSelfPath === undefined) delete process.env['XDOCS_SELF_PATH']
+      else process.env['XDOCS_SELF_PATH'] = previousSelfPath
+    }
+  })
+
+  test('explicit older targets are treated as up to date and recover to the installed version', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-no-downgrade-'))
+    const previousSelfPath = process.env['XDOCS_SELF_PATH']
+    const executable = join(dir, process.platform === 'win32' ? 'xdocs.exe' : 'xdocs')
+    try {
+      await writeFile(executable, process.platform === 'win32' ? 'MZ' : '\x7fELF', 'binary')
+      process.env['XDOCS_SELF_PATH'] = executable
+      const result = await upgradeSelf({ version: '0.1.0', arch: 'x64' })
+      expect(result.outcome).toBe('up-to-date')
+      expect(result.recovery.targetVersion).toBe(readPackageVersion())
+      expect(result.recovery.targetSource).toBe('fallback-current')
+    } finally {
+      if (previousSelfPath === undefined) delete process.env['XDOCS_SELF_PATH']
+      else process.env['XDOCS_SELF_PATH'] = previousSelfPath
       await rm(dir, { recursive: true, force: true })
     }
   })
@@ -227,6 +314,11 @@ describe('self management', () => {
     }
   })
 })
+
+function nextMajorFixtureVersion(prerelease: string): string {
+  const major = Number.parseInt(readPackageVersion().split('.')[0] ?? '0', 10)
+  return `${major + 1}.0.0-${prerelease}`
+}
 
 // ---------------------------------------------------------------------------
 // metadata.ts

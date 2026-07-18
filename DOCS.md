@@ -420,7 +420,32 @@ variant first, then falls back to the default and `modern` assets. Source
 checkouts intentionally refuse self-upgrade so development commands do not
 replace Bun or a source launcher by mistake.
 
-When the resolved target matches the installed version, xdocs prints `Already up to date.` and exits successfully without downloading a binary, writing update cache state, or scheduling executable replacement. JSON output reports `upToDate: true`.
+Before downloading the asset body, xdocs prints and flushes the complete plan:
+current and target versions, OS, architecture, selected binary, canonical path,
+and exact tagged URL. Text and Markdown modes stream `Downloading`, `Validating`,
+`Replacing`, `Verifying`, cache, and cleanup phases. JSON emits exactly one
+schema-versioned envelope containing the same plan, ordered events, result,
+recovery guidance, and stable error data.
+
+Replacement is a synchronous verified transaction. The current canonical file is
+renamed to a transaction backup, the validated candidate immediately takes the
+canonical path, and that absolute path must report the exact target version before
+success or cache commit. Failure restores and verifies the previous executable.
+Only deletion of the renamed backup may be scheduled after the old Windows
+process exits; installation is never deferred.
+
+Candidate and canonical `--version` checks have a bounded timeout. `upgrade`
+never downgrades an installed binary, and an interrupted journal that contains
+both canonical and backup candidates is preserved for explicit recovery rather
+than guessed away. A journal left after successful backup deletion accepts the
+canonical target only after its exact version is verified. A refused downgrade
+is reported as already current and is not mislabeled as target discovery failure.
+
+Every terminal outcome, including already-current, dry-run, pre-plan discovery
+failure, rollback, and success, prints a copy-paste installer command pinned to an
+exact version followed by a separate optional process-stop command. Discovery
+failure visibly labels its current-version repair fallback instead of using a
+mutable `latest` target.
 
 ```bash
 xdocs upgrade
@@ -433,9 +458,9 @@ xdocs upgrade list
 
 - `xdocs upgrade`: Download and replace the current installed native binary.
 - `xdocs upgrade check`: Fetch latest release metadata and report whether a newer version exists.
-- `xdocs upgrade list`: List available GitHub Release versions.
+- `xdocs upgrade list`: Follow every GitHub Releases page and list all valid semantic versions newest first with stable/alpha/beta/RC/other channels, publication dates, assets, current, and latest-stable markers.
 
-Flags: `--version <version>`, `--arch <x64|arm64>`, `--variant <baseline|default|modern>`, `--dry-run`, `--format <text|json>`.
+Flags: `--version <version>`, `--arch <x64|arm64>`, `--variant <baseline|default|modern>`, `--dry-run`, `--format <text|json|markdown>`.
 
 ### `xdocs uninstall`
 
@@ -630,6 +655,8 @@ The API uses the same configuration discovery and validation as the CLI.
 - `source/embedded-resources.ts`: prompt, skill, and package metadata text imports used only for native binary embedding.
 - `source/cli.ts`: single declarative Citty command tree, library-safe raw-argument execution, config-gated automation, extended-help routing, contextual usage errors, and process-facing error handling.
 - `source/self-management.ts`: background update checks, update cache, native binary upgrade, and uninstall helpers.
+- `source/upgrade-catalog.ts`: complete paginated release discovery, strict SemVer ordering/channel classification, compatible assets, list envelopes, and exact recovery commands.
+- `source/upgrade-transaction.ts`: lock/journal ownership, native candidate preflight, immediate canonical swap, absolute-path verification, rollback, post-verification cache commit, and backup cleanup.
 - `source/config.ts`: TOML discovery, schema validation, defaulting, default config generation, and agent-settings normalization.
 - `source/context.ts`: deterministic reading-set recommendation from xdocs metadata for `xdocs context`.
 - `source/doctor.ts`: health checks for descriptor validity, companion-document metadata, tree integrity, and documented file existence.
