@@ -1,269 +1,185 @@
-/**
- * @copyright Copyright (c) 2026 GUIHO Technologies as represented by Cristóvão GUIHO. All Rights Reserved.
- */
-
-import { describe, expect, test } from 'bun:test'
+import { afterEach, describe, expect, test } from 'bun:test'
 import { existsSync } from 'node:fs'
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-import { createXDocsCommand, runCli } from './cli.js'
-import { XDocsError } from './errors.js'
+import { createXDocsCommand, runCli, runCliWithErrorHandling } from './cli.js'
 import { readPackageVersion } from './help.js'
 
-type CapturedOutput = {
-  stdout: string
-  stderr: string
-}
+type Captured = { stdout: string, stderr: string }
+const temporaryPaths: string[] = []
 
-describe('Citty CLI', () => {
-  test.serial('renders root, command, and nested command usage without project access', async () => {
-    const missingProject = join(tmpdir(), 'xdocs-missing-project')
-    const { stdout } = await captureOutput(async () => {
-      await runCli(['--cwd', missingProject, '-h'])
-      for (const command of ['init', 'scan', 'generate', 'prompt', 'merge', 'tree', 'list', 'meta', 'context', 'doctor', 'agents', 'upgrade', 'uninstall']) {
-        await runCli([command, '--cwd', missingProject, '--help'])
-      }
-      await runCli(['agents', 'install', '--cwd', missingProject, '--help'])
-      await runCli(['agents', 'instructions', '--cwd', missingProject, '--help'])
-      await runCli(['upgrade', 'check', '--cwd', missingProject, '--help'])
-      await runCli(['upgrade', 'list', '--cwd', missingProject, '--help'])
-    })
+afterEach(async () => {
+  process.exitCode = 0
+  await Promise.all(temporaryPaths.splice(0).map((path) => rm(path, { recursive: true, force: true })))
+})
 
-    expect(stdout).toContain('xdocs [OPTIONS]')
-    expect(stdout).toContain('xdocs context [OPTIONS] <QUERY> [PATH]')
-    expect(stdout).toContain('xdocs agents install [OPTIONS] <SCOPE>')
-    expect(stdout).toContain('xdocs upgrade check [OPTIONS]')
-  })
-
-  test.serial('renders short and long version outside a project', async () => {
-    const missingProject = join(tmpdir(), 'xdocs-missing-project')
-    const { stdout } = await captureOutput(async () => {
-      await runCli(['--cwd', missingProject, '-v'])
-      await runCli(['--cwd', missingProject, '--version'])
-    })
-
-    expect(stdout).toBe(`xdocs ${readPackageVersion()}\nxdocs ${readPackageVersion()}\n`)
-  })
-
-  test.serial('keeps extended help tree and Markdown help available', async () => {
-    const tree = await captureOutput(() => runCli(['agents', '--help-tree']))
-    const docs = await captureOutput(() => runCli(['context', '--help-docs']))
-
-    expect(tree.stdout).toContain('xdocs agents install')
-    expect(docs.stdout).toContain('# xdocs context')
-  })
-
-  test('reports contextual Citty usage errors before project automation', async () => {
-    const cases: Array<{ args: string[], message: string }> = [
-      { args: ['unknown'], message: 'Unknown command' },
-      { args: ['--unknown', 'scan'], message: 'Unknown option: --unknown' },
-      { args: ['scan', '--unknown'], message: 'Unknown option: --unknown' },
-      { args: ['scan', 'extra'], message: 'Unexpected argument: extra' },
-      { args: ['prompt'], message: 'Missing required argument: --name' },
-      { args: ['prompt', '--name', 'invalid'], message: 'Invalid value for argument' },
-      { args: ['context'], message: 'Missing required positional argument: QUERY' },
-      { args: ['context', 'query', '--limit', '0'], message: 'Expected a positive integer' },
-      { args: ['agents'], message: 'No command specified' },
-      { args: ['agents', 'install'], message: 'Missing required positional argument: SCOPE' },
-      { args: ['agents', 'install', 'workspace'], message: 'Expected local or global' },
-      { args: ['upgrade', '--arch', 'mips'], message: 'Invalid value for argument' },
-      { args: ['scan', '--format', 'yaml'], message: 'Invalid value for argument' },
-    ]
-
-    for (const entry of cases) {
-      try {
-        await runCli(entry.args)
-        throw new Error(`Expected failure for ${entry.args.join(' ')}`)
-      } catch (error) {
-        expect(error).toBeInstanceOf(XDocsError)
-        expect((error as Error).message).toContain(entry.message)
-        expect((error as Error).message).toContain('USAGE')
-      }
-    }
-  })
-
-  test.serial('runs data commands with clean structured output and file outputs', async () => {
-    const dir = await createDocumentedProject()
-    try {
-      const scan = await captureOutput(() => runCli(['scan', '--cwd', dir, '--format', 'json']))
-      expect(JSON.parse(scan.stdout).xdocsFiles).toHaveLength(2)
-      expect(scan.stderr).toBe('')
-
-      const tree = await captureOutput(() => runCli(['tree', '--cwd', dir, '--format', 'json']))
-      expect(JSON.parse(tree.stdout).subject).toBe('fixture')
-
-      const list = await captureOutput(() => runCli(['list', '--cwd', dir, '--format', 'json']))
-      expect(Array.isArray(JSON.parse(list.stdout))).toBe(true)
-
-      const meta = await captureOutput(() => runCli(['meta', '--cwd', dir, '--format', 'json']))
-      expect(JSON.parse(meta.stdout).descriptors).toHaveLength(1)
-
-      const context = await captureOutput(() => runCli(['context', 'fixture', '--cwd', dir, '--format', 'json']))
-      expect(JSON.parse(context.stdout).entries.length).toBeGreaterThan(0)
-
-      const doctor = await captureOutput(() => runCli(['doctor', '--cwd', dir, '--format', 'json']))
-      expect(JSON.parse(doctor.stdout).valid).toBe(true)
-
-      await captureOutput(() => runCli(['generate', '--cwd', dir, '--output', 'out/generated.md']))
-      await captureOutput(() => runCli(['merge', '--cwd', dir, '--output', 'out/merged.md']))
-      await captureOutput(() => runCli(['tree', '--cwd', dir, '--output', 'out/tree.txt']))
-
-      expect(existsSync(join(dir, 'out', 'generated.md'))).toBe(true)
-      expect(existsSync(join(dir, 'out', 'merged.md'))).toBe(true)
-      expect(existsSync(join(dir, 'out', 'tree.txt'))).toBe(true)
-    } finally {
-      await rm(dir, { recursive: true, force: true })
-    }
-  })
-
-  test.serial('routes init and nested agents commands through Citty', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'xdocs-citty-init-'))
-    try {
-      await writeFile(join(dir, 'AGENTS.md'), '# Fixture Agent Instructions\n', 'utf8')
-      await captureOutput(() => runCli(['init', '--cwd', dir, '--tool', 'agents']))
-      expect(existsSync(join(dir, 'XDOCS.md'))).toBe(true)
-      expect(existsSync(join(dir, 'xdocs.config.toml'))).toBe(true)
-      expect(existsSync(join(dir, 'AGENTS.md'))).toBe(true)
-      expect(existsSync(join(dir, '.agents', 'skills', 'guiho-s-xdocs', 'SKILL.md'))).toBe(true)
-
-      const install = await captureOutput(() => runCli(['agents', 'install', 'local', '--cwd', dir, '--tool', 'agents', '--format', 'json']))
-      expect(JSON.parse(install.stdout)[0].scope).toBe('local')
-
-      const instructions = await captureOutput(() => runCli(['agents', 'instructions', '--cwd', dir, '--format', 'json']))
-      expect(JSON.parse(instructions.stdout).exists).toBe(true)
-    } finally {
-      await rm(dir, { recursive: true, force: true })
-    }
-  })
-
-  test.serial('routes prompt, equal-version upgrade, and uninstall dry-run', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'xdocs-citty-self-'))
-    const executable = join(dir, process.platform === 'win32' ? 'xdocs.exe' : 'xdocs')
-    const previousSelfPath = process.env['XDOCS_SELF_PATH']
-    try {
-      await writeFile(executable, process.platform === 'win32' ? 'MZ' : '\x7fELF', 'binary')
-      process.env['XDOCS_SELF_PATH'] = executable
-
-      const prompt = await captureOutput(() => runCli(['prompt', '--name', 'write']))
-      expect(prompt.stdout).toContain('xdocs')
-
-      const upgrade = await captureOutput(() => runCli(['upgrade', '--version', readPackageVersion(), '--format', 'json']))
-      const upgradeJson = JSON.parse(upgrade.stdout)
-      expect(upgradeJson.outcome).toBe('up-to-date')
-      expect(upgradeJson.schemaVersion).toBe(1)
-      expect(upgradeJson.recovery.installCommand).toContain(readPackageVersion())
-
-      const upgradeText = await captureOutput(() => runCli(['upgrade', '--version', readPackageVersion()]))
-      expect(upgradeText.stdout.indexOf('Upgrading the CLI...')).toBeLessThan(upgradeText.stdout.indexOf('current :'))
-      expect(upgradeText.stdout.indexOf('current :')).toBeLessThan(upgradeText.stdout.indexOf('Already up to date.'))
-      expect(upgradeText.stdout).toContain('If the upgrade did not take effect')
-      const installToken = process.platform === 'win32' ? 'install.ps1' : 'install.sh'
-      const stopToken = process.platform === 'win32' ? 'Get-Process xdocs' : 'pkill -x xdocs'
-      expect(upgradeText.stdout.indexOf(installToken)).toBeLessThan(upgradeText.stdout.indexOf(stopToken))
-
-      const upgradeMarkdown = await captureOutput(() => runCli(['upgrade', '--version', readPackageVersion(), '--format', 'markdown']))
-      expect(upgradeMarkdown.stdout).toContain('# xdocs upgrade')
-      expect(upgradeMarkdown.stdout).toContain('| current |')
-      expect(upgradeMarkdown.stdout).toContain('```text')
-
-      const downgrade = await captureOutput(() => runCli(['upgrade', '--version', '0.0.0']))
-      expect(downgrade.stdout).toContain('Already up to date.')
-      expect(downgrade.stdout).not.toContain('Target discovery failed.')
-      expect(downgrade.stdout).toContain(readPackageVersion())
-
-      const uninstall = await captureOutput(() => runCli(['uninstall', '--dry-run', '--format', 'json']))
-      expect(JSON.parse(uninstall.stdout).dryRun).toBe(true)
-    } finally {
-      if (previousSelfPath === undefined) delete process.env['XDOCS_SELF_PATH']
-      else process.env['XDOCS_SELF_PATH'] = previousSelfPath
-      await rm(dir, { recursive: true, force: true })
-    }
-  })
-
-  test('removes the legacy parser helpers from the public library API', async () => {
-    const api = await import('./guiho-xdocs.js') as Record<string, unknown>
-    expect(api['parseArgs']).toBeUndefined()
-    expect(api['stringFlag']).toBeUndefined()
-    expect(api['booleanFlag']).toBeUndefined()
-    expect(api['listFlag']).toBeUndefined()
-  })
-
-  test('keeps bare/default and background-worker routes hidden in the Citty tree', async () => {
+describe('RFC 0034 Citty catalog', () => {
+  test('exposes only the final public root catalog', () => {
     const root = createXDocsCommand()
-    const subCommands = root.subCommands as Record<string, { meta?: { hidden?: boolean }, default?: string, subCommands?: Record<string, { meta?: { hidden?: boolean } }> }>
+    const names = Object.keys(root.subCommands as Record<string, unknown>).filter((name) => !['home', '--check-updates-worker'].includes(name))
+    expect(names).toEqual(['init', 'scan', 'generate', 'merge', 'tree', 'list', 'meta', 'context', 'doctor', 'agent', 'upgrade', 'uninstall'])
+    expect(names).not.toContain('prompt')
+    expect(names).not.toContain('agents')
+  })
+
+  test.serial('prints the exact no-argument banner and root versions', async () => {
+    const previous = process.env['XDOCS_DISABLE_UPDATE_CHECK']
+    process.env['XDOCS_DISABLE_UPDATE_CHECK'] = '1'
+    try {
+      expect((await capture(() => runCli([]))).stdout).toBe(`Hello Windows - xdocs v${readPackageVersion()}\n`)
+      expect((await capture(() => runCli(['-v']))).stdout).toBe(`xdocs ${readPackageVersion()}\n`)
+      expect((await capture(() => runCli(['--version']))).stdout).toBe(`xdocs ${readPackageVersion()}\n`)
+    } finally {
+      if (previous === undefined) delete process.env['XDOCS_DISABLE_UPDATE_CHECK']
+      else process.env['XDOCS_DISABLE_UPDATE_CHECK'] = previous
+    }
+  })
+
+  test.serial('renders help, Unicode trees, positive depth, and Markdown docs at nested scopes', async () => {
+    expect((await capture(() => runCli(['agent', 'skill', 'show', '--help']))).stdout).toContain('xdocs agent skill show')
+    const tree = await capture(() => runCli(['agent', '--help-tree']))
+    expect(tree.stdout).toStartWith('COMMAND TREE\n\n')
+    expect(tree.stdout).toContain('├── skill')
+    expect(tree.stdout).not.toContain('|-')
+    const depth = await capture(() => runCli(['agent', '--help-tree-depth', '1']))
+    expect(depth.stdout).toContain('skill')
+    expect(depth.stdout).not.toContain('install')
+    const docs = await capture(() => runCli(['agent', 'prompt', '--help-docs']))
+    expect(docs.stdout).toStartWith('# xdocs agent prompt')
+  })
+
+  test.serial('preserves all four prompts in the singular agent namespace', async () => {
+    expect((await capture(() => runCli(['agent', 'prompt', 'list', '--names']))).stdout).toBe('write\nupdate\nagents\ngenerate\n')
+    const listed = await capture(() => runCli(['agent', 'prompt', 'list', '--format', 'json']))
+    expect(JSON.parse(listed.stdout)).toHaveLength(4)
+    expect((await capture(() => runCli(['agent', 'prompt', 'show', 'write']))).stdout).toContain('xdocs')
+  })
+
+  test.serial('installs and removes skills in both local tool locations', async () => {
+    const root = await temp()
+    await capture(() => runCli(['agent', 'skill', 'install', '--local', '--cwd', root, '--format', 'json']))
+    expect(existsSync(join(root, '.agents', 'skills', 'guiho-s-xdocs', 'SKILL.md'))).toBeTrue()
+    expect(existsSync(join(root, '.claude', 'skills', 'guiho-s-xdocs', 'SKILL.md'))).toBeTrue()
+    await capture(() => runCli(['agent', 'skill', 'uninstall', '--local', '--cwd', root, '--format', 'json']))
+    expect(existsSync(join(root, '.agents', 'skills', 'guiho-s-xdocs'))).toBeFalse()
+    expect(existsSync(join(root, '.claude', 'skills', 'guiho-s-xdocs'))).toBeFalse()
+  })
+
+  test.serial('applies, updates, shows, and removes exact instruction blocks', async () => {
+    const root = await temp()
+    await writeFile(join(root, 'AGENTS.md'), '# Agent\n')
+    await writeFile(join(root, 'CLAUDE.md'), '# Claude\n')
+    await capture(() => runCli(['agent', 'instruction', 'apply', '--cwd', root]))
+    await capture(() => runCli(['agent', 'instruction', 'update', '--cwd', root]))
+    for (const name of ['AGENTS.md', 'CLAUDE.md']) {
+      const content = await readFile(join(root, name), 'utf8')
+      expect(content.match(/<!-- BEGIN XDOCS/g)?.length).toBe(1)
+      expect(content).toContain('<!-- END XDOCS -->')
+    }
+    expect((await capture(() => runCli(['agent', 'instruction', 'show']))).stdout).toContain('xdocs.yaml')
+    await capture(() => runCli(['agent', 'instruction', 'remove', '--cwd', root]))
+    expect(await readFile(join(root, 'AGENTS.md'), 'utf8')).toBe('# Agent\n')
+  })
+
+  test.serial('initializes YAML without implicit agent mutations', async () => {
+    const root = await temp()
+    await capture(() => runCli(['init', '--cwd', root]))
+    expect(existsSync(join(root, 'xdocs.yaml'))).toBeTrue()
+    expect(existsSync(join(root, 'XDOCS.md'))).toBeTrue()
+    expect(existsSync(join(root, 'AGENTS.md'))).toBeFalse()
+    expect(existsSync(join(root, '.agents'))).toBeFalse()
+  })
+
+  test.serial('preserves structured documentation domain commands under YAML', async () => {
+    const root = await documentedProject()
+    const scan = await capture(() => runCli(['scan', '--cwd', root, '--format', 'json']))
+    expect(JSON.parse(scan.stdout).xdocsFiles.length).toBeGreaterThan(0)
+    const tree = await capture(() => runCli(['tree', '--cwd', root, '--format', 'json']))
+    expect(JSON.parse(tree.stdout).subject).toBe('fixture')
+    const doctor = await capture(() => runCli(['doctor', '--cwd', root, '--format', 'json']))
+    expect(JSON.parse(doctor.stdout).valid).toBeTrue()
+  })
+
+  test.serial('orders cached notices before ordinary output without corrupting JSON stdout', async () => {
+    const root = await documentedProject()
+    const cache = await temp()
+    const previousCache = process.env['XDOCS_CACHE_DIR']
+    process.env['XDOCS_CACHE_DIR'] = cache
+    await writeFile(join(cache, 'cache.json'), JSON.stringify({
+      newVersionAvailable: true,
+      latestVersion: '9.9.9',
+      upgradeCommand: 'xdocs upgrade',
+      lastCheck: new Date().toISOString(),
+    }))
+    try {
+      const text = await capture(() => runCli(['agent', 'prompt', 'list', '--names']))
+      expect(text.stdout).toStartWith('New version available. Run this command to upgrade: xdocs upgrade\n')
+      const json = await capture(() => runCli(['scan', '--cwd', root, '--format', 'json']))
+      expect(JSON.parse(json.stdout).xdocsFiles.length).toBeGreaterThan(0)
+      expect(json.stderr).toStartWith('New version available. Run this command to upgrade: xdocs upgrade\n')
+      expect(json.stderr).toContain('configuration file loaded:')
+    } finally {
+      if (previousCache === undefined) delete process.env['XDOCS_CACHE_DIR']
+      else process.env['XDOCS_CACHE_DIR'] = previousCache
+    }
+  })
+
+  test.serial('maps Citty usage failures to exit code 2', async () => {
+    const result = await capture(() => runCliWithErrorHandling(['not-a-command']))
+    expect(result.stdout).toBe('')
+    expect(result.stderr).toContain('Unknown command')
+    expect(process.exitCode).toBe(2)
+  })
+
+  test('keeps the hidden worker and upgrade default internal', () => {
+    const root = createXDocsCommand()
+    const commands = root.subCommands as Record<string, { default?: string }>
     expect(root.default).toBe('home')
-    expect(subCommands['home']?.meta?.hidden).toBe(true)
-    expect(subCommands['xdocs-update-check-worker']?.meta?.hidden).toBe(true)
-    expect(subCommands['upgrade']?.default).toBe('apply')
-    expect(subCommands['upgrade']?.subCommands?.['apply']?.meta?.hidden).toBe(true)
+    expect(commands['upgrade']?.default).toBe('apply')
   })
 })
 
-async function captureOutput(action: () => Promise<void>): Promise<CapturedOutput> {
+async function temp(): Promise<string> {
+  const path = await mkdtemp(join(tmpdir(), 'xdocs-rfc-cli-'))
+  temporaryPaths.push(path)
+  return path
+}
+
+async function documentedProject(): Promise<string> {
+  const root = await temp()
+  await mkdir(join(root, 'out'))
+  await writeFile(join(root, 'xdocs.yaml'), 'schema: 1\nscan:\n  exclude:\n    - out\nproject:\n  name: fixture\n')
+  await writeFile(join(root, 'XDOCS.md'), '# Fixture\n')
+  await writeFile(join(root, 'fixture.xdocs.md'), `---
+subject: fixture
+description: Fixture project.
+parent: null
+children: []
+files: {}
+documents: {}
+tags: [fixture]
+keywords: [fixture]
+flags: []
+---
+Fixture.
+`)
+  return root
+}
+
+async function capture(action: () => Promise<void>): Promise<Captured> {
   const stdout: string[] = []
   const stderr: string[] = []
-  const originalStdoutWrite = process.stdout.write
-  const originalStderrWrite = process.stderr.write
-
-  process.stdout.write = ((chunk: string | Uint8Array) => {
-    stdout.push(String(chunk))
-    return true
-  }) as typeof process.stdout.write
-  process.stderr.write = ((chunk: string | Uint8Array) => {
-    stderr.push(String(chunk))
-    return true
-  }) as typeof process.stderr.write
-
+  const out = process.stdout.write
+  const err = process.stderr.write
+  process.stdout.write = ((chunk: string | Uint8Array) => (stdout.push(String(chunk)), true)) as typeof process.stdout.write
+  process.stderr.write = ((chunk: string | Uint8Array) => (stderr.push(String(chunk)), true)) as typeof process.stderr.write
   try {
     await action()
   } finally {
-    process.stdout.write = originalStdoutWrite
-    process.stderr.write = originalStderrWrite
+    process.stdout.write = out
+    process.stderr.write = err
   }
-
   return { stdout: stdout.join(''), stderr: stderr.join('') }
-}
-
-async function createDocumentedProject(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), 'xdocs-citty-project-'))
-  await mkdir(join(dir, 'out'))
-  await writeFile(join(dir, 'XDOCS.md'), '# Fixture\n', 'utf8')
-  await writeFile(join(dir, 'xdocs.config.toml'), [
-    'schema = 1',
-    '',
-    '[project]',
-    'name = "fixture"',
-    '',
-    '[scan]',
-    'exclude = ["out"]',
-    '',
-    '[agents]',
-    'auto_agents_md = false',
-    'auto_skill_install = false',
-    'skill_tool = "agents"',
-    '',
-  ].join('\n'), 'utf8')
-  await writeFile(join(dir, 'fixture.xdocs.md'), [
-    '---',
-    'subject: fixture',
-    'description: Fixture project for Citty CLI command coverage.',
-    'parent: null',
-    'children: []',
-    'files: {}',
-    'documents: {}',
-    'tags:',
-    '  - fixture',
-    'keywords:',
-    '  - fixture',
-    '  - citty',
-    'flags: []',
-    'status: stable',
-    '---',
-    '',
-    'Fixture descriptor.',
-    '',
-  ].join('\n'), 'utf8')
-  return dir
 }
