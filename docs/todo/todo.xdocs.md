@@ -8,6 +8,8 @@ documents:
   citty-cli-migration-implementation.md: Tracks migration progress, decisions, verification evidence, and handoff state for the Citty CLI migration.
   citty-cli-migration.md: Defines the required full migration from xdocs handwritten CLI parsing and routing to Citty.
   improve-json-output-coverage.md: Follow-up task spec for consistent JSON output coverage across xdocs commands.
+  upgrade-reliability-implementation.md: Tracks upgrade reliability progress, decisions, verification evidence, and integration handoff.
+  upgrade-reliability.md: Defines reliable verified self-upgrade, complete release catalog, exact recovery guidance, and installer acceptance signals.
 tags:
   - todo
   - planning
@@ -18,6 +20,8 @@ keywords:
   - json output
   - todo spec
   - format flag
+  - upgrade reliability
+  - rollback
 flags: []
 status: stable
 ---
