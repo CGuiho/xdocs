@@ -408,7 +408,542 @@ describe('validateMetadata', () => {
   })
 
   test('rejects missing subject', () => {
-    const result = validat…5671 tokens truncated…lizeConfig({ schema: 2 }, '/project')).toThrow(XDocsError)
+    const result = validateMetadata({ ...validMeta, subject: '' })
+    expect(result.valid).toBe(false)
+    expect(result.errors.some((e) => e.includes('subject'))).toBe(true)
+  })
+
+  test('rejects missing description', () => {
+    const result = validateMetadata({ ...validMeta, description: 123 })
+    expect(result.valid).toBe(false)
+    expect(result.errors.some((e) => e.includes('description'))).toBe(true)
+  })
+
+  test('rejects non-array children', () => {
+    const result = validateMetadata({ ...validMeta, children: 'not-array' })
+    expect(result.valid).toBe(false)
+    expect(result.errors.some((e) => e.includes('children'))).toBe(true)
+  })
+
+  test('rejects non-object files', () => {
+    const result = validateMetadata({ ...validMeta, files: 'not-object' })
+    expect(result.valid).toBe(false)
+    expect(result.errors.some((e) => e.includes('files'))).toBe(true)
+  })
+
+  test('rejects missing or invalid documents', () => {
+    const missing = validateMetadata({ ...validMeta, documents: undefined })
+    const invalid = validateMetadata({ ...validMeta, documents: 'not-object' })
+
+    expect(missing.valid).toBe(false)
+    expect(missing.errors.some((e) => e.includes('documents'))).toBe(true)
+    expect(invalid.valid).toBe(false)
+    expect(invalid.errors.some((e) => e.includes('documents'))).toBe(true)
+  })
+
+  test('rejects non-array tags', () => {
+    const result = validateMetadata({ ...validMeta, tags: 'not-array' })
+    expect(result.valid).toBe(false)
+    expect(result.errors.some((e) => e.includes('tags'))).toBe(true)
+  })
+
+  test('rejects non-array keywords', () => {
+    const result = validateMetadata({ ...validMeta, keywords: 'not-array' })
+    expect(result.valid).toBe(false)
+    expect(result.errors.some((e) => e.includes('keywords'))).toBe(true)
+  })
+
+  test('rejects non-array flags field', () => {
+    const result = validateMetadata({ ...validMeta, flags: 'not-array' })
+    expect(result.valid).toBe(false)
+    expect(result.errors.some((e) => e.includes('flags'))).toBe(true)
+  })
+
+  test('accepts string parent', () => {
+    const result = validateMetadata({ ...validMeta, parent: 'root' })
+    expect(result.valid).toBe(true)
+    expect(result.metadata?.parent).toBe('root')
+  })
+
+  test('preserves optional status field', () => {
+    const result = validateMetadata({ ...validMeta, status: 'active' })
+    expect(result.valid).toBe(true)
+    expect(result.metadata?.status).toBe('active')
+  })
+
+  test('omits status when not a string', () => {
+    const result = validateMetadata({ ...validMeta, status: 42 })
+    expect(result.valid).toBe(true)
+    expect(result.metadata?.status).toBeUndefined()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// discovery.ts
+// ---------------------------------------------------------------------------
+const descriptorContent = (subject: string, documents: Record<string, string> = {}): string => {
+  const documentEntries = Object.entries(documents)
+  const documentsYaml = documentEntries.length === 0
+    ? 'documents: {}'
+    : [
+        'documents:',
+        ...documentEntries.map(([name, description]) => `  ${name}: ${description}`),
+      ].join('\n')
+
+  return `---
+subject: ${subject}
+description: The ${subject} module
+parent: null
+children: []
+files: {}
+${documentsYaml}
+tags: []
+keywords: []
+flags: []
+---
+
+# ${subject}
+`
+}
+
+describe('discovery', () => {
+  test('classifies xdocs descriptors and plain Markdown documents', () => {
+    expect(isXDocsFile('/project/XDOCS.md')).toBe(true)
+    expect(isXDocsFile('/project/auth.xdocs.md')).toBe(true)
+    expect(isXDocsDescriptorFile('/project/auth.xdocs.md')).toBe(true)
+    expect(isXDocsDescriptorFile('/project/.xdocs.md')).toBe(true)
+    expect(isPlainMarkdownDocument('/project/auth.md')).toBe(true)
+    expect(isPlainMarkdownDocument('/project/auth.xdocs.md')).toBe(false)
+    expect(isPlainMarkdownDocument('/project/XDOCS.md')).toBe(false)
+  })
+
+  test('scans named descriptors with sibling Markdown documents', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-discovery-'))
+    try {
+      const authDir = join(dir, 'auth')
+      await mkdir(authDir)
+      await writeFile(join(dir, 'XDOCS.md'), '# Root\n', 'utf8')
+      await writeFile(join(authDir, 'auth.xdocs.md'), descriptorContent('auth', { 'implementation.md': 'Authentication implementation notes.' }), 'utf8')
+      await writeFile(join(authDir, 'implementation.md'), '# Implementation\n', 'utf8')
+
+      const result = await scanProject(defaultConfig(dir))
+      const file = result.xdocsFiles.find((entry) => entry.relativePath.endsWith('auth.xdocs.md'))
+
+      expect(result.totalMarkdownDocuments).toBe(1)
+      expect(result.markdownDocuments.map((document) => document.relativePath)).toEqual([join('auth', 'implementation.md')])
+      expect(file?.valid).toBe(true)
+      expect(file?.documents.map((document) => document.name)).toEqual(['implementation.md'])
+      expect(file?.metadata?.documents).toEqual({ 'implementation.md': 'Authentication implementation notes.' })
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('marks nameless .xdocs.md descriptors invalid', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-nameless-'))
+    try {
+      await writeFile(join(dir, '.xdocs.md'), descriptorContent('root'), 'utf8')
+
+      const result = await scanProject(defaultConfig(dir))
+      const file = result.xdocsFiles.find((entry) => entry.relativePath === '.xdocs.md')
+
+      expect(file?.valid).toBe(false)
+      expect(file?.errors.some((error) => error.includes('Invalid xdocs descriptor filename'))).toBe(true)
+      expect(result.uncoveredPaths).toContain(dir)
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('marks multiple descriptors in one directory invalid', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-duplicates-'))
+    try {
+      await writeFile(join(dir, 'first.xdocs.md'), descriptorContent('first'), 'utf8')
+      await writeFile(join(dir, 'second.xdocs.md'), descriptorContent('second'), 'utf8')
+
+      const result = await scanProject(defaultConfig(dir))
+      const descriptors = result.xdocsFiles.filter((file) => file.relativePath.endsWith('.xdocs.md'))
+
+      expect(descriptors).toHaveLength(2)
+      expect(descriptors.every((file) => file.valid === false)).toBe(true)
+      expect(descriptors.every((file) => file.errors.some((error) => error.includes('Multiple xdocs descriptors')))).toBe(true)
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('requires descriptors to list every sibling plain Markdown document', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-undocumented-'))
+    try {
+      await writeFile(join(dir, 'auth.xdocs.md'), descriptorContent('auth'), 'utf8')
+      await writeFile(join(dir, 'implementation.md'), '# Implementation\n', 'utf8')
+
+      const result = await scanProject(defaultConfig(dir))
+      const file = result.xdocsFiles.find((entry) => entry.relativePath === 'auth.xdocs.md')
+
+      expect(file?.valid).toBe(false)
+      expect(file?.errors.some((error) => error.includes('Undocumented Markdown document'))).toBe(true)
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('requires declared documents to be existing sibling Markdown files', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-missing-documents-'))
+    try {
+      await writeFile(join(dir, 'auth.xdocs.md'), descriptorContent('auth', {
+        'missing.md': 'Missing document.',
+        '../outside.md': 'Path references are not allowed.',
+        'nested/inside.md': 'Nested paths are not allowed.',
+        'other.xdocs.md': 'Descriptors are not companion documents.',
+      }), 'utf8')
+
+      const result = await scanProject(defaultConfig(dir))
+      const file = result.xdocsFiles.find((entry) => entry.relativePath === 'auth.xdocs.md')
+
+      expect(file?.valid).toBe(false)
+      expect(file?.errors.some((error) => error.includes('Missing Markdown document: "missing.md"'))).toBe(true)
+      expect(file?.errors.filter((error) => error.includes('Invalid document entry'))).toHaveLength(3)
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+})
+
+describe('scanMetadata', () => {
+  test('returns descriptor and companion document frontmatter', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-meta-'))
+    try {
+      const authDir = join(dir, 'auth')
+      await mkdir(authDir)
+      await writeFile(join(authDir, 'auth.xdocs.md'), descriptorContent('auth', { 'implementation.md': 'Authentication implementation notes.' }), 'utf8')
+      await writeFile(join(authDir, 'implementation.md'), `---
+name: auth-implementation
+purpose: Explain authentication implementation details.
+description: Detailed notes for auth behavior.
+created: 2026-07-10
+flags: []
+tags:
+  - security
+keywords:
+  - authentication
+  - sessions
+owner: auth
+---
+
+# Implementation
+`, 'utf8')
+
+      const result = await scanMetadata(defaultConfig(dir), { targetPath: 'auth', includeDocuments: true })
+      const descriptor = result.descriptors[0]
+      const document = descriptor?.documents[0]
+
+      expect(result.errors).toEqual([])
+      expect(descriptor?.subject).toBe('auth')
+      expect(descriptor?.frontmatter?.['subject']).toBe('auth')
+      expect(document?.owner).toBe('auth')
+      expect(document?.frontmatter?.['purpose']).toBe('Explain authentication implementation details.')
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('filters by owner, tag, and keyword across descriptors and documents', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-meta-filter-'))
+    try {
+      const authDir = join(dir, 'auth')
+      const billingDir = join(dir, 'billing')
+      await mkdir(authDir)
+      await mkdir(billingDir)
+      await writeFile(join(authDir, 'auth.xdocs.md'), descriptorContent('auth', { 'implementation.md': 'Authentication implementation notes.' }), 'utf8')
+      await writeFile(join(authDir, 'implementation.md'), `---
+name: auth-implementation
+purpose: Explain authentication implementation details.
+description: Detailed notes for auth behavior.
+created: 2026-07-10
+flags: []
+tags:
+  - security
+keywords:
+  - sessions
+owner: auth
+---
+`, 'utf8')
+      await writeFile(join(billingDir, 'billing.xdocs.md'), descriptorContent('billing'), 'utf8')
+
+      const result = await scanMetadata(defaultConfig(dir), { includeDocuments: true, owner: 'auth', tag: 'security', keyword: 'sessions' })
+
+      expect(result.descriptors).toHaveLength(1)
+      expect(result.descriptors[0]?.subject).toBe('auth')
+      expect(result.descriptors[0]?.documents).toHaveLength(1)
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('reports invalid companion document metadata', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-meta-invalid-'))
+    try {
+      await writeFile(join(dir, 'auth.xdocs.md'), descriptorContent('auth', { 'implementation.md': 'Authentication implementation notes.' }), 'utf8')
+      await writeFile(join(dir, 'implementation.md'), `---
+name: auth-implementation
+purpose: Explain authentication implementation details.
+description: Detailed notes for auth behavior.
+created: 2026-07-10
+flags: []
+tags: []
+keywords: []
+owner: wrong-owner
+---
+`, 'utf8')
+
+      const result = await scanMetadata(defaultConfig(dir), { includeDocuments: true })
+
+      expect(result.errors.some((error) => error.includes('Expected "auth"'))).toBe(true)
+      expect(result.descriptors[0]?.documents[0]?.valid).toBe(false)
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('strict CLI mode fails on metadata errors', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'xdocs-meta-cli-'))
+    const originalStdoutWrite = process.stdout.write
+    const originalStderrWrite = process.stderr.write
+    try {
+      await writeFile(join(dir, 'xdocs.config.toml'), 'schema = 1\n\n[agents]\nauto_agents_md = false\nauto_skill_install = false\n', 'utf8')
+      await writeFile(join(dir, 'auth.xdocs.md'), descriptorContent('auth', { 'implementation.md': 'Authentication implementation notes.' }), 'utf8')
+      await writeFile(join(dir, 'implementation.md'), `---
+name: auth-implementation
+purpose: Explain authentication implementation details.
+description: Detailed notes for auth behavior.
+created: 2026-07-10
+flags: []
+tags: []
+keywords: []
+owner: wrong-owner
+---
+`, 'utf8')
+
+      process.stdout.write = (() => true) as typeof process.stdout.write
+      process.stderr.write = (() => true) as typeof process.stderr.write
+
+      await expect(runCli(['meta', '--cwd', dir, '--documents', '--strict'])).rejects.toThrow(XDocsError)
+    } finally {
+      process.stdout.write = originalStdoutWrite
+      process.stderr.write = originalStderrWrite
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+})
+
+// ---------------------------------------------------------------------------
+// tree.ts
+// ---------------------------------------------------------------------------
+const makeFile = (subject: string, parent: string | null, children: string[] = []): XDocsFile => ({
+  path: `/project/${subject}/${subject}.xdocs.md`,
+  relativePath: `${subject}/${subject}.xdocs.md`,
+  directory: `/project/${subject}`,
+  metadata: {
+    subject,
+    description: `The ${subject} module`,
+    parent,
+    children,
+    files: {},
+    documents: {},
+    tags: [],
+    keywords: [],
+    flags: [],
+  },
+  documents: [],
+  body: '',
+  valid: true,
+  errors: [],
+})
+
+describe('buildTree', () => {
+  test('builds a tree with a root node', () => {
+    const files = [
+      makeFile('root', null, ['auth', 'api']),
+      makeFile('auth', 'root'),
+      makeFile('api', 'root'),
+    ]
+
+    const tree = buildTree(files)
+    expect(tree.subject).toBe('root')
+    expect(tree.children).toHaveLength(2)
+    expect(tree.children.map((c) => c.subject).sort()).toEqual(['api', 'auth'])
+  })
+
+  test('creates synthetic root when no parent=null node', () => {
+    const files = [
+      makeFile('auth', 'root'),
+      makeFile('api', 'root'),
+    ]
+
+    const tree = buildTree(files)
+    expect(tree.subject).toBe('(root)')
+    expect(tree.children).toHaveLength(2)
+  })
+
+  test('handles empty input', () => {
+    const tree = buildTree([])
+    expect(tree.subject).toBe('(root)')
+    expect(tree.children).toHaveLength(0)
+  })
+
+  test('handles files without metadata', () => {
+    const file: XDocsFile = {
+      path: '/test.md',
+      relativePath: 'test.md',
+      directory: '/',
+      metadata: null,
+      documents: [],
+      body: '',
+      valid: false,
+      errors: ['no frontmatter'],
+    }
+
+    const tree = buildTree([file])
+    expect(tree.subject).toBe('(root)')
+    expect(tree.children).toHaveLength(0)
+  })
+})
+
+describe('renderTree', () => {
+  test('renders a simple tree', () => {
+    const files = [
+      makeFile('project', null, ['auth', 'api']),
+      makeFile('auth', 'project'),
+      makeFile('api', 'project'),
+    ]
+    const tree = buildTree(files)
+    const output = renderTree(tree)
+
+    expect(output).toContain('project')
+    expect(output).toContain('auth')
+    expect(output).toContain('api')
+  })
+
+  test('renders nested branches', () => {
+    const files = [
+      makeFile('root', null, ['a']),
+      makeFile('a', 'root', ['b']),
+      makeFile('b', 'a'),
+    ]
+    const tree = buildTree(files)
+    const output = renderTree(tree)
+    const lines = output.split('\n')
+
+    expect(lines[0]).toBe('root')
+    expect(lines[1]).toBe('|- a')
+    expect(lines[2]).toBe('|  |- b')
+  })
+
+  test('renders sibling scope pipes', () => {
+    const files = [
+      makeFile('root', null, ['a', 'b']),
+      makeFile('a', 'root', ['a-child']),
+      makeFile('a-child', 'a'),
+      makeFile('b', 'root'),
+    ]
+    const tree = buildTree(files)
+    const output = renderTree(tree)
+
+    expect(output).toContain('|- a')
+    expect(output).toContain('|  |- a-child')
+    expect(output).toContain('|- b')
+  })
+})
+
+describe('renderTreeMarkdown', () => {
+  test('renders markdown with bold subjects and descriptions', () => {
+    const files = [
+      makeFile('root', null, ['child']),
+      makeFile('child', 'root'),
+    ]
+    const tree = buildTree(files)
+    const output = renderTreeMarkdown(tree)
+
+    expect(output).toContain('- **root**: The root module')
+    expect(output).toContain('  - **child**: The child module')
+  })
+})
+
+describe('validateTree', () => {
+  test('reports no issues for valid tree', () => {
+    const files = [
+      makeFile('root', null, ['auth']),
+      makeFile('auth', 'root'),
+    ]
+    const result = validateTree(files)
+    expect(result.valid).toBe(true)
+    expect(result.warnings).toHaveLength(0)
+    expect(result.errors).toHaveLength(0)
+  })
+
+  test('reports duplicate subjects', () => {
+    const files = [
+      makeFile('root', null),
+      makeFile('root', null),
+    ]
+    const result = validateTree(files)
+    expect(result.valid).toBe(false)
+    expect(result.errors.some((e) => e.includes('Duplicate'))).toBe(true)
+  })
+
+  test('reports orphan subjects', () => {
+    const files = [
+      makeFile('child', 'nonexistent'),
+    ]
+    const result = validateTree(files)
+    expect(result.valid).toBe(false)
+    expect(result.errors.some((e) => e.includes('Orphan'))).toBe(true)
+  })
+
+  test('warns about missing children', () => {
+    const files = [
+      makeFile('root', null, ['missing-child']),
+    ]
+    const result = validateTree(files)
+    expect(result.valid).toBe(true) // warnings don't invalidate
+    expect(result.warnings.some((w) => w.includes('Missing child'))).toBe(true)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// config.ts
+// ---------------------------------------------------------------------------
+describe('normalizeConfig', () => {
+  test('normalizes a minimal raw config', () => {
+    const raw: XDocsRawConfig = { schema: 1 }
+    const config = normalizeConfig(raw, '/project')
+
+    expect(config.schema).toBe(1)
+    expect(config.extensions.supported).toEqual(['.xdocs.md'])
+    expect(config.ai.mode).toBe('prompt')
+    expect(config.scan.exclude).toContain('node_modules')
+    expect(config.project.name).toBe('project')
+  })
+
+  test('normalizes a full raw config', () => {
+    const raw: XDocsRawConfig = {
+      schema: 1,
+      extensions: { supported: ['.xdocs.md'] },
+      ai: { mode: 'auto' },
+      scan: { exclude: ['vendor'] },
+      project: { name: 'my-project' },
+    }
+    const config = normalizeConfig(raw, '/project')
+
+    expect(config.extensions.supported).toEqual(['.xdocs.md'])
+    expect(config.ai.mode).toBe('auto')
+    expect(config.scan.exclude).toEqual(['vendor'])
+    expect(config.project.name).toBe('my-project')
+  })
+
+  test('rejects unsupported schema version', () => {
+    expect(() => normalizeConfig({ schema: 2 }, '/project')).toThrow(XDocsError)
   })
 
   test('rejects invalid ai.mode', () => {
