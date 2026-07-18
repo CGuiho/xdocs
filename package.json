@@ -1,7 +1,7 @@
 {
   "name": "@guiho/xdocs",
   "description": "Structured documentation system for codebases. Helps AI make sense of projects.",
-  "version": "0.6.0-alpha.0",
+  "version": "0.6.0",
   "type": "module",
   "main": "./library/guiho-xdocs.js",
   "types": "./library/guiho-xdocs.d.ts",
