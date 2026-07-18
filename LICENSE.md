@@ -1,3 +1,18 @@
+---
+name: xdocs-license
+purpose: State the software license governing use and distribution of xdocs.
+description: MIT license terms for the @guiho/xdocs package.
+created: 2026-06-01
+owner: xdocs-package
+flags: []
+tags:
+  - legal
+  - license
+keywords:
+  - MIT License
+  - xdocs licensing
+---
+
 @guiho/xdocs
 
 The MIT License (MIT)
