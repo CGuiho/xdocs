@@ -3,7 +3,7 @@ name: xdocs RFC 0034 CLI Compliance Migration Implementation
 purpose: Record execution decisions, completed plan units, verification, and handoff for the breaking xdocs CLI migration.
 description: Tracks the implementation of XD-01 through XD-18 and the evidence required to close task 4.
 created: 2026-07-18
-updated: 2026-07-18
+updated: 2026-07-19
 owner: xdocs-todo
 flags:
   - completed
@@ -24,6 +24,28 @@ keywords:
 
 Implemented and validated locally. Package publication and GitHub release
 creation are intentionally not part of this execution.
+
+## Corrective audit and patch
+
+An independent post-release audit found and corrected three RFC completion
+gaps before the `0.6.1` patch:
+
+- root help was delegated to a synthetic default `home` subcommand, so root
+  usage, tree, depth, and Markdown modes omitted the public command catalog and
+  `xdocs home` was accidentally callable;
+- standard and Markdown help omitted examples;
+- the POSIX installer's Darwin Bash profile branch compared the normalized
+  `darwin` platform with the unreachable value `macos`.
+
+The root now owns the no-argument lifecycle directly, returns after routed
+subcommands, renders every root help form from the true Citty tree, excludes
+hidden internal commands, and rejects `home`. Examples live in command metadata
+and both help renderers consume them. The installer now selects an existing
+Darwin `.bash_profile` correctly.
+
+Regression coverage includes live subprocess root help/catalog checks, `home`
+rejection, all three YAML precedence levels, and Darwin profile selection. The
+complete suite passes with 50 tests.
 
 ## Completed units
 
