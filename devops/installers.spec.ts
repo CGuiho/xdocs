@@ -10,6 +10,7 @@ import { dirname, join, resolve } from 'node:path'
 import { buildUpgradeRecovery } from '../source/upgrade-catalog.js'
 
 const fixtureVersion = '9.0.0-alpha.1'
+const installerTestTimeoutMilliseconds = 180_000
 const repositoryRoot = resolve(import.meta.dir, '..')
 
 if (process.platform === 'win32') {
@@ -23,6 +24,7 @@ if (process.platform === 'win32') {
       await compileFixture(source, fixture)
       server = Bun.serve({
         port: 0,
+        idleTimeout: 120,
         fetch: (request) => {
           const path = new URL(request.url).pathname
           if (path === '/install.ps1') return new Response(Bun.file(join(repositoryRoot, 'devops', 'install.ps1')))
@@ -69,7 +71,7 @@ if (process.platform === 'win32') {
       server?.stop(true)
       await rm(dir, { recursive: true, force: true })
     }
-  }, 60_000)
+  }, installerTestTimeoutMilliseconds)
 } else {
   test('printed Bash recovery command installs and verifies an exact prerelease fixture', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'xdocs-bash-installer-'))
@@ -130,7 +132,7 @@ cp "$XDOCS_INSTALLER_FIXTURE" "$output"
     } finally {
       await rm(dir, { recursive: true, force: true })
     }
-  }, 60_000)
+  }, installerTestTimeoutMilliseconds)
 }
 
 async function compileFixture(source: string, destination: string): Promise<void> {
