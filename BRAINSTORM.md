@@ -1,3 +1,20 @@
+---
+name: xdocs-brainstorm
+purpose: Preserve product vision and future design ideas for structured documentation.
+description: Brainstorming notes for extending xdocs across code, work, startup, and other knowledge domains.
+created: 2026-06-01
+owner: xdocs-package
+flags: []
+tags:
+  - product
+  - brainstorming
+  - structured-documentation
+keywords:
+  - xdocs vision
+  - knowledge model
+  - future directions
+---
+
 # GUIHO XDocs Brainstorming
 
 ## What is xdocs
