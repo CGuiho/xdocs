@@ -1,6 +1,13 @@
 ---
 name: write
+purpose: Guide an agent through creating a named xdocs descriptor for a directory or module.
 description: Scan a directory and write a new named xdocs descriptor for it.
+created: 2026-06-02
+owner: xdocs-prompts
+flags: []
+tags:
+  - prompt
+  - descriptor-authoring
 keywords:
   - write descriptor
   - xdocs metadata
