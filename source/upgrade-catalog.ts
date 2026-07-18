@@ -13,6 +13,7 @@ import type {
   XDocsUpgradeRecovery,
 } from './types.js'
 import { XDocsError } from './errors.js'
+import { GitHubReleaseCatalogSchema, decodeWithSchema } from './schemas.js'
 
 export {
   buildUpgradeListEnvelope,
@@ -40,18 +41,14 @@ type RecoveryOptions = {
   installerUrl?: string
 }
 
-type GitHubReleaseAsset = {
-  name?: unknown
-  browser_download_url?: unknown
-  size?: unknown
-}
-
+type GitHubReleaseAsset = { name: string, browser_download_url: string, size?: number }
 type GitHubRelease = {
-  tag_name?: unknown
-  html_url?: unknown
-  published_at?: unknown
-  draft?: unknown
-  assets?: unknown
+  tag_name: string
+  html_url: string
+  published_at: string | null
+  prerelease: boolean
+  draft: boolean
+  assets: GitHubReleaseAsset[]
 }
 
 type SemanticVersion = {
@@ -74,11 +71,15 @@ async function fetchReleaseCatalog(options: ReleaseCatalogOptions): Promise<XDoc
   while (url) {
     const response = await fetcher(url, { headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'xdocs-cli' } })
     if (!response.ok) {
-      throw new XDocsError(`Failed to fetch the complete xdocs release catalog: ${response.status} ${response.statusText}`)
+      throw new XDocsError(`Failed to fetch the complete xdocs release catalog: ${response.status} ${response.statusText}`, 4)
     }
 
-    const page = await response.json() as unknown
-    if (!Array.isArray(page)) throw new XDocsError('GitHub returned a malformed xdocs release catalog page.')
+    const page = decodeWithSchema<GitHubRelease[]>(
+      GitHubReleaseCatalogSchema,
+      await response.json(),
+      'GitHub xdocs release catalog response',
+      4,
+    )
 
     for (const value of page) {
       const release = normalizeRelease(value, options)
@@ -137,7 +138,7 @@ function buildUpgradeRecovery(options: RecoveryOptions): XDocsUpgradeRecovery {
 function recoveryInstallerUrl(value: string | undefined, fallback: string): string {
   const url = value ?? fallback
   if (!/^https?:\/\/[0-9A-Za-z._~:/%=-]+$/.test(url)) {
-    throw new XDocsError(`Invalid recovery installer URL: ${url}`)
+    throw new XDocsError(`Invalid recovery installer URL: ${url}`, 4)
   }
   return url
 }
