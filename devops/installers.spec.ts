@@ -10,18 +10,28 @@ import { dirname, join, resolve } from 'node:path'
 import { buildUpgradeRecovery } from '../source/upgrade-catalog.js'
 
 const fixtureVersion = '9.0.0-alpha.1'
-const installerTestTimeoutMilliseconds = 180_000
+const installerTestTimeoutMilliseconds = 60_000
 const repositoryRoot = resolve(import.meta.dir, '..')
 
 if (process.platform === 'win32') {
   test('printed Windows recovery command works from PowerShell and Git Bash', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'xdocs-powershell-installer-'))
     const fixture = join(dir, 'fixture.exe')
-    const source = join(dir, 'fixture.ts')
+    const source = join(dir, 'fixture.cs')
     let server: ReturnType<typeof Bun.serve> | undefined
     try {
-      await writeFile(source, `console.log('${fixtureVersion}')\n`, 'utf8')
-      await compileFixture(source, fixture)
+      await writeFile(source, `using System;
+
+internal static class Program
+{
+    private static int Main(string[] args)
+    {
+        Console.WriteLine("${fixtureVersion}");
+        return 0;
+    }
+}
+`, 'utf8')
+      await compileWindowsFixture(source, fixture)
       server = Bun.serve({
         port: 0,
         idleTimeout: 120,
@@ -149,6 +159,34 @@ async function compileFixture(source: string, destination: string): Promise<void
     new Response(proc.stderr).text(),
   ])
   if (exitCode !== 0) throw new Error(`Fixture compilation failed (${exitCode}): ${stdout}\n${stderr}`)
+}
+
+async function compileWindowsFixture(source: string, destination: string): Promise<void> {
+  await mkdir(dirname(destination), { recursive: true })
+  const windowsDirectory = process.env['WINDIR'] ?? 'C:\\Windows'
+  const compiler = join(windowsDirectory, 'Microsoft.NET', 'Framework64', 'v4.0.30319', 'csc.exe')
+  if (!await Bun.file(compiler).exists()) {
+    throw new Error(`Windows C# compiler not found: ${compiler}`)
+  }
+  const proc = Bun.spawn([
+    compiler,
+    '/nologo',
+    '/optimize+',
+    '/target:exe',
+    `/out:${destination}`,
+    source,
+  ], {
+    cwd: repositoryRoot,
+    stdin: 'ignore',
+    stdout: 'pipe',
+    stderr: 'pipe',
+  })
+  const [exitCode, stdout, stderr] = await Promise.all([
+    proc.exited,
+    new Response(proc.stdout).text(),
+    new Response(proc.stderr).text(),
+  ])
+  if (exitCode !== 0) throw new Error(`Windows fixture compilation failed (${exitCode}): ${stdout}\n${stderr}`)
 }
 
 async function executableVersion(path: string): Promise<string> {
