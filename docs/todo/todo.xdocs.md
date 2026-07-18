@@ -9,6 +9,7 @@ documents:
   citty-cli-migration.md: Defines the required full migration from xdocs handwritten CLI parsing and routing to Citty.
   improve-json-output-coverage.md: Follow-up task spec for consistent JSON output coverage across xdocs commands.
   rfc-0034-cli-compliance-migration.md: Defines the required breaking outcome, scope, constraints, and completion signals for full xdocs RFC 0034 compliance.
+  rfc-0034-cli-compliance-migration-implementation.md: Records completed units, breaking removals, validation, review, and downstream handoff.
   upgrade-reliability-implementation.md: Tracks upgrade reliability progress, decisions, verification evidence, and integration handoff.
   upgrade-reliability.md: Defines reliable verified self-upgrade, complete release catalog, exact recovery guidance, and installer acceptance signals.
 tags:
