@@ -170,36 +170,46 @@ function Get-NormalizedVersion {
 function Get-ExecutableVersion {
   param([string]$Path)
 
-  $stdoutPath = Join-Path ([IO.Path]::GetTempPath()) "xdocs-verify-$PID-$([Guid]::NewGuid().ToString('N')).out"
-  $stderrPath = Join-Path ([IO.Path]::GetTempPath()) "xdocs-verify-$PID-$([Guid]::NewGuid().ToString('N')).err"
   $previousDisableUpdateCheck = $env:XDOCS_DISABLE_UPDATE_CHECK
+  $process = $null
   try {
     $env:XDOCS_DISABLE_UPDATE_CHECK = '1'
-    $process = Start-Process -FilePath $Path -ArgumentList '--version' -NoNewWindow -PassThru `
-      -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath
+    $startInfo = New-Object System.Diagnostics.ProcessStartInfo
+    $startInfo.FileName = $Path
+    $startInfo.Arguments = '--version'
+    $startInfo.UseShellExecute = $false
+    $startInfo.CreateNoWindow = $true
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
+    $process = New-Object System.Diagnostics.Process
+    $process.StartInfo = $startInfo
+    if (-not $process.Start()) {
+      throw "Could not launch $Path --version."
+    }
     if (-not $process.WaitForExit(15000)) {
       $process.Kill()
       $process.WaitForExit()
       throw "Executable verification timed out for $Path after 15 seconds."
     }
-    $output = ((Get-Content -LiteralPath $stdoutPath -Raw -ErrorAction SilentlyContinue) + `
-      (Get-Content -LiteralPath $stderrPath -Raw -ErrorAction SilentlyContinue))
+    $output = $process.StandardOutput.ReadToEnd().Trim()
+    $errorOutput = $process.StandardError.ReadToEnd().Trim()
     if ($process.ExitCode -ne 0) {
-      throw "Executable verification failed for $Path with exit code $($process.ExitCode)`: $($output.Trim())"
+      throw "Executable verification failed for $Path with exit code $($process.ExitCode)`: $errorOutput"
     }
   } finally {
+    if ($null -ne $process) {
+      $process.Dispose()
+    }
     if ($null -eq $previousDisableUpdateCheck) {
       Remove-Item Env:XDOCS_DISABLE_UPDATE_CHECK -ErrorAction SilentlyContinue
     } else {
       $env:XDOCS_DISABLE_UPDATE_CHECK = $previousDisableUpdateCheck
     }
-    Remove-Item -LiteralPath $stdoutPath, $stderrPath -Force -ErrorAction SilentlyContinue
   }
-  $match = [regex]::Match($output, '\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?')
-  if (-not $match.Success) {
-    throw "Executable verification did not return a semantic version for $Path`: $($output.Trim())"
+  if ($output -notmatch '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$') {
+    throw "Executable verification did not return exactly one semantic version for $Path`: $output"
   }
-  return $match.Value
+  return $output
 }
 
 function Test-Shadowing {
