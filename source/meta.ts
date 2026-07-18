@@ -2,8 +2,8 @@
  * @copyright Copyright (c) 2026 GUIHO Technologies as represented by Cristóvão GUIHO. All Rights Reserved.
  */
 
-import { readdir, stat } from 'node:fs/promises'
-import { basename, dirname, join, relative, resolve } from 'node:path'
+import { readDirectory as readdir, statPath as stat } from './runtime/fs.js'
+import { basename, dirname, joinPath as join, relativePath as relative, resolvePath as resolve } from './runtime/path.js'
 import type {
   XDocsConfig,
   XDocsFrontmatter,
