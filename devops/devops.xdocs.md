@@ -5,8 +5,9 @@ parent: xdocs-package
 children: []
 files:
   build-binaries.ts: Bun-native release binary matrix builder and verifier for all 12 Linux, macOS, and Windows native binary assets.
-  install.ps1: Windows PowerShell direct installer for the native xdocs binary from GitHub Releases; uses baseline-first x64 fallback, updates the user PATH, and returns without closing the host session.
-  install.sh: Bash direct installer for Linux and macOS native xdocs binaries from GitHub Releases; uses baseline-first x64 fallback and updates the user's shell profile PATH.
+  install.ps1: Windows PowerShell direct installer with baseline-first fallback, candidate/final exact-version verification, same-directory canonical swap, rollback, PATH setup, and shadowing warnings.
+  install.sh: Linux/macOS direct installer with baseline-first fallback, candidate/final exact-version verification, same-directory canonical swap, rollback, PATH setup, and shadowing warnings.
+  installers.spec.ts: Executable installer regressions that compile an exact prerelease fixture and run generated recovery commands through PowerShell, Git Bash, or Bash, proving exact installation in paths containing spaces.
 documents: {}
 tags:
   - devops
