@@ -1,6 +1,6 @@
 ---
 subject: xdocs-skills
-description: Bundled AI-agent skills shipped with @guiho/xdocs and installed by the xdocs agents commands.
+description: Bundled AI-agent skills shipped with @guiho/xdocs and installed by the singular xdocs agent skill commands.
 parent: xdocs-package
 children:
   - xdocs-guiho-s-xdocs-skill
