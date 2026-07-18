@@ -5,7 +5,7 @@ parent: xdocs-package
 children: []
 files:
   xdocs-bin.ts: Shipped Bun launcher used as the package bin; delegates to an installed native binary, falls back to the TypeScript CLI in source checkouts, and installs the native binary on first run for published packages.
-  install-package.ts: Package-manager install helper that downloads or copies the matching GitHub Release native binary into vendor/xdocs or vendor/xdocs.exe.
+  install-package.ts: Package-manager installer that validates and executes the candidate, swaps the vendor canonical path, verifies the exact version, rolls back failures, and terminates immediately while preserving the backup when rollback cannot complete.
 documents: {}
 tags:
   - install
