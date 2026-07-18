@@ -19,10 +19,10 @@ documents:
   AGENTS.md: Repository instructions for agents working on xdocs, including commands, context recommendations, doctor checks, metadata-only scans, source structure, release rules, and xdocs metadata requirements.
   ARCHITECTURE.md: Architecture and technical design notes for xdocs file conventions, metadata, CLI behavior, distribution, and agent workflows.
   BRAINSTORM.md: Product and design brainstorming notes for the xdocs structured documentation model and future directions.
-  CHANGELOG.md: Release changelog for xdocs versions and unreleased changes.
-  DOCS.md: Canonical full documentation for @guiho/xdocs, including CLI commands, context recommendations, doctor checks, metadata-only scans, API behavior, and agent-skill behavior; release artifact updated before publishing.
+  CHANGELOG.md: Release changelog including immediate verified upgrade, complete release catalog, recovery, and installer hardening changes.
+  DOCS.md: Canonical full documentation including fixed upgrade outputs, transaction/rollback/cache ordering, complete release listing, exact recovery, and agent-skill behavior.
   LICENSE.md: Package license document shipped with @guiho/xdocs.
-  README.md: Public-facing package overview, installation instructions, CLI reference, metadata schema, and API examples.
+  README.md: Public package overview with installation, observable verified self-upgrade/recovery, complete release listing, CLI reference, metadata schema, and API examples.
   TECHNICAL.md: Short technical notes placeholder for xdocs implementation context.
   TODO.md: Local task list for pending xdocs repository work.
 tags:
@@ -38,6 +38,8 @@ keywords:
   - doctor checks
   - native binary
   - self management
+  - verified upgrade
+  - exact recovery
 flags: []
 status: stable
 ---
