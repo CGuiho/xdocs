@@ -2,7 +2,7 @@
  * @copyright Copyright (c) 2026 GUIHO Technologies as represented by Cristóvão GUIHO. All Rights Reserved.
  */
 
-import { join } from 'node:path'
+import { joinPath as join } from './runtime/path.js'
 import type {
   XDocsConfig,
   XDocsContextEntry,
