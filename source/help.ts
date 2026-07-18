@@ -1,425 +1,112 @@
 /**
- * @copyright Copyright (c) 2026 GUIHO Technologies as represented by Cristóvão GUIHO. All Rights Reserved.
+ * Developer Context help generated from the live Citty command tree.
  */
 
-import { readFileSync } from 'node:fs'
+import type { ArgDef, CommandDef } from 'citty'
+import packageJson from '../package.json' with { type: 'json' }
 
-export {
-  commandHelpRecords,
-  readPackageVersion,
-  showCommandHelp,
-  showCommandHelpDocs,
-  showCommandHelpTree,
-  showHelp,
-  showHelpDocs,
-  showHelpTree,
-  showVersion,
-}
+type AnyCommand = CommandDef<any>
 
-type HelpFlag = {
-  readonly name: string
-  readonly description: string
-}
-
-type HelpExample = {
-  readonly command: string
-  readonly description: string
-}
-
-type HelpRecord = {
-  readonly name: string
-  readonly summary: string
-  readonly usage: readonly string[]
-  readonly description: string
-  readonly flags: readonly HelpFlag[]
-  readonly examples: readonly HelpExample[]
-  readonly subcommands?: readonly HelpRecord[]
-}
-
-const globalFlags: readonly HelpFlag[] = [
-  { name: '-h, --help', description: 'Show help for the CLI or a command.' },
-  { name: '-v, --version', description: 'Show the xdocs version.' },
-  { name: '--help-tree', description: 'Show the command tree from the current command, including subcommands and flags.' },
-  { name: '--help-docs', description: 'Show Markdown documentation for the current command.' },
-  { name: '--cwd <path>', description: 'Run as if started in this directory.' },
-  { name: '--config <path>', description: 'Path to xdocs.config.toml.' },
-  { name: '--format <text|json|markdown>', description: 'Output format for commands that support it.' },
-  { name: '--verbose', description: 'Show detailed output.' },
-]
-
-const commandHelpRecords: readonly HelpRecord[] = [
-  {
-    name: 'init',
-    summary: 'Initialize xdocs in a project.',
-    usage: ['xdocs init [--tool <agents|claude|all>] [--global]'],
-    description: 'Creates XDOCS.md, xdocs.config.toml, AGENTS.md instructions, and installs the guiho-s-xdocs agent skill.',
-    flags: [
-      { name: '--tool <tool>', description: 'agents (standard), claude, or all.' },
-      { name: '--global', description: 'Install the skill in the user home skills directory.' },
-      ...commonPathFlags(),
-    ],
-    examples: [
-      { command: 'xdocs init', description: 'Initialize xdocs in the current project.' },
-      { command: 'xdocs init --tool all', description: 'Install both standard and explicit non-standard skill targets.' },
-    ],
-  },
-  {
-    name: 'scan',
-    summary: 'Scan for xdocs descriptors and Markdown documents.',
-    usage: ['xdocs scan'],
-    description: 'Walks the project tree, validates named *.xdocs.md descriptors, and reports same-directory Markdown companion-document coverage.',
-    flags: [
-      { name: '--format <text|json>', description: 'Output format. Defaults to text.' },
-      ...commonPathFlags(),
-    ],
-    examples: [
-      { command: 'xdocs scan', description: 'Print coverage in text format.' },
-      { command: 'xdocs scan --format json', description: 'Print scan data as JSON.' },
-    ],
-  },
-  {
-    name: 'generate',
-    summary: 'Generate documentation for a directory or the project.',
-    usage: ['xdocs generate [path]'],
-    description: 'Generates Markdown documentation from xdocs metadata. With no path, it generates project-level documentation.',
-    flags: [
-      { name: '--output <path>', description: 'Write output to a file instead of stdout.' },
-      { name: '--format <text|markdown>', description: 'Output format. Defaults to markdown.' },
-      ...commonPathFlags(),
-    ],
-    examples: [
-      { command: 'xdocs generate', description: 'Generate project documentation.' },
-      { command: 'xdocs generate ./src/auth', description: 'Generate documentation for one module.' },
-    ],
-  },
-  {
-    name: 'prompt',
-    summary: 'Output a ready-made prompt for AI.',
-    usage: ['xdocs prompt --name=<write|update|agents|generate>'],
-    description: 'Prints a self-contained instruction prompt for an AI agent to execute a specific xdocs task.',
-    flags: [
-      { name: '--name <name>', description: 'Prompt name: write, update, agents, or generate.' },
-      ...commonPathFlags(),
-    ],
-    examples: [
-      { command: 'xdocs prompt --name=write', description: 'Print the descriptor-writing prompt.' },
-      { command: 'xdocs prompt --name update', description: 'Print the descriptor-update prompt.' },
-    ],
-  },
-  {
-    name: 'merge',
-    summary: 'Merge xdocs descriptors from a directory into one file.',
-    usage: ['xdocs merge [path]'],
-    description: 'Concatenates all descriptors in a scope into a consolidated Markdown document with source markers.',
-    flags: [
-      { name: '--output <path>', description: 'Write output to a file instead of stdout.' },
-      ...commonPathFlags(),
-    ],
-    examples: [
-      { command: 'xdocs merge ./src/domain', description: 'Merge domain descriptors to stdout.' },
-    ],
-  },
-  {
-    name: 'tree',
-    summary: 'Display the project hierarchy tree.',
-    usage: ['xdocs tree'],
-    description: 'Scans descriptors and renders the parent-child containment hierarchy.',
-    flags: [
-      { name: '--format <text|markdown|json>', description: 'Output format. Defaults to text.' },
-      { name: '--output <path>', description: 'Write output to a file instead of stdout.' },
-      ...commonPathFlags(),
-    ],
-    examples: [
-      { command: 'xdocs tree', description: 'Print the hierarchy tree.' },
-      { command: 'xdocs tree --format json', description: 'Print the tree as JSON.' },
-    ],
-  },
-  {
-    name: 'list',
-    summary: 'List documented files and documents.',
-    usage: ['xdocs list [path]'],
-    description: 'Lists implementation files and companion Markdown documents with descriptions pulled from descriptor metadata.',
-    flags: [
-      { name: '--format <text|json>', description: 'Output format. Defaults to text.' },
-      ...commonPathFlags(),
-    ],
-    examples: [
-      { command: 'xdocs list', description: 'List documented files in the project.' },
-      { command: 'xdocs list ./src/auth', description: 'List documented files in one scope.' },
-    ],
-  },
-  {
-    name: 'meta',
-    summary: 'Read descriptor and companion-document frontmatter.',
-    usage: ['xdocs meta [path] [--documents] [--strict] [--owner <subject>] [--tag <tag>] [--keyword <keyword>]'],
-    description: 'Scans a directory top-down and reads only YAML frontmatter from named *.xdocs.md descriptors, plus associated companion Markdown documents when requested.',
-    flags: [
-      { name: '--documents', description: 'Also read frontmatter from companion Markdown documents listed by each descriptor.' },
-      { name: '--strict', description: 'Fail when descriptor or companion-document metadata has validation errors.' },
-      { name: '--owner <subject>', description: 'Filter descriptors by subject and companion documents by owner.' },
-      { name: '--tag <tag>', description: 'Filter descriptors/documents whose tags include this value.' },
-      { name: '--keyword <keyword>', description: 'Filter descriptors/documents whose keywords include this value.' },
-      { name: '--format <text|markdown|json>', description: 'Output format. Defaults to text.' },
-      ...commonPathFlags(),
-    ],
-    examples: [
-      { command: 'xdocs meta ./src --format json', description: 'Return descriptor frontmatter in one scope.' },
-      { command: 'xdocs meta ./src --documents --keyword auth --format json', description: 'Find relevant descriptor and companion metadata before reading full files.' },
-      { command: 'xdocs meta --documents --strict', description: 'Validate descriptor and companion-document frontmatter.' },
-    ],
-  },
-  {
-    name: 'context',
-    summary: 'Recommend a minimal reading set for a task.',
-    usage: ['xdocs context <query> [path] [--documents] [--files] [--limit <n>] [--owner <subject>] [--tag <tag>] [--keyword <keyword>] [--explain]'],
-    description: 'Uses xdocs descriptor and companion-document metadata to recommend the smallest useful set of descriptors, files, and documents to read for a query.',
-    flags: [
-      { name: '--documents', description: 'Include companion Markdown documents in the reading set.' },
-      { name: '--files', description: 'Include implementation files from descriptor files maps in the reading set.' },
-      { name: '--limit <n>', description: 'Maximum entries to return. Defaults to 20.' },
-      { name: '--owner <subject>', description: 'Scope matching to one descriptor subject or document owner.' },
-      { name: '--tag <tag>', description: 'Only match descriptors/documents with this tag.' },
-      { name: '--keyword <keyword>', description: 'Only match descriptors/documents with this keyword.' },
-      { name: '--explain', description: 'Include match reasons in text or Markdown output.' },
-      { name: '--format <text|markdown|json>', description: 'Output format. Defaults to text.' },
-      ...commonPathFlags(),
-    ],
-    examples: [
-      { command: 'xdocs context "auth sessions" --documents --files --format json', description: 'Find relevant descriptors, files, and docs.' },
-      { command: 'xdocs context "release skill version" . --tag agents --explain', description: 'Explain why each entry matched.' },
-    ],
-  },
-  {
-    name: 'doctor',
-    summary: 'Run strict xdocs health checks.',
-    usage: ['xdocs doctor [path] [--no-documents] [--warnings-as-errors]'],
-    description: 'Combines descriptor validation, metadata-only companion-document validation, tree integrity checks, and documented-file existence checks into one CI-friendly health check.',
-    flags: [
-      { name: '--no-documents', description: 'Skip companion-document frontmatter validation.' },
-      { name: '--warnings-as-errors', description: 'Treat tree warnings as errors.' },
-      { name: '--format <text|markdown|json>', description: 'Output format. Defaults to text.' },
-      ...commonPathFlags(),
-    ],
-    examples: [
-      { command: 'xdocs doctor', description: 'Validate xdocs health for the current project.' },
-      { command: 'xdocs doctor ./source --format json', description: 'Validate one scope and print JSON.' },
-    ],
-  },
-  {
-    name: 'agents',
-    summary: 'Install the guiho-s-xdocs skill and AGENTS.md instructions.',
-    usage: ['xdocs agents install <local|global> [--tool <agents|claude|all>]', 'xdocs agents instructions'],
-    description: 'Installs or refreshes the bundled agent skill and maintains the standard AGENTS.md section.',
-    flags: [
-      { name: '--tool <tool>', description: 'agents (standard), claude, or all.' },
-      { name: '--format <text|json>', description: 'Output format. Defaults to text.' },
-      ...commonPathFlags(),
-    ],
-    subcommands: [
-      subcommand('install', 'Install the skill under the project or user home directory.', ['xdocs agents install local', 'xdocs agents install global']),
-      subcommand('instructions', 'Insert or refresh the xdocs section in AGENTS.md.', ['xdocs agents instructions']),
-    ],
-    examples: [
-      { command: 'xdocs agents install local', description: 'Install the standard local skill.' },
-      { command: 'xdocs agents instructions', description: 'Refresh AGENTS.md instructions.' },
-    ],
-  },
-  {
-    name: 'upgrade',
-    summary: 'Upgrade the installed xdocs native binary.',
-    usage: ['xdocs upgrade [--version <version>] [--variant <baseline|default|modern>]', 'xdocs upgrade check', 'xdocs upgrade list'],
-    description: 'Prints the exact plan, downloads a compatible release, immediately replaces and verifies the canonical binary, rolls back failure, and always prints pinned recovery guidance.',
-    flags: [
-      { name: '--version <version>', description: 'Install a specific version instead of latest.' },
-      { name: '--arch <x64|arm64>', description: 'Override detected architecture.' },
-      { name: '--variant <baseline|default|modern>', description: 'Override x64 variant preference. Defaults to baseline.' },
-      { name: '--dry-run', description: 'Print the selected asset and URL without replacing the binary.' },
-      { name: '--format <text|json|markdown>', description: 'Output format. Defaults to text.' },
-    ],
-    subcommands: [
-      subcommand('check', 'Fetch latest release metadata and report whether an update is available.', ['xdocs upgrade check']),
-      subcommand('list', 'List every paginated stable and prerelease version newest first.', ['xdocs upgrade list']),
-    ],
-    examples: [
-      { command: 'xdocs upgrade', description: 'Upgrade to latest compatible release.' },
-      { command: 'xdocs upgrade --dry-run', description: 'Preview the selected binary asset.' },
-    ],
-  },
-  {
-    name: 'uninstall',
-    summary: 'Remove the installed xdocs native binary.',
-    usage: ['xdocs uninstall [--dry-run]'],
-    description: 'Deletes the current native xdocs executable. On Windows, removal is scheduled after the current process exits.',
-    flags: [
-      { name: '--dry-run', description: 'Print the executable path without deleting it.' },
-      { name: '--format <text|json>', description: 'Output format. Defaults to text.' },
-    ],
-    examples: [
-      { command: 'xdocs uninstall --dry-run', description: 'Show what would be removed.' },
-      { command: 'xdocs uninstall', description: 'Remove the installed native binary.' },
-    ],
-  },
-]
-
-function readPackageVersion(): string {
+export function readPackageVersion(): string {
   const embedded = globalThis.__XDOCS_EMBEDDED_RESOURCES__?.version
   if (embedded) return embedded
+  return typeof packageJson.version === 'string' ? packageJson.version : '0.0.0'
+}
 
-  try {
-    const raw = readFileSync(new URL('../package.json', import.meta.url), 'utf8')
-    const pkg = JSON.parse(raw) as Record<string, unknown>
-    return typeof pkg['version'] === 'string' ? pkg['version'] : '0.0.0'
-  } catch {
-    return '0.0.0'
+export const showVersion = (): string => `xdocs ${readPackageVersion()}`
+
+export function showHelpTree(command: AnyCommand, commandPath = 'xdocs', depth?: number): string {
+  return ['COMMAND TREE', '', ...renderTree(command, commandPath, '', true, 0, depth)].join('\n')
+}
+
+export function showHelpDocs(command: AnyCommand, commandPath = 'xdocs', depth?: number): string {
+  return renderDocs(command, commandPath, 0, depth).join('\n').trimEnd() + '\n'
+}
+
+function renderTree(
+  command: AnyCommand,
+  label: string,
+  prefix: string,
+  last: boolean,
+  level: number,
+  maxDepth?: number,
+): string[] {
+  const branch = level === 0 ? '' : last ? '└── ' : '├── '
+  const meta = command.meta as { description?: string } | undefined
+  const description = meta?.description ? `  ${meta.description}` : ''
+  const lines = [`${prefix}${branch}${label}${description}`]
+  if (maxDepth !== undefined && level >= maxDepth) return lines
+  const childPrefix = level === 0 ? '' : `${prefix}${last ? '    ' : '│   '}`
+  const entries: Array<{ label: string, command?: AnyCommand, description: string }> = []
+
+  for (const [name, arg] of Object.entries(command.args ?? {}) as Array<[string, ArgDef]>) {
+    if (name === 'help') continue
+    entries.push({ label: formatFlag(name, arg), description: arg.description ?? '' })
   }
-}
-
-function showVersion(): string {
-  return `xdocs ${readPackageVersion()}`
-}
-
-function showHelp(): string {
-  return [
-    `xdocs ${readPackageVersion()}`,
-    'Structured documentation for codebases and AI agents',
-    '',
-    'Usage',
-    '  xdocs <command> [options]',
-    '',
-    'Core Commands',
-    ...commandHelpRecords
-      .filter((command) => ['init', 'scan', 'meta', 'context', 'doctor', 'tree', 'list', 'generate', 'merge'].includes(command.name))
-      .map((command) => `  ${pad(command.name, 18)}${command.summary}`),
-    '',
-    'Agent Commands',
-    ...commandHelpRecords
-      .filter((command) => ['prompt', 'agents'].includes(command.name))
-      .map((command) => `  ${pad(command.name, 18)}${command.summary}`),
-    '',
-    'Binary Commands',
-    ...commandHelpRecords
-      .filter((command) => ['upgrade', 'uninstall'].includes(command.name))
-      .map((command) => `  ${pad(command.name, 18)}${command.summary}`),
-    '',
-    'Global Flags',
-    ...globalFlags.map((flag) => `  ${pad(flag.name, 28)}${flag.description}`),
-    '',
-    'Use `xdocs <command> --help` for command-specific usage.',
-  ].join('\n')
-}
-
-function showCommandHelp(command: string): string {
-  const record = findCommand(command)
-  if (!record) return `Unknown command: ${command}\n\nRun \`xdocs --help\` for available commands.`
-
-  return [
-    `xdocs ${record.name} - ${record.summary}`,
-    '',
-    'Usage:',
-    ...record.usage.map((usage) => `  ${usage}`),
-    '',
-    record.description,
-    '',
-    ...(record.subcommands?.length ? ['Subcommands:', ...record.subcommands.map((sub) => `  ${pad(sub.name, 18)}${sub.summary}`), ''] : []),
-    'Flags:',
-    ...record.flags.map((flag) => `  ${pad(flag.name, 32)}${flag.description}`),
-    '',
-    'Examples:',
-    ...record.examples.map((example) => `  ${pad(example.command, 42)}${example.description}`),
-  ].join('\n').trim()
-}
-
-function showHelpTree(command?: string): string {
-  const records = command ? [findCommand(command)].filter((record): record is HelpRecord => Boolean(record)) : [...commandHelpRecords]
-  if (command && records.length === 0) return `Unknown command: ${command}`
-
-  return [
-    command ? `xdocs ${command} command tree` : 'xdocs command tree',
-    'The tree shows commands, nested subcommands, and the flags available at each scope.',
-    '------------------------------------------------------------',
-    ...records.flatMap((record) => renderTreeRecord(record, command ? `xdocs ${record.name}` : `xdocs ${record.name}`, 0)),
-  ].join('\n')
-}
-
-function showCommandHelpTree(command: string): string {
-  return showHelpTree(command)
-}
-
-function showHelpDocs(command?: string): string {
-  const title = command ? `xdocs ${command}` : 'xdocs CLI'
-  const records = command ? [findCommand(command)].filter((record): record is HelpRecord => Boolean(record)) : [...commandHelpRecords]
-  if (command && records.length === 0) return `# Unknown command: ${command}\n`
-
-  return [
-    `# ${title}`,
-    '',
-    command ? records[0]?.description ?? '' : 'xdocs is a structured documentation CLI for codebases.',
-    '',
-    '## Usage',
-    '',
-    ...records.flatMap((record) => record.usage.map((usage) => `- \`${usage}\``)),
-    '',
-    '## Commands',
-    '',
-    ...records.flatMap(renderMarkdownRecord),
-  ].join('\n').trim() + '\n'
-}
-
-function showCommandHelpDocs(command: string): string {
-  return showHelpDocs(command)
-}
-
-function commonPathFlags(): readonly HelpFlag[] {
-  return [
-    { name: '--cwd <path>', description: 'Target directory. Defaults to current directory.' },
-    { name: '--config <path>', description: 'Path to xdocs.config.toml.' },
-    { name: '--verbose', description: 'Show detailed output.' },
-  ]
-}
-
-function subcommand(name: string, summary: string, usage: readonly string[]): HelpRecord {
-  return { name, summary, usage, description: summary, flags: [], examples: usage.map((command) => ({ command, description: summary })) }
-}
-
-function findCommand(command: string): HelpRecord | undefined {
-  return commandHelpRecords.find((record) => record.name === command)
-}
-
-function renderTreeRecord(record: HelpRecord, label: string, depth: number): string[] {
-  const indent = '  '.repeat(depth)
-  const lines = [
-    `${indent}|- ${label}`,
-    `${indent}|  ${record.summary}`,
-  ]
-
-  if (record.flags.length > 0) {
-    lines.push(`${indent}|  Flags:`)
-    for (const flag of record.flags) lines.push(`${indent}|    ${flag.name} - ${flag.description}`)
+  for (const [name, child] of Object.entries(staticSubCommands(command))) {
+    const childMeta = child.meta as { description?: string } | undefined
+    entries.push({ label: name, command: child, description: childMeta?.description ?? '' })
   }
 
-  for (const subcommand of record.subcommands ?? []) {
-    lines.push(...renderTreeRecord(subcommand, `${label} ${subcommand.name}`, depth + 1))
-  }
-
+  entries.forEach((entry, index) => {
+    const isLast = index === entries.length - 1
+    if (entry.command) {
+      lines.push(...renderTree(entry.command, entry.label, childPrefix, isLast, level + 1, maxDepth))
+    } else {
+      lines.push(`${childPrefix}${isLast ? '└── ' : '├── '}${entry.label}${entry.description ? `  ${entry.description}` : ''}`)
+    }
+  })
   return lines
 }
 
-function renderMarkdownRecord(record: HelpRecord): string[] {
-  return [
-    `### \`${record.name}\``,
+function renderDocs(command: AnyCommand, path: string, level: number, maxDepth?: number): string[] {
+  const lines = [
+    `${'#'.repeat(Math.min(level + 1, 6))} ${path}`,
     '',
-    record.description,
+    (command.meta as { description?: string } | undefined)?.description ?? '',
     '',
-    'Usage:',
+    '## Syntax',
     '',
-    ...record.usage.map((usage) => `- \`${usage}\``),
+    `\`${syntax(command, path)}\``,
     '',
-    ...(record.flags.length > 0 ? ['Flags:', '', ...record.flags.map((flag) => `- \`${flag.name}\`: ${flag.description}`), ''] : []),
-    ...(record.examples.length > 0 ? ['Examples:', '', ...record.examples.map((example) => `- \`${example.command}\`: ${example.description}`), ''] : []),
-    ...(record.subcommands?.length ? ['Subcommands:', '', ...record.subcommands.map((sub) => `- \`${sub.name}\`: ${sub.summary}`), ''] : []),
   ]
+  const args = Object.entries(command.args ?? {}) as Array<[string, ArgDef]>
+  if (args.length > 0) {
+    lines.push('## Positionals and flags', '')
+    for (const [name, arg] of args) lines.push(`- \`${formatFlag(name, arg)}\`: ${arg.description ?? ''}`)
+    lines.push('')
+  }
+  const children = Object.entries(staticSubCommands(command))
+  if (children.length > 0) {
+    lines.push('## Subcommands', '')
+    for (const [name, child] of children) lines.push(`- \`${name}\`: ${(child.meta as { description?: string } | undefined)?.description ?? ''}`)
+    lines.push('')
+  }
+  if (maxDepth === undefined || level < maxDepth) {
+    for (const [name, child] of children) lines.push(...renderDocs(child, `${path} ${name}`, level + 1, maxDepth))
+  }
+  return lines
 }
 
-function pad(value: string, length: number): string {
-  return value + ' '.repeat(Math.max(1, length - value.length))
+function syntax(command: AnyCommand, path: string): string {
+  const args = (Object.entries(command.args ?? {}) as Array<[string, ArgDef]>).map(([name, arg]) => {
+    if (arg.type === 'positional') return arg.required === false ? `[${name}]` : `<${name}>`
+    return arg.type === 'boolean' ? `[--${name}]` : `[--${name} <value>]`
+  })
+  if (Object.keys(staticSubCommands(command)).length > 0) args.push('<command>')
+  return [path, ...args].join(' ')
+}
+
+function formatFlag(name: string, arg: ArgDef): string {
+  if (arg.type === 'positional') return arg.required === false ? `[${name}]` : `<${name}>`
+  const alias = 'alias' in arg && arg.alias
+    ? `${Array.isArray(arg.alias) ? arg.alias.map((value) => `-${value}`).join(', ') : `-${arg.alias}`}, `
+    : ''
+  return arg.type === 'boolean' ? `${alias}--${name}` : `${alias}--${name} <${arg.valueHint ?? 'value'}>`
+}
+
+function staticSubCommands(command: AnyCommand): Record<string, AnyCommand> {
+  const value = command.subCommands
+  if (!value || typeof value === 'function' || value instanceof Promise) return {}
+  return value as Record<string, AnyCommand>
 }
