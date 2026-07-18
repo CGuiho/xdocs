@@ -16,7 +16,7 @@ files:
   scan.ts: Handles `xdocs scan`, reporting descriptor coverage, validity, metadata keywords, and companion-document coverage.
   tree.ts: Handles `xdocs tree`, rendering the descriptor hierarchy in text, Markdown, or JSON.
   uninstall.ts: Handles `xdocs uninstall`, removing or scheduling removal of the current native xdocs binary.
-  upgrade.ts: Implements focused apply/check/list operations routed by the Citty `upgrade` command group for native CLI self-updates from GitHub Releases.
+  upgrade.ts: Streams upgrade plans and transaction phases, renders fixed JSON/Markdown/text envelopes with pinned recovery guidance, and lists the complete SemVer release catalog.
 documents: {}
 tags:
   - cli
