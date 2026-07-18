@@ -6,6 +6,7 @@ children: []
 files: {}
 documents:
   citty-cli-migration-review.md: Reviews the Citty migration plan for traceability, sequencing, acceptance criteria, and safe execution.
+  rfc-0034-cli-compliance-migration-review.md: Reviews the breaking xdocs RFC 0034 migration for Bun-only source, TypeBox/YAML sequencing, agents, prompts, distribution, self-documentation, and validation.
   upgrade-reliability-implementation-review.md: Reviews the upgrade reliability plan for transaction safety, recovery, catalog completeness, and execution readiness.
 tags:
   - reviews
@@ -14,6 +15,8 @@ keywords:
   - plan review
   - Citty
   - CLI migration
+  - RFC 0034
+  - xdocs.yaml
   - upgrade reliability
 flags: []
 status: stable
