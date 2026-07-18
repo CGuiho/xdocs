@@ -1,4 +1,4 @@
-﻿Copyright (c) 2026 GUIHO Technologies as represented by Cristóvão GUIHO
+Copyright (c) 2026 GUIHO Technologies as represented by Cristóvão GUIHO
 All Rights Reserved.
 
 # GUIHO XDocs TODO List
@@ -16,7 +16,7 @@ All Rights Reserved.
 | --- | ---: |
 | todo | 1 |
 | in progress | 0 |
-| testing | 0 |
+| testing | 1 |
 | stopped | 0 |
 | completed | 1 |
 
@@ -41,3 +41,17 @@ All Rights Reserved.
   - [docs/plans/citty-cli-migration.md](docs/plans/citty-cli-migration.md) - Approved executable migration plan.
   - [docs/reviews/plans/citty-cli-migration-review.md](docs/reviews/plans/citty-cli-migration-review.md) - Plan readiness review.
 - Implementation: [docs/todo/citty-cli-migration-implementation.md](docs/todo/citty-cli-migration-implementation.md)
+
+### 3. Make Self-Upgrade Reliable and Recoverable
+
+- Status: testing
+- Created: `2026-07-15`
+- Updated: `2026-07-18`
+- Outcome: Make native self-upgrade observable, immediately verified and rollback-safe, with complete release listing and exact recovery commands.
+- Spec: [docs/todo/upgrade-reliability.md](docs/todo/upgrade-reliability.md)
+- Related files:
+  - [docs/superpowers/specs/2026-07-15-upgrade-reliability-design.md](docs/superpowers/specs/2026-07-15-upgrade-reliability-design.md) - Approved behavior and architecture contract.
+  - [docs/plans/upgrade-reliability-implementation.md](docs/plans/upgrade-reliability-implementation.md) - Approved executable implementation plan.
+  - [docs/reviews/plans/upgrade-reliability-implementation-review.md](docs/reviews/plans/upgrade-reliability-implementation-review.md) - Plan readiness review.
+- External: GitHub issues [CGuiho/xdocs#9](https://github.com/CGuiho/xdocs/issues/9) and [CGuiho/xdocs#10](https://github.com/CGuiho/xdocs/issues/10)
+- Implementation: [docs/todo/upgrade-reliability-implementation.md](docs/todo/upgrade-reliability-implementation.md)
