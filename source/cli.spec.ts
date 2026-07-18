@@ -133,11 +133,35 @@ describe('RFC 0034 Citty catalog', () => {
     expect(process.exitCode).toBe(2)
   })
 
-  test('keeps the hidden worker and upgrade default internal', () => {
+  test.serial('routes nested upgrade version flags to the direct upgrade action', async () => {
+    const previousPath = process.env['XDOCS_SELF_PATH']
+    const previousUpdate = process.env['XDOCS_DISABLE_UPDATE_CHECK']
+    process.env['XDOCS_SELF_PATH'] = process.execPath
+    process.env['XDOCS_DISABLE_UPDATE_CHECK'] = '1'
+    try {
+      const result = await capture(() => runCli([
+        'upgrade',
+        '--version',
+        readPackageVersion(),
+        '--dry-run',
+        '--format',
+        'json',
+      ]))
+      expect(JSON.parse(result.stdout).outcome).toBe('up-to-date')
+      expect(result.stderr).toBe('')
+    } finally {
+      if (previousPath === undefined) delete process.env['XDOCS_SELF_PATH']
+      else process.env['XDOCS_SELF_PATH'] = previousPath
+      if (previousUpdate === undefined) delete process.env['XDOCS_DISABLE_UPDATE_CHECK']
+      else process.env['XDOCS_DISABLE_UPDATE_CHECK'] = previousUpdate
+    }
+  })
+
+  test('keeps only the hidden worker internal and the final upgrade subtree public', () => {
     const root = createXDocsCommand()
-    const commands = root.subCommands as Record<string, { default?: string }>
+    const commands = root.subCommands as Record<string, { subCommands?: Record<string, unknown> }>
     expect(root.default).toBe('home')
-    expect(commands['upgrade']?.default).toBe('apply')
+    expect(Object.keys(commands['upgrade']?.subCommands ?? {})).toEqual(['check', 'list'])
   })
 })
 
