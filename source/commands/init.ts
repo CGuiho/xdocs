@@ -1,87 +1,38 @@
 /**
- * @copyright Copyright (c) 2026 GUIHO Technologies as represented by Cristóvão GUIHO. All Rights Reserved.
+ * Initialize the explicit xdocs project files.
  */
 
-import { existsSync } from 'node:fs'
-import { writeFile } from 'node:fs/promises'
-import { basename, relative, resolve } from 'node:path'
 import type { XDocsCliOptions } from '../types.js'
 import { writeDefaultConfig } from '../config.js'
-import { ensureAgentsInstructions, findAgentsFile, installSkill, resolveInstallTools, xdocsSkillName } from '../agents.js'
+import { pathExists, writeText } from '../runtime/fs.js'
+import { basename, joinPath } from '../runtime/path.js'
 
-type XDocsInitInput = {
-  global?: boolean
-  tool?: string
-}
-
-/**
- * Build the root XDOCS.md content. There is exactly one `XDOCS.md` per
- * repository, at the repo root. It does NOT use frontmatter; it is a plain
- * index that lists the repository's packages and applications. Each package or
- * application has its own root `.xdocs.md` file (with frontmatter) that is the
- * top of that package's documentation tree.
- */
 const createRootXDocsContent = (projectName: string): string =>
   `# ${projectName} -- XDocs Root
 
 The single root index for this repository. There is exactly one \`XDOCS.md\` per
 repository and it does not use frontmatter. List the packages and applications
-in the repo below; each one has its own root \`.xdocs.md\` file (with frontmatter)
-that is the top of that package's documentation tree.
+in the repo below; each one has its own root named \`*.xdocs.md\` descriptor.
 
 ## Packages
 
 ## Applications
 `
 
-/** Run the init command. */
-export const runInit = async (options: XDocsCliOptions, input: XDocsInitInput = {}): Promise<void> => {
+export const runInit = async (options: XDocsCliOptions, _input: Record<string, never> = {}): Promise<void> => {
   const cwd = options.cwd
-
-  // 1. Create xdocs.config.toml
-  const configPath = resolve(cwd, 'xdocs.config.toml')
-  if (existsSync(configPath)) {
-    process.stdout.write(`exists: xdocs.config.toml\n`)
-  } else {
+  const configPath = joinPath(cwd, 'xdocs.yaml')
+  if (await pathExists(configPath)) process.stdout.write('exists: xdocs.yaml\n')
+  else {
     await writeDefaultConfig(cwd)
-    process.stdout.write(`created: xdocs.config.toml\n`)
+    process.stdout.write('created: xdocs.yaml\n')
   }
 
-  // 2. Create XDOCS.md
-  const xdocsPath = resolve(cwd, 'XDOCS.md')
-  if (existsSync(xdocsPath)) {
-    process.stdout.write(`exists: XDOCS.md\n`)
-  } else {
-    await writeFile(xdocsPath, createRootXDocsContent(basename(cwd)), 'utf8')
-    process.stdout.write(`created: XDOCS.md\n`)
+  const xdocsPath = joinPath(cwd, 'XDOCS.md')
+  if (await pathExists(xdocsPath)) process.stdout.write('exists: XDOCS.md\n')
+  else {
+    await writeText(xdocsPath, createRootXDocsContent(basename(cwd)))
+    process.stdout.write('created: XDOCS.md\n')
   }
-
-  // 3. Update AGENTS.md (announce xdocs + point AI at the guiho-s-xdocs skill)
-  const agentsExisted = findAgentsFile(cwd) !== undefined
-  const agentsResult = await ensureAgentsInstructions(cwd, true)
-  if (!agentsExisted) {
-    process.stdout.write(`created: AGENTS.md\n`)
-  } else if (agentsResult.changed) {
-    process.stdout.write(`updated: AGENTS.md (xdocs section)\n`)
-  } else {
-    process.stdout.write(`exists: AGENTS.md (xdocs section already present)\n`)
-  }
-
-  // 4. Install the guiho-s-xdocs agent skill (standard by default; non-standard
-  //    tools only when explicitly requested via --tool or detected in the project)
-  const scope = input.global ? 'global' : 'local'
-  const tools = resolveInstallTools(cwd, input.tool)
-  for (const tool of tools) {
-    const result = await installSkill(tool, scope, { cwd })
-    const where = scope === 'local' ? relative(cwd, result.path) || result.path : result.path
-    if (result.installed) {
-      process.stdout.write(`installed: ${xdocsSkillName} skill (${tool}, ${scope}) -> ${where}\n`)
-    } else if (result.updated || result.removedLegacyPaths.length > 0) {
-      process.stdout.write(`updated: ${xdocsSkillName} skill (${tool}, ${scope})\n`)
-    } else {
-      process.stdout.write(`exists: ${xdocsSkillName} skill (${tool}, ${scope})\n`)
-    }
-  }
-
-  process.stdout.write(`\nxdocs initialized.\n`)
+  process.stdout.write('\nxdocs initialized. Use `xdocs agent skill install --local` and `xdocs agent instruction apply` for explicit agent setup.\n')
 }
