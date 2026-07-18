@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test'
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -47,6 +47,33 @@ describe('RFC 0034 YAML configuration', () => {
     const discovered = await discoverConfig(root, explicit)
     expect(discovered.path).toBe(explicit)
     expect(discovered.raw?.project?.name).toBe('explicit')
+  })
+
+  test.serial('resolves explicit, project, and global YAML in exact precedence order', async () => {
+    const root = await temporaryDirectory()
+    const home = await temporaryDirectory()
+    const explicit = join(root, 'custom.yaml')
+    const project = join(root, 'xdocs.yaml')
+    const global = join(home, '.guiho', 'xdocs', 'xdocs.yaml')
+    const previousHome = process.env['HOME']
+    const previousProfile = process.env['USERPROFILE']
+    await mkdir(join(home, '.guiho', 'xdocs'), { recursive: true })
+    await writeFile(global, 'schema: 1\nproject:\n  name: global\n')
+    await writeFile(project, 'schema: 1\nproject:\n  name: project\n')
+    await writeFile(explicit, 'schema: 1\nproject:\n  name: explicit\n')
+    process.env['HOME'] = home
+    process.env['USERPROFILE'] = home
+    try {
+      expect((await discoverConfig(root, explicit)).raw?.project?.name).toBe('explicit')
+      expect((await discoverConfig(root)).raw?.project?.name).toBe('project')
+      await rm(project)
+      expect((await discoverConfig(root)).raw?.project?.name).toBe('global')
+    } finally {
+      if (previousHome === undefined) delete process.env['HOME']
+      else process.env['HOME'] = previousHome
+      if (previousProfile === undefined) delete process.env['USERPROFILE']
+      else process.env['USERPROFILE'] = previousProfile
+    }
   })
 
   test('rejects invalid YAML shape with config exit code', async () => {
