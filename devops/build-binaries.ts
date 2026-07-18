@@ -1,99 +1,53 @@
 /**
- * @copyright Copyright (c) 2026 GUIHO Technologies as represented by Cristóvão GUIHO. All Rights Reserved.
- *
- * Build release binaries for the supported xdocs platform matrix.
+ * Build and verify the exact RFC 0034 fourteen-asset release set.
  */
 
-import { mkdir, rm, stat } from 'node:fs/promises'
-import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { assertExactReleaseAssets, xdocsNativeTargets, xdocsReleaseAssetNames } from '../source/release-assets.js'
+import { makeDirectory, removePath } from '../source/runtime/fs.js'
 
-type BinaryTarget = {
-  readonly bunTarget: string
-  readonly assetName: string
+assertExactReleaseAssets(xdocsReleaseAssetNames)
+
+const root = Bun.fileURLToPath(new URL('..', import.meta.url)).replace(/[\\/]+$/, '')
+const slash = process.platform === 'win32' ? '\\' : '/'
+const bin = `${root}${slash}bin`
+await removePath(bin, { recursive: true, force: true })
+await makeDirectory(bin)
+
+for (const [target, asset] of xdocsNativeTargets) {
+  const output = `${bin}${slash}${asset}`
+  const child = Bun.spawn([
+    process.execPath,
+    'build',
+    'source/guiho-xdocs-native-bin.ts',
+    '--compile',
+    '--production',
+    '--minify-whitespace',
+    '--minify-syntax',
+    '--target',
+    target,
+    '--outfile',
+    output,
+  ], { cwd: root, stdout: 'inherit', stderr: 'inherit' })
+  if (await child.exited !== 0) throw new Error(`Failed to build ${target} -> ${asset}`)
+  if ((await Bun.file(output).stat()).size === 0) throw new Error(`Built binary is empty: ${asset}`)
+  console.log(`built: ${target} -> bin/${asset}`)
 }
 
-const targets: readonly BinaryTarget[] = [
-  { bunTarget: 'bun-linux-arm64', assetName: 'xdocs-linux-arm64' },
-  { bunTarget: 'bun-linux-x64', assetName: 'xdocs-linux-x64' },
-  { bunTarget: 'bun-linux-x64-baseline', assetName: 'xdocs-linux-x64-baseline' },
-  { bunTarget: 'bun-linux-x64-modern', assetName: 'xdocs-linux-x64-modern' },
-  { bunTarget: 'bun-darwin-arm64', assetName: 'xdocs-macos-arm64' },
-  { bunTarget: 'bun-darwin-x64', assetName: 'xdocs-macos-x64' },
-  { bunTarget: 'bun-darwin-x64-baseline', assetName: 'xdocs-macos-x64-baseline' },
-  { bunTarget: 'bun-darwin-x64-modern', assetName: 'xdocs-macos-x64-modern' },
-  { bunTarget: 'bun-windows-arm64', assetName: 'xdocs-windows-arm64.exe' },
-  { bunTarget: 'bun-windows-x64', assetName: 'xdocs-windows-x64.exe' },
-  { bunTarget: 'bun-windows-x64-baseline', assetName: 'xdocs-windows-x64-baseline.exe' },
-  { bunTarget: 'bun-windows-x64-modern', assetName: 'xdocs-windows-x64-modern.exe' },
-]
-
-const expectedAssetCount = 12
-const assetNames = targets.map((target) => target.assetName)
-const uniqueAssetNames = new Set(assetNames)
-
-if (targets.length !== expectedAssetCount) {
-  throw new Error(`Expected ${expectedAssetCount} binary targets, found ${targets.length}`)
+const skill = await Bun.file(`${root}${slash}skills${slash}guiho-s-xdocs${slash}SKILL.md`).text()
+const promptManifest = await Bun.file(`${root}${slash}prompts${slash}guiho-i-xdocs.md`).text()
+const promptBodies: Record<string, string> = {}
+for (const name of ['write', 'update', 'agents', 'generate']) {
+  promptBodies[`${name}.md`] = await Bun.file(`${root}${slash}prompts${slash}${name}.md`).text()
 }
+await Bun.write(`${bin}${slash}guiho-s-xdocs`, `${skill.trimEnd()}\n`)
+await Bun.write(`${bin}${slash}guiho-i-xdocs`, JSON.stringify({
+  schema: 1,
+  manifest: promptManifest,
+  prompts: promptBodies,
+}, null, 2) + '\n')
 
-if (uniqueAssetNames.size !== assetNames.length) {
-  throw new Error('Binary target matrix contains duplicate asset names')
-}
-
-const root = fileURLToPath(new URL('..', import.meta.url))
-const binDirectory = join(root, 'bin')
-const bunExecutable = process.execPath
-
-await rm(binDirectory, { recursive: true, force: true })
-await mkdir(binDirectory, { recursive: true })
-
-const builds = targets.map(async (target) => {
-  const outputPath = join(binDirectory, target.assetName)
-  const proc = Bun.spawn({
-    cmd: [
-      bunExecutable,
-      'build',
-      'source/guiho-xdocs-native-bin.ts',
-      '--compile',
-      '--production',
-      '--minify-whitespace',
-      '--minify-syntax',
-      '--target',
-      target.bunTarget,
-      '--outfile',
-      outputPath,
-    ],
-    cwd: root,
-    stdout: 'pipe',
-    stderr: 'pipe',
-  })
-
-  const [stdout, stderr, exitCode] = await Promise.all([
-    new Response(proc.stdout).text(),
-    new Response(proc.stderr).text(),
-    proc.exited,
-  ])
-
-  if (exitCode !== 0) {
-    throw new Error([
-      `Failed to build ${target.bunTarget} -> ${target.assetName}`,
-      stdout.trim(),
-      stderr.trim(),
-    ].filter(Boolean).join('\n'))
-  }
-
-  process.stdout.write(`built: ${target.bunTarget} -> bin/${target.assetName}\n`)
-})
-
-await Promise.all(builds)
-
-for (const target of targets) {
-  const outputPath = join(binDirectory, target.assetName)
-  const output = await stat(outputPath)
-
-  if (output.size === 0) {
-    throw new Error(`Built binary is empty: bin/${target.assetName}`)
-  }
-}
-
-process.stdout.write(`verified ${targets.length} native binary assets\n`)
+const actual: string[] = []
+for await (const entry of new Bun.Glob('*').scan({ cwd: bin, onlyFiles: true })) actual.push(entry)
+actual.sort()
+assertExactReleaseAssets(actual)
+console.log('verified exactly 12 native binaries plus guiho-s-xdocs and guiho-i-xdocs')
