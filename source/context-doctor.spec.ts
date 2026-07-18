@@ -153,7 +153,7 @@ describe('doctorProject', () => {
     const originalStdoutWrite = process.stdout.write
     const originalStderrWrite = process.stderr.write
     try {
-      await writeFile(join(dir, 'xdocs.config.toml'), 'schema = 1\n\n[agents]\nauto_agents_md = false\nauto_skill_install = false\n', 'utf8')
+      await writeFile(join(dir, 'xdocs.yaml'), 'schema: 1\nproject:\n  name: fixture\n', 'utf8')
       await writeFile(join(dir, 'auth.xdocs.md'), descriptorContent('auth', {
         files: { 'missing.ts': 'Missing implementation file.' },
         keywords: ['authentication'],
