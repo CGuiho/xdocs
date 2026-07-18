@@ -1,7 +1,29 @@
+---
+name: xdocs-changelog
+purpose: Record user-visible changes to xdocs releases and unreleased work.
+description: Release history for the xdocs library, CLI, installers, agent resources, and upgrade system.
+created: 2026-06-01
+owner: xdocs-package
+flags: []
+tags:
+  - changelog
+  - releases
+keywords:
+  - xdocs versions
+  - release history
+  - RFC 0034
+---
+
 # GUIHO XDocs Changelog
 
 ## Unreleased
 
+- Break xdocs onto the complete GUIHO RFC 0034 platform contract: Bun-only core, strict ESM TypeScript, raw Citty, TypeBox, YAML configuration, exact startup/cache behavior, and stable exit categories.
+- Replace `xdocs.config.toml` with `xdocs.yaml` using explicit/project/global precedence and remove configuration-driven agent mutations.
+- Replace root prompt and plural agents commands with the complete singular `xdocs agent skill|instruction|prompt` namespace, preserving all four embedded prompt bodies.
+- Generate standard usage, Unicode command trees with positive depth, and redirect-safe Markdown from the live Citty catalog at every command scope.
+- Replace the Bun package launcher/postinstall flow with a thin Node-compatible native bootstrap and rebuild both direct installers with visible progress, PATH configuration, both global skill targets, instruction reconciliation, and final verification.
+- Rename Darwin assets, package `guiho-s-xdocs` and `guiho-i-xdocs`, and enforce exactly twelve native binaries plus those two agent artifacts in build and release automation.
 - Replace deferred Windows self-upgrade installation with a locked, journaled, immediate canonical rename/swap that preflights the candidate, verifies the installed absolute path, commits cache state only afterward, restores failures, and defers backup deletion only.
 - Print and flush the full upgrade plan before downloading, stream ordered phases in text and Markdown, and return a fixed JSON envelope with plan, events, result, recovery, and stable errors.
 - Always print a full-version pinned reinstall command followed by a separate optional process-stop command, including an explicitly labeled current-version repair fallback when target discovery fails.
