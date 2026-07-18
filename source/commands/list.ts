@@ -2,7 +2,7 @@
  * @copyright Copyright (c) 2026 GUIHO Technologies as represented by Cristóvão GUIHO. All Rights Reserved.
  */
 
-import { resolve, relative } from 'node:path'
+import { resolvePath as resolve, relativePath as relative } from '../runtime/path.js'
 import type { XDocsCliOptions } from '../types.js'
 import { loadConfigOrDefaults } from '../config.js'
 import { scanProject } from '../discovery.js'
