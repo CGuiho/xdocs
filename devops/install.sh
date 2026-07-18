@@ -120,7 +120,7 @@ parse_args() {
 detect_os() {
   case "$(uname -s)" in
     Linux) printf 'linux\n' ;;
-    Darwin) printf 'macos\n' ;;
+    Darwin) printf 'darwin\n' ;;
     *) fail "unsupported OS: $(uname -s)" ;;
   esac
 }
@@ -203,7 +203,7 @@ verify_native_binary() {
     linux)
       [[ "$magic4" == $'\177ELF' ]]
       ;;
-    macos)
+    darwin)
       case "$magic4" in
         $'\xcf\xfa\xed\xfe' | $'\xce\xfa\xed\xfe' | $'\xfe\xed\xfa\xcf' | $'\xfe\xed\xfa\xce' | $'\xca\xfe\xba\xbe' | $'\xbe\xba\xfe\xca') return 0 ;;
         *) return 1 ;;
@@ -352,7 +352,13 @@ install_binary() {
     url="$(build_url "$asset")"
     printf '  Trying %s\n' "$url"
 
-    if curl --fail --location --silent --show-error --proto '=https' --tlsv1.2 "$url" --output "$TMP/xdocs"; then
+    printf 'Initiating GUIHO CLI Upgrade / Installation Sequence...\n'
+    printf 'Target Version: v%s\n' "$(normalize_version "$VERSION")"
+    printf 'Architecture:   %s\n' "$ARCH"
+    printf 'Variant:        %s\n' "${VARIANT_OVERRIDE:-baseline}"
+    printf 'Source URL:     %s\n' "$url"
+    printf 'Downloading native binary with progress...\n'
+    if curl --fail --location --progress-bar --proto '=https' --tlsv1.2 "$url" --output "$TMP/xdocs"; then
       if ! verify_native_binary "$TMP/xdocs"; then
         printf '  %s was not a native binary, trying next candidate...\n' "$asset" >&2
         continue
@@ -389,10 +395,30 @@ install_binary() {
       fi
       rm -f -- "$backup"
       printf 'Installed xdocs to %s\n' "$destination"
+      local skill_url
+      local prompt_url
+      skill_url="$(build_url guiho-s-xdocs)"
+      prompt_url="$(build_url guiho-i-xdocs)"
+      printf 'Downloading skill asset: %s\n' "$skill_url"
+      curl --fail --location --progress-bar --proto '=https' --tlsv1.2 "$skill_url" --output "$TMP/guiho-s-xdocs"
+      printf 'Downloading instruction/prompt asset: %s\n' "$prompt_url"
+      curl --fail --location --progress-bar --proto '=https' --tlsv1.2 "$prompt_url" --output "$TMP/guiho-i-xdocs"
+      [[ -s "$TMP/guiho-s-xdocs" && -s "$TMP/guiho-i-xdocs" ]] || fail 'downloaded agent assets were empty'
+      for skill_destination in "$HOME/.agents/skills/guiho-s-xdocs" "$HOME/.claude/skills/guiho-s-xdocs"; do
+        mkdir -p "$skill_destination"
+        install -m 0644 "$TMP/guiho-s-xdocs" "$skill_destination/SKILL.md"
+        printf 'Installed skill: %s\n' "$skill_destination"
+      done
+      for instruction_file in AGENTS.md CLAUDE.md; do
+        [[ ! -f "$PWD/$instruction_file" ]] || printf 'Discovered instruction file: %s\n' "$PWD/$instruction_file"
+      done
+      printf 'Reconciling project instruction blocks...\n'
+      "$destination" agent instruction update
       if [[ "${XDOCS_SKIP_PATH_UPDATE:-0}" != "1" ]]; then
         ensure_path
         check_shadowing
       fi
+      printf 'Final verification: %s --version\n' "$destination"
       printf 'Verified: %s --version -> %s\n' "$destination" "$installed_version"
       return 0
     fi
