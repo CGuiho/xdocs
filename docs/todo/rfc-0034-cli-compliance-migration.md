@@ -81,6 +81,8 @@ namespace; and publishes exactly twelve RFC binaries plus `guiho-s-xdocs` and
 - Only `-h` and root `-v` exist.
 - Every scope has standard help, Unicode tree help, positive depth, and clean
   Markdown docs generated from the Citty tree.
+- Root help exposes the complete approved public catalog with examples, hides
+  internal worker routing, and rejects `xdocs home` as an unknown command.
 - The complete singular agent namespace is explicit and idempotent; ordinary
   scan/generate/meta/context/doctor commands do not mutate skills or
   instructions.
