@@ -12,7 +12,7 @@
     }
   },
   "bin": {
-    "xdocs": "scripts/xdocs-bin.ts"
+    "xdocs": "scripts/xdocs-bin.mjs"
   },
   "files": [
     "README.md",
@@ -51,8 +51,7 @@
     "build": "rm -rf library && tsc -p tsconfig.build.json",
     "binary": "bun build source/guiho-xdocs-native-bin.ts --compile --outfile bin/xdocs",
     "binaries": "bun run devops/build-binaries.ts",
-    "bundle": "rm -rf bundle && bun build source/guiho-xdocs-bin.ts --outdir bundle --target node --sourcemap=linked",
-    "postinstall": "bun run scripts/install-package.ts",
+    "bundle": "rm -rf bundle && bun build source/guiho-xdocs-bin.ts --outdir bundle --target bun --sourcemap=linked",
     "typecheck": "tsc -p . --noEmit",
     "clean": "rm -rf .temp",
     "clean-build": "rm -rf build library bundle bin",
@@ -73,6 +72,7 @@
     "url": "https://github.com/CGuiho/xdocs/issues"
   },
   "dependencies": {
+    "@sinclair/typebox": "^0.34.52",
     "citty": "^0.2.2"
   },
   "devDependencies": {
