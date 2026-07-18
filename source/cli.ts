@@ -37,6 +37,13 @@ export { createXDocsCommand, runCli, runCliWithErrorHandling }
 
 type ParsedArgs = { _: string[] } & Record<string, unknown>
 type AnyCommand = CommandDef<any>
+type XDocsCommandMeta = {
+  name?: string
+  version?: string
+  description?: string
+  hidden?: boolean
+  examples?: readonly string[]
+}
 
 const formatOptions = ['text', 'json', 'markdown']
 const archOptions = ['x64', 'arm64']
@@ -79,10 +86,11 @@ function createXDocsCommand(): AnyCommand {
     action: (args: ParsedArgs) => Promise<void> | void,
     configAware = false,
     startupLifecycle = true,
+    hidden = false,
   ): AnyCommand => {
     let command: AnyCommand
     command = defineCommand({
-      meta: { name, description },
+      meta: { name, description, hidden, examples: [path] } as XDocsCommandMeta,
       args,
       run: async ({ args: parsed, rawArgs }) => {
         if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
@@ -260,24 +268,17 @@ function createXDocsCommand(): AnyCommand {
     'dry-run': { type: 'boolean', description: 'Preview without removing the binary.' },
   }, 'xdocs uninstall', (args) => runUninstall(options(args), { dryRun: Boolean(args['dryRun']) }))
   const worker = leaf('--check-updates-worker', 'Internal detached update worker.', executionArgs, 'xdocs --check-updates-worker', () =>
-    runBackgroundUpdateCheck(), false, false)
-
-  const home = leaf('home', 'Show the xdocs startup banner.', rootArgs, 'xdocs', async (args) => {
-    if (Boolean(args['version'])) {
-      process.stdout.write(showVersion() + '\n')
-      return
-    }
-    await reportCachedUpdateNotice(options(args).format)
-    void scheduleBackgroundUpdateCheck()
-    process.stdout.write(`Hello Windows - xdocs v${readPackageVersion()}\n`)
-  }, false, false)
+    runBackgroundUpdateCheck(), false, false, true)
 
   root = defineCommand({
-    meta: { name: 'xdocs', version: readPackageVersion(), description: 'Structured documentation for codebases and AI agents.' },
+    meta: {
+      name: 'xdocs',
+      version: readPackageVersion(),
+      description: 'Structured documentation for codebases and AI agents.',
+      examples: ['xdocs scan', 'xdocs doctor . --warnings-as-errors'],
+    } as XDocsCommandMeta,
     args: rootArgs,
-    default: 'home',
     subCommands: {
-      home,
       init,
       scan,
       generate,
@@ -291,6 +292,21 @@ function createXDocsCommand(): AnyCommand {
       upgrade,
       uninstall,
       '--check-updates-worker': worker,
+    },
+    run: async ({ args: parsed, rawArgs }) => {
+      if (Array.isArray(parsed._) && parsed._.length > 0) return
+      if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
+        process.stdout.write(await renderUsageWithExamples(root) + '\n')
+        return
+      }
+      if (handleDeveloperHelp(parsed, root, 'xdocs')) return
+      if (Boolean(parsed['version'])) {
+        process.stdout.write(showVersion() + '\n')
+        return
+      }
+      await reportCachedUpdateNotice(options(parsed).format)
+      void scheduleBackgroundUpdateCheck()
+      process.stdout.write(`Hello Windows - xdocs v${readPackageVersion()}\n`)
     },
   })
   return root
@@ -306,7 +322,7 @@ function group(
 ): AnyCommand {
   let command: AnyCommand
   command = defineCommand({
-    meta: { name, description },
+    meta: { name, description, examples: [path] } as XDocsCommandMeta,
     args,
     subCommands,
     run: async ({ args: parsed, rawArgs }) => {
@@ -349,8 +365,15 @@ function handleDeveloperHelp(args: ParsedArgs, command: AnyCommand, path: string
 
 async function renderScopedUsage(command: AnyCommand, path: string): Promise<string> {
   const parentName = path.split(' ').slice(0, -1).join(' ')
-  if (!parentName) return renderUsage(command)
-  return renderUsage(command, defineCommand({ meta: { name: parentName } }))
+  const parent = parentName ? defineCommand({ meta: { name: parentName } }) : undefined
+  return renderUsageWithExamples(command, parent)
+}
+
+async function renderUsageWithExamples(command: AnyCommand, parent?: AnyCommand): Promise<string> {
+  const usage = await renderUsage(command, parent)
+  const examples = (command.meta as XDocsCommandMeta | undefined)?.examples ?? []
+  if (examples.length === 0) return usage
+  return `${usage}\n\nEXAMPLES\n\n${examples.map((example) => `  ${example}`).join('\n')}`
 }
 
 async function reportLoadedConfiguration(options: XDocsCliOptions): Promise<void> {
