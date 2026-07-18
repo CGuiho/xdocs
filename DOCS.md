@@ -404,7 +404,47 @@ xdocs agents instructions             # insert/refresh the AGENTS.md section
 
 When refreshing the `AGENTS.md` section, XDocs compares the existing section to
 the canonical section while ignoring blank-only lines and trailing whitespace.
-This means Markdown for…655 tokens truncated…f using a
+This means Markdown formatters that add blank lines around the section markers do
+not cause repeated rewrites. Real text changes are still replaced with the
+canonical section.
+
+Flags: `--tool <agents|claude|all>`, `--format <text|json>`, `--cwd`.
+
+When `--tool` is omitted, XDocs installs the standard target and adds the Claude target only when a `.claude/` directory or `CLAUDE.md` is detected in the project. Global skill installation uses the user home directory; tests and automation can override that home root with `XDOCS_AGENT_HOME`.
+
+### `xdocs upgrade`
+
+Upgrades the installed native xdocs binary from GitHub Releases. It chooses the
+current OS and architecture automatically. On x64, it prefers the `baseline`
+variant first, then falls back to the default and `modern` assets. Source
+checkouts intentionally refuse self-upgrade so development commands do not
+replace Bun or a source launcher by mistake.
+
+Before downloading the asset body, xdocs prints and flushes the complete plan:
+current and target versions, OS, architecture, selected binary, canonical path,
+and exact tagged URL. Text and Markdown modes stream `Downloading`, `Validating`,
+`Replacing`, `Verifying`, cache, and cleanup phases. JSON emits exactly one
+schema-versioned envelope containing the same plan, ordered events, result,
+recovery guidance, and stable error data.
+
+Replacement is a synchronous verified transaction. The current canonical file is
+renamed to a transaction backup, the validated candidate immediately takes the
+canonical path, and that absolute path must report the exact target version before
+success or cache commit. Failure restores and verifies the previous executable.
+Only deletion of the renamed backup may be scheduled after the old Windows
+process exits; installation is never deferred.
+
+Candidate and canonical `--version` checks have a bounded timeout. `upgrade`
+never downgrades an installed binary, and an interrupted journal that contains
+both canonical and backup candidates is preserved for explicit recovery rather
+than guessed away. A journal left after successful backup deletion accepts the
+canonical target only after its exact version is verified. A refused downgrade
+is reported as already current and is not mislabeled as target discovery failure.
+
+Every terminal outcome, including already-current, dry-run, pre-plan discovery
+failure, rollback, and success, prints a copy-paste installer command pinned to an
+exact version followed by a separate optional process-stop command. Discovery
+failure visibly labels its current-version repair fallback instead of using a
 mutable `latest` target.
 
 ```bash
