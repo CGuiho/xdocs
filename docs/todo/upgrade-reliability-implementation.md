@@ -4,7 +4,7 @@ purpose: Preserve implementation progress, decisions, validation evidence, and h
 description: Tracks execution of the reliable self-upgrade, complete catalog, recovery guidance, installer hardening, documentation, and verification work.
 created: 2026-07-15
 flags:
-  - testing
+  - completed
 tags:
   - cli
   - reliability
@@ -60,6 +60,10 @@ Execution record for [TODO task 3](../../TODO.md) and the approved
   terminal package-installer rollback failures, deterministic future-version dry
   runs, downgrade-specific presentation, scheduled-cleanup assertions, and direct
   execution of generated recovery commands through PowerShell, Git Bash, and Bash.
+- `2026-07-19` - Issue #9 acceptance audit removed stable-only and output-page
+  truncation from `upgrade list`, exposed full tags and exact custom channels,
+  added explicit compatible-asset state, matched the required pre-download human
+  plan, and added canonical-swap obstruction coverage.
 
 ## Verification Evidence
 
@@ -72,6 +76,12 @@ Execution record for [TODO task 3](../../TODO.md) and the approved
 - Git Bash validates `devops/install.sh` with `bash -n`.
 - Strict source metadata passed after the catalog and transaction modules.
 - `git diff --check` passes.
+- Issue #9 focused validation passes: 30 tests, 171 expectations across CLI,
+  catalog, transaction, Windows-running-executable, and human-output suites.
+- Live GitHub Releases validation returned all 14 published releases, including
+  `0.6.0-alpha.0`, in both aligned text and one-document JSON; channels were
+  `alpha` and `stable`, and every Windows x64 row reported compatible-asset
+  state.
 - Post-review repository and standalone package-installer TypeScript checks pass
   through the installed TypeScript 6 compiler.
 - The final focused Bun invocation reached 0 tests because Bun returned `EPERM`
@@ -83,9 +93,9 @@ Execution record for [TODO task 3](../../TODO.md) and the approved
 
 ## Handoff
 
-Implementation awaits final Bun and CI validation in the isolated
-`codex/upgrade-reliability` worktree. Release, push, PR, merge, and issue closure
-are owned by the parent integration agent.
+Implementation and repository-local acceptance validation are complete on
+`main`. Final issue closure waits for the authorized patch release so the
+published native binary can receive a post-release smoke test.
 
 ## References
 
