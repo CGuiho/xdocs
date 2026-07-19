@@ -248,7 +248,9 @@ continues in a later session.
      `agents.skill_tool`; explicit agent commands replace those mutation
      settings. Keep `[ai].mode` because it governs documentation-writing
      workflow rather than agent-file mutation.
-  5. Make `xdocs init` create `xdocs.yaml`.
+  5. Make `xdocs init` create `xdocs.yaml` and install the bundled skill
+     globally by default; `--local` selects project scope. This explicit setup
+     action is the sole exception to ordinary-command agent-file immutability.
   6. Print `configuration file loaded: <absolute-path>` when loaded.
   7. Update the xdocs skill's onboarding/config reference to YAML.
   8. Use exit code `3` for missing/invalid configuration where a command
@@ -584,7 +586,8 @@ platform foundations and should not be interleaved before their contracts pass.
 xdocs is complete only when TypeBox validates every structured boundary, no
 prohibited Node imports remain in core/shared source, the final command catalog
 is the sole public catalog, ordinary documentation commands do not mutate agent
-files, all four prompts are available through the new agent prompt namespace,
+files, `xdocs init` performs its accepted global-by-default skill setup, all
+four prompts are available through the new agent prompt namespace,
 and release verification finds exactly twelve binaries plus the two named
 `.md` agent assets.
 
