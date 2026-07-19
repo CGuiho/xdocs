@@ -51,6 +51,10 @@ rejection, all three YAML precedence levels, Darwin profile selection, literal
 `ls`, and `mkdir`. The Windows installer rejects literal `$env:Path` and
 `%PATH%` tokens before persisting user PATH.
 
+Issue #11's Developer Context audit also verifies Unicode tree connectors,
+root/group/leaf scopes, positive depth truncation, zero/negative/non-numeric
+usage failures, ANSI-free stdout, and hidden internal-command exclusion.
+
 ## Completed units
 
 - XD-01: baseline inventory and validation captured before edits.
