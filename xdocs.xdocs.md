@@ -20,10 +20,10 @@ documents:
   AGENTS.md: Repository instructions requiring the GUIHO SWE agent and CLI engineer skill for xdocs CLI work, including commands, metadata workflows, release rules, and the approved breaking RFC 0034 migration.
   ARCHITECTURE.md: Architecture and technical design notes for xdocs file conventions, metadata, CLI behavior, distribution, and agent workflows.
   BRAINSTORM.md: Product and design brainstorming notes for the xdocs structured documentation model and future directions.
-  CHANGELOG.md: Release changelog including the RFC 0034 root-help/catalog correction and Darwin installer PATH fix.
-  DOCS.md: Canonical full documentation including live-root help, fixed upgrade outputs, transaction/rollback/cache ordering, complete release listing, exact recovery, and agent-skill behavior.
+  CHANGELOG.md: Release changelog including RFC 0034 corrections, validated Markdown release assets, literal-safe installer PATH handling, and exact-version release notes.
+  DOCS.md: Canonical full documentation including live-root help, fixed upgrade outputs, transaction/rollback/cache ordering, complete release listing, exact recovery, validated .md agent assets, and agent-skill behavior.
   LICENSE.md: Package license document shipped with @guiho/xdocs.
-  README.md: Public package overview with installation, live Citty help/catalog behavior, observable verified self-upgrade/recovery, complete release listing, CLI reference, metadata schema, and API examples.
+  README.md: Public package overview with installation, validated Markdown agent assets, live Citty help/catalog behavior, observable verified self-upgrade/recovery, complete release listing, CLI reference, metadata schema, and API examples.
   TECHNICAL.md: Short technical notes placeholder for xdocs implementation context.
   TODO.md: Local task list for pending xdocs repository work.
 tags:
