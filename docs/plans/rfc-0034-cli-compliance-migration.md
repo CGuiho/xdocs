@@ -38,7 +38,11 @@ The final package must use Bun, strict ESM TypeScript, raw Citty, and TypeBox;
 keep core source free of prohibited Node imports; use `xdocs.yaml`; expose exact
 startup, help, agent, upgrade, installer, and output contracts; keep prompt and
 skill resources embedded; and release exactly twelve binaries plus
-`guiho-s-xdocs` and `guiho-i-xdocs`.
+`guiho-s-xdocs.md` and `guiho-i-xdocs.md`.
+
+The developer explicitly overrides the original RFC 0034 extensionless
+agent-asset filenames for xdocs. The `.md` suffixes are mandatory on both
+Markdown artifacts and the total release asset count remains exactly fourteen.
 
 ## Authority And Required Execution Roles
 
@@ -382,7 +386,8 @@ continues in a later session.
   4. Make `show <id>` print only the raw body.
   5. Replace regex-only metadata parsing with TypeBox-decoded prompt records.
   6. Embed the catalog manifest and all four raw bodies into native binaries.
-  7. Build one reproducible archive file named exactly `guiho-i-xdocs`
+  7. Build one reproducible Markdown artifact named exactly
+     `guiho-i-xdocs.md`
      containing the manifest and four prompt bodies; do not upload the
      individual prompt files as separate release assets.
 - Acceptance:
@@ -449,8 +454,10 @@ continues in a later session.
   3. Display real-time progress; remove silent curl/download flags.
   4. Validate and transactionally verify the binary.
   5. configure PATH when missing.
-  6. download/install `guiho-s-xdocs` into both global skill paths.
-  7. download `guiho-i-xdocs`, discover instruction files, and reconcile.
+  6. download and validate `guiho-s-xdocs.md` before installing it into both
+     global skill paths.
+  7. download and validate `guiho-i-xdocs.md`, discover instruction files, and
+     reconcile.
   8. print each action and final version verification.
 - Acceptance:
   - Isolated PowerShell/POSIX tests cover progress, binary, PATH, both skills,
@@ -490,12 +497,13 @@ continues in a later session.
   - `xdocs-windows-x64-baseline.exe`
   - `xdocs-windows-x64-modern.exe`
 - Agent assets:
-  - `guiho-s-xdocs`
-  - `guiho-i-xdocs`
+  - `guiho-s-xdocs.md`
+  - `guiho-i-xdocs.md`
 - Actions:
   1. Remove all `macos` selectors/names.
   2. Make the builder Bun-only.
-  3. package skill and prompt catalog reproducibly.
+  3. package the skill and prompt catalog reproducibly as Markdown files and
+     reject binary payloads before installation.
   4. upload exactly fourteen.
   5. fail CI for missing, duplicate, extra, legacy, or wrongly suffixed assets.
 - Acceptance:
@@ -577,8 +585,8 @@ xdocs is complete only when TypeBox validates every structured boundary, no
 prohibited Node imports remain in core/shared source, the final command catalog
 is the sole public catalog, ordinary documentation commands do not mutate agent
 files, all four prompts are available through the new agent prompt namespace,
-and release verification finds exactly twelve binaries plus the two named agent
-assets.
+and release verification finds exactly twelve binaries plus the two named
+`.md` agent assets.
 
 ## References
 
