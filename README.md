@@ -188,9 +188,10 @@ xdocs upgrade list
 ```
 
 The default x64 variant is `baseline`. Upgrades validate release metadata,
-download and verify a native candidate, replace transactionally, roll back on
-failure, update `~/.guiho/xdocs/cache.json`, refresh both global skill copies,
-and reconcile project instructions. `upgrade list` exhausts the GitHub Releases
+stream known-length percentage/bar progress or unknown-length byte progress,
+verify a native candidate, replace transactionally, roll back on failure,
+update `~/.guiho/xdocs/cache.json`, refresh both global skill copies, and
+reconcile project instructions. `upgrade list` exhausts the GitHub Releases
 catalog and returns every stable and prerelease version, newest SemVer first,
 with full tags, channel identifiers, publication dates, compatible-asset
 status, and current/latest-stable markers.
@@ -200,6 +201,10 @@ direct-install command is pinned to the fully resolved stable or prerelease
 version and uses the supported native installer; a separate platform-specific
 command stops a blocking XDocs process. JSON returns the same values in its
 `recovery` object.
+
+The Bash installer uses curl's progress bar. The PowerShell installer streams
+all binary and agent downloads and prints deterministic percentage/byte
+progress even when host-native web-request progress UI is unavailable.
 
 ## Development
 
