@@ -65,7 +65,7 @@ complete suite passes with 50 tests.
   global default, and `--local`.
 - XD-09: implemented exact idempotent instruction apply/remove/update/show.
 - XD-10: preserved four prompts under `agent prompt` and added the single
-  `guiho-i-xdocs` manifest/artifact.
+  `guiho-i-xdocs.md` manifest/artifact.
 - XD-11: preserved one-document JSON output and stable exit categories.
 - XD-12: added stable/prerelease pagination and post-upgrade skill/instruction
   reconciliation while retaining journaled rollback/recovery.
@@ -73,8 +73,9 @@ complete suite passes with 50 tests.
   verification, both skill paths, and instruction reconciliation.
 - XD-14: replaced the Bun launcher/postinstall helper with a thin Node ESM
   native bootstrap.
-- XD-15: implemented exact twelve binaries plus two agent artifacts and exact
-  GitHub workflow comparison.
+- XD-15: implemented exact twelve binaries plus validated
+  `guiho-s-xdocs.md` and `guiho-i-xdocs.md` Markdown artifacts and exact GitHub
+  workflow comparison.
 - XD-16: aligned public docs, architecture, skill, AGENTS, TODO, and xdocs
   descriptors.
 - XD-17: recorded all live GUIHO TOML consumer paths without editing them.
