@@ -25,8 +25,8 @@ files:
   metadata.ts: YAML frontmatter parsing and TypeBox descriptor validation.
   npm-bootstrap.spec.ts: Node-only bootstrap smoke tests without Bun in PATH.
   prompts.ts: TypeBox-decoded embedded prompt catalog.
-  release-assets.spec.ts: Exact fourteen-asset and prohibited-import tests.
-  release-assets.ts: Exact native and agent release asset contract.
+  release-assets.spec.ts: Exact fourteen-asset, Markdown agent-payload validation, and prohibited-import tests.
+  release-assets.ts: Exact native and .md agent release asset contract with frontmatter, identity, and Markdown guards.
   schemas.ts: TypeBox schemas and shared decoding diagnostics.
   self-management.ts: RFC cache, detached worker, upgrade, agent reconciliation, and uninstall orchestration.
   tree.ts: Containment tree assembly, validation, and rendering.
