@@ -4,10 +4,12 @@ description: Exact fourteen-asset release builder and complete cross-platform na
 parent: xdocs-package
 children: []
 files:
-  build-binaries.ts: Bun-only builder for twelve Linux, Darwin, and Windows binaries plus guiho-s-xdocs and guiho-i-xdocs, with exact-set verification.
-  install.ps1: Progress-visible Windows installer for binary, PATH, both skill destinations, instruction reconciliation, rollback, and final verification.
-  install.sh: Progress-visible Linux/Darwin installer with Darwin-aware shell-profile PATH setup, both skill destinations, instruction reconciliation, rollback, and final verification.
-  installers.spec.ts: Isolated recovery-installer regression coverage including paths with spaces and Darwin Bash profile selection.
+  build-binaries.ts: Bun-only builder for twelve Linux, Darwin, and Windows binaries plus validated guiho-s-xdocs.md and guiho-i-xdocs.md Markdown assets, with exact-set verification.
+  extract-release-notes.spec.ts: Exact-version changelog-section extraction regression coverage.
+  extract-release-notes.ts: Strict release-note extractor that writes only the changelog section matching the release version.
+  install.ps1: Progress-visible Windows installer for binary, literal-safe PATH mutation, validated Markdown agent assets, both skill destinations, instruction reconciliation, rollback, and final verification.
+  install.sh: Progress-visible Linux/Darwin installer with Darwin-aware shell-profile PATH setup, literal-safe PATH persistence, validated Markdown agent assets, both skill destinations, instruction reconciliation, rollback, and final verification.
+  installers.spec.ts: Isolated recovery-installer regression coverage including Markdown agent fixtures, paths with spaces, PATH persistence, and Darwin Bash profile selection.
 documents: {}
 tags:
   - devops
