@@ -31,7 +31,7 @@ files:
   self-management.ts: RFC cache, detached worker, upgrade, agent reconciliation, and uninstall orchestration.
   tree.ts: Containment tree assembly, validation, and rendering.
   types.ts: Public and internal domain/platform TypeScript types.
-  upgrade-catalog.spec.ts: GitHub pagination, TypeBox response, SemVer, channel, and asset-selection tests.
+  upgrade-catalog.spec.ts: GitHub pagination, TypeBox response, SemVer, exact channel, prerelease retention, and missing/compatible asset tests.
   upgrade-catalog.ts: TypeBox-decoded GitHub release catalog and recovery commands.
   upgrade-transaction.spec.ts: Upgrade transaction, rollback, cache, locking, and recovery tests.
   upgrade-transaction.ts: Observable journaled replacement, verification, rollback, and cleanup.
