@@ -70,8 +70,10 @@ xdocs tree
 xdocs doctor
 ```
 
-`xdocs init` creates `XDOCS.md` and `xdocs.yaml`. Agent files are never mutated
-implicitly; use the explicit `xdocs agent` commands.
+`xdocs init` creates `XDOCS.md` and `xdocs.yaml`, then idempotently installs the
+bundled skill in both global agent locations. Use `xdocs init --local` when the
+skill must remain inside the initialized project. Instructions remain explicit
+through `xdocs agent instruction`.
 
 ## Configuration
 
