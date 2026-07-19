@@ -189,7 +189,7 @@ function classifyReleaseChannel(version: string): XDocsReleaseChannel {
   if (first === 'alpha' || first.startsWith('alpha-')) return 'alpha'
   if (first === 'beta' || first.startsWith('beta-')) return 'beta'
   if (first === 'rc' || first.startsWith('rc-')) return 'rc'
-  return 'prerelease'
+  return /^\d+$/.test(first) ? 'prerelease' : first
 }
 
 function normalizeRelease(value: unknown, options: ReleaseCatalogOptions): XDocsRelease | null {
