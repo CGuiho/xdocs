@@ -249,21 +249,9 @@ try {
     Copy-Item -LiteralPath $skillAsset -Destination (Join-Path $skillRoot 'SKILL.md') -Force
     Write-Host "Installed skill: $(Join-Path $skillRoot 'SKILL.md')"
   }
-  $instructionTargets = @()
-  if (Test-Path -LiteralPath (Join-Path (Get-Location) 'AGENTS.md')) { $instructionTargets += (Join-Path (Get-Location) 'AGENTS.md') }
-  if (Test-Path -LiteralPath (Join-Path (Get-Location) 'CLAUDE.md')) { $instructionTargets += (Join-Path (Get-Location) 'CLAUDE.md') }
-  if ($instructionTargets.Count -eq 0) { $instructionTargets += (Join-Path (Get-Location) 'AGENTS.md') }
-  $startMarker = '<!-- BEGIN XDOCS â€” DO NOT EDIT THIS SECTION -->'
-  $endMarker = '<!-- END XDOCS -->'
-  $prompt = Get-Content -Raw -LiteralPath $promptAsset
-  foreach ($instructionPath in $instructionTargets) {
-    Write-Host "Reconciling instruction file: $instructionPath"
-    $existing = if (Test-Path -LiteralPath $instructionPath) { Get-Content -Raw -LiteralPath $instructionPath } else { '' }
-    $pattern = [Regex]::Escape($startMarker) + '[\s\S]*?' + [Regex]::Escape($endMarker) + '\s*'
-    $clean = ([Regex]::Replace($existing, $pattern, '')).TrimEnd()
-    $prefix = if ($clean) { "$clean`r`n`r`n" } else { '' }
-    Set-Content -LiteralPath $instructionPath -Value "$prefix$startMarker`r`n$($prompt.Trim())`r`n$endMarker`r`n" -Encoding utf8
-  }
+  Write-Host 'Reconciling project instruction blocks...'
+  & $destination agent instruction update
+  if ($LASTEXITCODE -ne 0) { throw 'XDocs instruction reconciliation failed.' }
   if ($env:XDOCS_SKIP_PATH_UPDATE -ne '1') {
     Add-InstallDirToPath -Directory $InstallDir
     Test-Shadowing -ExpectedPath $destination
