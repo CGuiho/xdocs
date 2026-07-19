@@ -48,12 +48,22 @@ if (process.platform === 'win32') {
     let server: ReturnType<typeof Bun.serve> | undefined
     try {
       await mkdir(home, { recursive: true })
+      await writeFile(join(home, 'AGENTS.md'), '# Fixture\n', 'utf8')
       await writeFile(source, `using System;
+using System.IO;
 
 internal static class Program
 {
     private static int Main(string[] args)
     {
+        if (args.Length > 0 && args[0] == "agent")
+        {
+            File.AppendAllText(
+                Path.Combine(Environment.CurrentDirectory, "AGENTS.md"),
+                "\\n<!-- BEGIN XDOCS — DO NOT EDIT THIS SECTION -->\\n## XDocs Structured Documentation\\n<!-- END XDOCS -->\\n"
+            );
+            return 0;
+        }
         Console.WriteLine("xdocs ${fixtureVersion}");
         return 0;
     }
@@ -105,7 +115,10 @@ internal static class Program
         expect(installedSkill).toContain('name: guiho-s-xdocs')
         expect(installedSkill.startsWith('MZ')).toBeFalse()
       }
-      expect(await Bun.file(join(home, 'AGENTS.md')).text()).toContain('<!-- BEGIN XDOCS')
+      const instructions = await Bun.file(join(home, 'AGENTS.md')).text()
+      expect(instructions).toContain('<!-- BEGIN XDOCS')
+      expect(instructions).toContain('## XDocs Structured Documentation')
+      expect(instructions).not.toContain('# xdocs Prompt Catalog')
     } finally {
       server?.stop(true)
       await rm(dir, { recursive: true, force: true })
