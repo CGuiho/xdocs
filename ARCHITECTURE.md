@@ -76,7 +76,10 @@ The structured-documentation domain remains separate:
 6. Route through Citty.
 7. With no arguments, print `Hello Windows - xdocs v<version>`.
 
-No documentation command mutates skills or instruction files.
+Data/documentation commands do not mutate skills or instruction files.
+Initialization is the deliberate setup exception: `xdocs init` installs the
+bundled skill globally by default, while `xdocs init --local` uses project
+scope. Instruction files remain explicit operations.
 
 ## Configuration
 
