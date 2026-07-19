@@ -120,7 +120,11 @@ Stop if you can not find it.
 
 - There is no lint or formatter config. Existing TS uses strict `tsconfig.json`, single quotes, and no semicolons; match nearby style.
 - Generated outputs (`library/`, `bundle/`, `bin/`, `vendor/`, `*.tgz`) are ignored; do not hand-edit them.
-- Prompt files and the agent skill are embedded into native binaries and packaged as `guiho-i-xdocs` and `guiho-s-xdocs`. Skill mutation always addresses both supported tool paths.
+- Prompt files and the agent skill are embedded into native binaries and packaged
+  as the Markdown release assets `guiho-i-xdocs.md` and
+  `guiho-s-xdocs.md`. Skill mutation always addresses both supported tool
+  paths. This repository explicitly overrides the extensionless RFC 0034
+  filenames while retaining exactly fourteen release assets.
 - The skill frontmatter top-level `version` and `metadata.version` must match the package version for a release.
 - Versioning is handled by `@guiho/mirror` via `mirror.config.toml`, not by xdocs itself. Do not confuse xdocs (documentation) with mirror (versioning).
 
@@ -133,6 +137,9 @@ Before editing release docs or changelogs, inspect mirror.config.toml. If [agent
 Use [agents].changelog_path as the changelog file path. If it is missing, use CHANGELOG.md in the project root.
 
 Before publishing a new version, update `DOCS.md` -- the canonical full documentation for `@guiho/xdocs` -- to capture every behavior change in the release, written the same way as the changelog. Treat `DOCS.md` as a required release artifact: keep it current with CLI commands and flags, configuration fields, the metadata schema, the TypeScript API, and agent skill behavior. Do not publish when `DOCS.md` is stale relative to the shipping code.
+
+GitHub Release descriptions contain only the exact version section extracted
+from `CHANGELOG.md`; never pass the full changelog to release creation.
 
 ## GUIHO Project
 
