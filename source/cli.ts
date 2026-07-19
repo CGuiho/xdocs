@@ -247,16 +247,8 @@ function createXDocsCommand(): AnyCommand {
   } satisfies ArgsDef
   const upgradeCheck = leaf('check', 'Check whether a newer release exists.', executionArgs, 'xdocs upgrade check', (args) =>
     runUpgradeCheck(options(args)))
-  const upgradeList = leaf('list', 'List available releases.', {
-    ...executionArgs,
-    page: { type: 'string', valueHint: 'number', description: 'Release page.' },
-    'per-page': { type: 'string', valueHint: 'number', description: 'Releases per page.' },
-    'pre-releases': { type: 'boolean', description: 'Include prereleases.' },
-  }, 'xdocs upgrade list', (args) => runUpgradeList(options(args), {
-    page: parsePositiveInteger(optionalString(args['page']), 'page') ?? 1,
-    perPage: parsePositiveInteger(optionalString(args['perPage']), 'per-page') ?? 30,
-    preReleases: Boolean(args['preReleases']),
-  }))
+  const upgradeList = leaf('list', 'List every published release.', executionArgs, 'xdocs upgrade list', (args) =>
+    runUpgradeList(options(args)))
   const upgrade = group('upgrade', 'Upgrade the installed xdocs binary.', upgradeArgs, 'xdocs upgrade', {
     check: upgradeCheck,
     list: upgradeList,
