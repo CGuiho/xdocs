@@ -3,7 +3,7 @@
  */
 
 import { describe, expect, test } from 'bun:test'
-import { chmod, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -79,6 +79,24 @@ describe('upgrade transaction', () => {
       const result = await executeUpgradeTransaction(fixture.options)
       expect(result.outcome).toBe('failed')
       expect(result.error?.code).toBe('upgrade-locked')
+      expect(await readFile(fixture.plan.executablePath, 'utf8')).toBe('MZcurrent')
+    } finally {
+      await fixture.cleanup()
+    }
+  })
+
+  test('does not report success when the canonical swap cannot start', async () => {
+    const fixture = await createFixture()
+    const obstructedBackup = join(fixture.dir, 'backup-directory')
+    try {
+      await mkdir(obstructedBackup)
+      await writeFile(join(obstructedBackup, 'locked'), 'keep', 'utf8')
+      const result = await executeUpgradeTransaction({
+        ...fixture.options,
+        plan: { ...fixture.plan, backupPath: obstructedBackup },
+      })
+      expect(result.outcome).toBe('failed')
+      expect(result.events).toContainEqual(expect.objectContaining({ phase: 'replace', status: 'failed' }))
       expect(await readFile(fixture.plan.executablePath, 'utf8')).toBe('MZcurrent')
     } finally {
       await fixture.cleanup()
