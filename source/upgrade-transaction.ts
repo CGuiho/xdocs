@@ -355,18 +355,23 @@ async function cleanupBackup(backupPath: string, platform: XDocsNativePlatform):
     if (process.env['XDOCS_DISABLE_SCHEDULED_CLEANUP'] === '1') {
       return { backupPath, scheduled: true }
     }
-    const scriptPath = join(dirname(backupPath), `.xdocs-cleanup-${process.pid}.ps1`)
-    const script = [
-      `$pidToWait = ${process.pid}`,
-      'Wait-Process -Id $pidToWait -ErrorAction SilentlyContinue',
-      `Remove-Item -LiteralPath ${quotePowerShell(backupPath)} -Force -ErrorAction SilentlyContinue`,
-      'Remove-Item -LiteralPath $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue',
-    ].join('\n')
-    await writeFile(scriptPath, script, 'utf8')
-    const proc = Bun.spawn(['powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', scriptPath], {
-      stdin: 'ignore', stdout: 'ignore', stderr: 'ignore',
+    const cleanupCommand = 'for ($attempt = 0; $attempt -lt 300; $attempt += 1) { if (-not (Test-Path -LiteralPath $env:XDOCS_BACKUP_PATH)) { exit 0 }; try { Remove-Item -LiteralPath $env:XDOCS_BACKUP_PATH -Force -ErrorAction Stop; exit 0 } catch { Start-Sleep -Milliseconds 100 } }; exit 1'
+    const launcherCommand = "$encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($env:XDOCS_CLEANUP_COMMAND)); Start-Process powershell.exe -ArgumentList @('-NoLogo', '-NoProfile', '-NonInteractive', '-EncodedCommand', $encoded) -WindowStyle Hidden"
+    const launcher = Bun.spawn(['powershell.exe', '-NoLogo', '-NoProfile', '-NonInteractive', '-Command', launcherCommand], {
+      env: {
+        ...process.env,
+        XDOCS_BACKUP_PATH: backupPath,
+        XDOCS_CLEANUP_COMMAND: cleanupCommand,
+      },
+      stdin: 'ignore', stdout: 'pipe', stderr: 'pipe',
     })
-    ;(proc as unknown as { unref?: () => void }).unref?.()
+    const [exitCode, stderr] = await Promise.all([
+      launcher.exited,
+      new Response(launcher.stderr).text(),
+    ])
+    if (exitCode !== 0) {
+      throw new XDocsError(`Could not schedule old executable cleanup (${exitCode}): ${stderr.trim() || 'PowerShell launcher failed.'}`)
+    }
     return { backupPath, scheduled: true }
   }
 }
@@ -406,10 +411,6 @@ function isProcessRunning(pid: number): boolean {
   } catch {
     return false
   }
-}
-
-function quotePowerShell(value: string): string {
-  return `'${value.replaceAll("'", "''")}'`
 }
 
 function toError(error: unknown): Error {
