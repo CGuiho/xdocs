@@ -8,7 +8,7 @@ import { readPackageVersion } from '../help.js'
 import { detectNativeArch, detectNativePlatform, checkForLatestVersion, upgradeSelf } from '../self-management.js'
 import { buildUpgradeListEnvelope, fetchReleaseCatalog } from '../upgrade-catalog.js'
 
-export { renderEvent, renderPlan, runUpgrade, runUpgradeCheck, runUpgradeList }
+export { renderEvent, renderPlan, renderTerminal, runUpgrade, runUpgradeCheck, runUpgradeList }
 
 type XDocsUpgradeInput = {
   version?: string
@@ -114,9 +114,9 @@ function renderTerminal(options: XDocsCliOptions, envelope: XDocsUpgradeEnvelope
     if (envelope.recovery.targetSource === 'fallback-current' && envelope.plan === null) {
       process.stdout.write(`Target discovery failed. Repair fallback: reinstalling currently installed xdocs ${envelope.recovery.targetVersion}.\n\n`)
     }
-    process.stdout.write(`If the upgrade did not take effect, install ${envelope.recovery.targetVersion} directly:\n\n`)
+    process.stdout.write(`If the new version is not active, install XDocs ${envelope.recovery.targetVersion} directly:\n\n`)
     process.stdout.write(`\`\`\`text\n${envelope.recovery.installCommand}\n\`\`\`\n\n`)
-    process.stdout.write('If the file is in use, stop other xdocs processes and retry:\n\n')
+    process.stdout.write('If XDocs is still running and blocks installation, stop it first:\n\n')
     process.stdout.write(`\`\`\`text\n${envelope.recovery.stopProcessCommand}\n\`\`\`\n`)
     return
   }
@@ -125,9 +125,9 @@ function renderTerminal(options: XDocsCliOptions, envelope: XDocsUpgradeEnvelope
   if (envelope.recovery.targetSource === 'fallback-current' && envelope.plan === null) {
     process.stdout.write(`Target discovery failed. Repair fallback: reinstalling currently installed xdocs ${envelope.recovery.targetVersion}.\n`)
   }
-  process.stdout.write(`If the upgrade did not take effect, install ${envelope.recovery.targetVersion} directly:\n`)
+  process.stdout.write(`If the new version is not active, install XDocs ${envelope.recovery.targetVersion} directly:\n`)
   process.stdout.write(`  ${envelope.recovery.installCommand}\n`)
-  process.stdout.write('If the file is in use, stop other xdocs processes and retry:\n')
+  process.stdout.write('If XDocs is still running and blocks installation, stop it first:\n')
   process.stdout.write(`  ${envelope.recovery.stopProcessCommand}\n`)
 }
 
