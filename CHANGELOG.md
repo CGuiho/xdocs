@@ -18,6 +18,16 @@ keywords:
 
 ## Unreleased
 
+- Rename both Markdown release artifacts to `guiho-s-xdocs.md` and
+  `guiho-i-xdocs.md` while retaining the exact fourteen-asset set, validate
+  their Markdown identity before installation, and isolate installer fixtures
+  from real global skill directories.
+- Generate GitHub Release descriptions from only the exact tagged version's
+  changelog section, failing on missing, duplicate, or empty sections.
+- Preserve the existing shell `PATH` when writing Bash/Zsh profile and
+  current-shell instructions, and guard Windows user PATH updates against
+  literal variable tokens.
+
 ## 0.6.1 - 2026-07-19
 
 - Make root `-h`, `--help`, `--help-tree`, `--help-tree-depth`, and
@@ -34,7 +44,9 @@ keywords:
 - Replace root prompt and plural agents commands with the complete singular `xdocs agent skill|instruction|prompt` namespace, preserving all four embedded prompt bodies.
 - Generate standard usage, Unicode command trees with positive depth, and redirect-safe Markdown from the live Citty catalog at every command scope.
 - Replace the Bun package launcher/postinstall flow with a thin Node-compatible native bootstrap and rebuild both direct installers with visible progress, PATH configuration, both global skill targets, instruction reconciliation, and final verification.
-- Rename Darwin assets, package `guiho-s-xdocs` and `guiho-i-xdocs`, and enforce exactly twelve native binaries plus those two agent artifacts in build and release automation.
+- Rename Darwin assets, package the xdocs skill and prompt catalog as dedicated
+  agent artifacts, and enforce exactly twelve native binaries plus those two
+  artifacts in build and release automation.
 - Replace deferred Windows self-upgrade installation with a locked, journaled, immediate canonical rename/swap that preflights the candidate, verifies the installed absolute path, commits cache state only afterward, restores failures, and defers backup deletion only.
 - Print and flush the full upgrade plan before downloading, stream ordered phases in text and Markdown, and return a fixed JSON envelope with plan, events, result, recovery, and stable errors.
 - Always print a full-version pinned reinstall command followed by a separate optional process-stop command, including an explicitly labeled current-version repair fallback when target discovery fails.
