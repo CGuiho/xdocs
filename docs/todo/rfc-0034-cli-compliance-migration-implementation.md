@@ -62,7 +62,8 @@ complete suite passes with 50 tests.
 - XD-07: generated Unicode trees and Markdown docs from live Citty definitions
   at every scope, including positive depth.
 - XD-08: implemented both-target skill install, update, uninstall, list, show,
-  global default, and `--local`.
+  global default, and `--local`; issue #7 reaffirmed that initialization invokes
+  this idempotent installation globally by default.
 - XD-09: implemented exact idempotent instruction apply/remove/update/show.
 - XD-10: preserved four prompts under `agent prompt` and added the single
   `guiho-i-xdocs.md` manifest/artifact.
@@ -87,7 +88,8 @@ complete suite passes with 50 tests.
 - root `xdocs prompt --name`
 - plural `xdocs agents`
 - `--tool`, positional skill scope, and `--global`
-- automatic agent mutations
+- configuration-driven and ordinary data-command agent mutations; initialization
+  retains its explicit global-by-default skill setup
 - legacy cache paths/fields
 - `macos` release names
 - Bun-dependent npm launcher and postinstall helper
