@@ -64,6 +64,11 @@ Execution record for [TODO task 3](../../TODO.md) and the approved
   truncation from `upgrade list`, exposed full tags and exact custom channels,
   added explicit compatible-asset state, matched the required pre-download human
   plan, and added canonical-swap obstruction coverage.
+- `2026-07-19` - Issue #10 acceptance audit standardized the required
+  exact-version recovery wording and added every-outcome presenter assertions;
+  existing installer integration executes the generated stable Windows command
+  from PowerShell and Git Bash and the generated prerelease POSIX command from
+  Bash.
 
 ## Verification Evidence
 
@@ -82,6 +87,9 @@ Execution record for [TODO task 3](../../TODO.md) and the approved
   `0.6.0-alpha.0`, in both aligned text and one-document JSON; channels were
   `alpha` and `stable`, and every Windows x64 row reported compatible-asset
   state.
+- Issue #10 focused validation passes: 34 tests and 218 expectations across
+  presenters, JSON CLI output, transaction envelopes, stable/prerelease recovery
+  generation, and executable native installer commands.
 - Post-review repository and standalone package-installer TypeScript checks pass
   through the installed TypeScript 6 compiler.
 - The final focused Bun invocation reached 0 tests because Bun returned `EPERM`
