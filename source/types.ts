@@ -342,8 +342,13 @@ export type XDocsUpgradePhase = 'plan' | 'download' | 'validate' | 'replace' | '
 export type XDocsUpgradeEvent = {
   sequence: number
   phase: XDocsUpgradePhase
-  status: 'started' | 'succeeded' | 'skipped' | 'failed'
+  status: 'started' | 'progress' | 'succeeded' | 'skipped' | 'failed'
   message: string
+  progress?: {
+    receivedBytes: number
+    totalBytes: number | null
+    percent: number | null
+  }
 }
 
 /** Exact recovery guidance shown after every upgrade result. */
