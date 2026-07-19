@@ -18,6 +18,10 @@ keywords:
 
 ## Unreleased
 
+- Stream real download progress during `xdocs upgrade`, including percentages
+  for known lengths, bytes for unknown lengths, human bars, JSON progress
+  events, and partial-stream failure attribution; give the PowerShell installer
+  deterministic buffered progress while retaining curl progress bars on POSIX.
 - Lock `--help-tree` coverage to Unicode connectors, ANSI-free redirectable
   output, root/group/leaf scopes, positive depth limits, invalid-depth usage
   errors, and hidden-command exclusion.
