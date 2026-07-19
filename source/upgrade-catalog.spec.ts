@@ -29,7 +29,7 @@ describe('upgrade release catalog', () => {
     expect(classifyReleaseChannel('2.0.0-alpha.1')).toBe('alpha')
     expect(classifyReleaseChannel('2.0.0-beta.1')).toBe('beta')
     expect(classifyReleaseChannel('2.0.0-rc.1')).toBe('rc')
-    expect(classifyReleaseChannel('2.0.0-preview.1')).toBe('prerelease')
+    expect(classifyReleaseChannel('2.0.0-preview.1')).toBe('preview')
   })
 
   test('follows pagination, deduplicates versions, and selects compatible assets', async () => {
@@ -73,6 +73,20 @@ describe('upgrade release catalog', () => {
     })
 
     await expect(fetchReleaseCatalog({ platform: 'linux', arch: 'x64', fetcher })).rejects.toThrow('complete xdocs release catalog')
+  })
+
+  test('retains prereleases and releases without a compatible platform asset', async () => {
+    const fetcher = async (): Promise<Response> => Response.json([
+      release('3.0.0', 'xdocs-linux-x64-baseline'),
+      release('3.1.0-preview.2', 'xdocs-windows-x64-baseline.exe'),
+    ])
+    const releases = await fetchReleaseCatalog({ platform: 'windows', arch: 'x64', fetcher })
+    const envelope = buildUpgradeListEnvelope('2.0.0', releases)
+    expect(envelope.releases.map(({ version, channel }) => ({ version, channel }))).toEqual([
+      { version: '3.1.0-preview.2', channel: 'preview' },
+      { version: '3.0.0', channel: 'stable' },
+    ])
+    expect(envelope.releases[1]?.compatibleAsset).toBeNull()
   })
 
   test('builds exact-version recovery commands with installer before optional stop guidance', () => {
