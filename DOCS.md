@@ -99,8 +99,10 @@ aliases exist.
 
 ### `xdocs init`
 
-Creates `xdocs.yaml` and `XDOCS.md` when absent. It does not modify agent
-skills, `AGENTS.md`, or `CLAUDE.md`.
+Creates `xdocs.yaml` and `XDOCS.md` when absent, then installs or refreshes the
+bundled skill in both global tool locations. `xdocs init --local` installs the
+same skill beneath the effective project root. Initialization does not modify
+`AGENTS.md` or `CLAUDE.md`; instruction changes remain explicit.
 
 ### `xdocs scan`
 
