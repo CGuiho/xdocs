@@ -18,7 +18,7 @@ files:
   xdocs.yaml: YAML configuration for xdocs documentation workflows in this repository.
 documents:
   AGENTS.md: Repository instructions requiring the GUIHO SWE agent and CLI engineer skill for xdocs CLI work, including commands, metadata workflows, release rules, and the approved breaking RFC 0034 migration.
-  ARCHITECTURE.md: Architecture and technical design notes for xdocs file conventions, metadata, CLI behavior, distribution, and agent workflows.
+  ARCHITECTURE.md: Architecture and technical design notes for xdocs file conventions, metadata, CLI behavior, verified upgrade transactions, complete release catalogs, distribution, and agent workflows.
   BRAINSTORM.md: Product and design brainstorming notes for the xdocs structured documentation model and future directions.
   CHANGELOG.md: Release changelog including global-by-default initialization skill setup, RFC 0034 corrections, validated Markdown release assets, literal-safe installer PATH handling, and exact-version release notes.
   DOCS.md: Canonical full documentation including global-by-default initialization skill setup, live-root help, fixed upgrade outputs, transaction/rollback/cache ordering, complete release listing, exact recovery, validated .md agent assets, and agent-skill behavior.
