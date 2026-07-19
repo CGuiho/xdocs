@@ -34,14 +34,18 @@ jobs:
       - run: bun run build
       - run: bun run binaries
 
+      - name: Extract exact-version release notes
+        run: bun devops/extract-release-notes.ts "${GITHUB_REF_NAME}" CHANGELOG.md "${RUNNER_TEMP}/xdocs-release-notes.md"
+
       - name: Publish exact RFC 0034 assets to GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
             gh release upload "${GITHUB_REF_NAME}" bin/* --clobber
+            gh release edit "${GITHUB_REF_NAME}" --notes-file "${RUNNER_TEMP}/xdocs-release-notes.md"
           else
-            gh release create "${GITHUB_REF_NAME}" bin/* --title "${GITHUB_REF_NAME}" --notes-file CHANGELOG.md
+            gh release create "${GITHUB_REF_NAME}" bin/* --title "${GITHUB_REF_NAME}" --notes-file "${RUNNER_TEMP}/xdocs-release-notes.md"
           fi
 
       - name: Verify exact fourteen-asset GitHub release
