@@ -28,8 +28,11 @@ test('uses Markdown agent assets and preserves shell PATH expansion', async () =
   }
   expect(bashInstaller).toContain('export PATH=%q:$PATH')
   expect(bashInstaller).not.toContain('export PATH=%q:\\$PATH')
+  expect(bashInstaller).toContain('curl --fail --location --progress-bar')
   expect(powerShellInstaller).toContain('Refusing to persist a literal PATH variable reference')
   expect(powerShellInstaller).toContain('Test-MarkdownAgentAsset')
+  expect(powerShellInstaller).toContain('Invoke-DownloadWithProgress')
+  expect(powerShellInstaller).toContain('Download progress:')
 })
 
 if (process.platform === 'win32') {
@@ -104,6 +107,7 @@ internal static class Program
         expect(exitCode, `${shell.name}\n${stdout}\n${stderr}`).toBe(0)
         const installed = join(installDir, 'xdocs.exe')
         expect(await executableVersion(installed)).toBe(fixtureVersion)
+        expect(stdout).toContain('Download progress:')
         expect(stdout).toContain(`Verified: ${installed} --version -> ${fixtureVersion}`)
         for (const tool of ['.agents', '.claude']) {
           const installedSkill = await Bun.file(join(home, tool, 'skills', 'guiho-s-xdocs', 'SKILL.md')).text()
