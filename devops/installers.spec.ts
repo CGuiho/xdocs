@@ -19,6 +19,19 @@ test('uses the Darwin runtime label when selecting the macOS Bash profile', asyn
   expect(installer).not.toContain('[[ "$OS" == "macos"')
 })
 
+test('uses Markdown agent assets and preserves shell PATH expansion', async () => {
+  const bashInstaller = await Bun.file(join(repositoryRoot, 'devops', 'install.sh')).text()
+  const powerShellInstaller = await Bun.file(join(repositoryRoot, 'devops', 'install.ps1')).text()
+  for (const installer of [bashInstaller, powerShellInstaller]) {
+    expect(installer).toContain('guiho-s-xdocs.md')
+    expect(installer).toContain('guiho-i-xdocs.md')
+  }
+  expect(bashInstaller).toContain('export PATH=%q:$PATH')
+  expect(bashInstaller).not.toContain('export PATH=%q:\\$PATH')
+  expect(powerShellInstaller).toContain('Refusing to persist a literal PATH variable reference')
+  expect(powerShellInstaller).toContain('Test-MarkdownAgentAsset')
+})
+
 if (process.platform === 'win32') {
   test('printed Windows recovery command works from PowerShell and Git Bash', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'xdocs-powershell-installer-'))
@@ -44,6 +57,12 @@ internal static class Program
         fetch: (request) => {
           const path = new URL(request.url).pathname
           if (path === '/install.ps1') return new Response(Bun.file(join(repositoryRoot, 'devops', 'install.ps1')))
+          if (path.endsWith('guiho-s-xdocs.md')) {
+            return new Response('---\nname: guiho-s-xdocs\n---\n\n# xdocs skill\n')
+          }
+          if (path.endsWith('guiho-i-xdocs.md')) {
+            return new Response('---\nname: guiho-i-xdocs\n---\n\n# xdocs prompts\n')
+          }
           if (path.endsWith('xdocs-windows-x64-baseline.exe')) {
             return new Response('missing baseline fixture', { status: 404 })
           }
@@ -72,8 +91,12 @@ internal static class Program
       ]
       for (const shell of shells) {
         const installDir = join(dir, `${shell.name} install path with spaces`)
+        const home = join(dir, `${shell.name} isolated home`)
+        await mkdir(home, { recursive: true })
         const { exitCode, stdout, stderr } = await spawnCaptured(shell.command, {
           ...process.env,
+          HOME: home,
+          USERPROFILE: home,
           XDOCS_DOWNLOAD_BASE_URL: baseUrl,
           XDOCS_INSTALL_DIR: installDir,
           XDOCS_SKIP_PATH_UPDATE: '1',
@@ -82,6 +105,11 @@ internal static class Program
         const installed = join(installDir, 'xdocs.exe')
         expect(await executableVersion(installed)).toBe(fixtureVersion)
         expect(stdout).toContain(`Verified: ${installed} --version -> ${fixtureVersion}`)
+        for (const tool of ['.agents', '.claude']) {
+          const installedSkill = await Bun.file(join(home, tool, 'skills', 'guiho-s-xdocs', 'SKILL.md')).text()
+          expect(installedSkill).toContain('name: guiho-s-xdocs')
+          expect(installedSkill.startsWith('MZ')).toBeFalse()
+        }
       }
     } finally {
       server?.stop(true)
@@ -102,6 +130,7 @@ internal static class Program
       await compileFixture(source, fixture)
       await writeFile(fakeCurl, `#!/bin/sh
 output=''
+url=''
 while [ "$#" -gt 0 ]; do
   case "$1" in
     *install.sh)
@@ -109,17 +138,22 @@ while [ "$#" -gt 0 ]; do
       exit 0
       ;;
   esac
-  case "$1" in
-    *-x64-baseline) exit 22 ;;
-  esac
   if [ "$1" = '--output' ]; then
     output="$2"
     shift 2
+  elif [ "${'$'}{1#http}" != "$1" ]; then
+    url="$1"
+    shift
   else
     shift
   fi
 done
-cp "$XDOCS_INSTALLER_FIXTURE" "$output"
+case "$url" in
+  *-x64-baseline) exit 22 ;;
+  *guiho-s-xdocs.md) printf '%s\\n' '---' 'name: guiho-s-xdocs' '---' '' '# xdocs skill' >"$output" ;;
+  *guiho-i-xdocs.md) printf '%s\\n' '---' 'name: guiho-i-xdocs' '---' '' '# xdocs prompts' >"$output" ;;
+  *) cp "$XDOCS_INSTALLER_FIXTURE" "$output" ;;
+esac
 `, 'utf8')
       await chmod(fakeCurl, 0o755)
       const recovery = buildUpgradeRecovery({
@@ -145,6 +179,11 @@ cp "$XDOCS_INSTALLER_FIXTURE" "$output"
       const installed = join(installDir, 'xdocs')
       expect(await executableVersion(installed)).toBe(fixtureVersion)
       expect(stdout).toContain(`Verified: ${installed} --version -> ${fixtureVersion}`)
+      for (const tool of ['.agents', '.claude']) {
+        const installedSkill = await Bun.file(join(dir, tool, 'skills', 'guiho-s-xdocs', 'SKILL.md')).text()
+        expect(installedSkill).toContain('name: guiho-s-xdocs')
+        expect(installedSkill.startsWith('MZ')).toBeFalse()
+      }
     } finally {
       await rm(dir, { recursive: true, force: true })
     }
