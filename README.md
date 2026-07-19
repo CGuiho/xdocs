@@ -195,6 +195,12 @@ catalog and returns every stable and prerelease version, newest SemVer first,
 with full tags, channel identifiers, publication dates, compatible-asset
 status, and current/latest-stable markers.
 
+Every upgrade outcome prints a recovery block after its final result. The
+direct-install command is pinned to the fully resolved stable or prerelease
+version and uses the supported native installer; a separate platform-specific
+command stops a blocking XDocs process. JSON returns the same values in its
+`recovery` object.
+
 ## Development
 
 ```bash
