@@ -9,7 +9,7 @@ files:
   extract-release-notes.ts: Strict release-note extractor that writes only the changelog section matching the release version.
   install.ps1: Progress-visible Windows installer for binary, literal-safe PATH mutation, validated Markdown agent assets, both skill destinations, instruction reconciliation, rollback, and final verification.
   install.sh: Progress-visible Linux/Darwin installer with Darwin-aware shell-profile PATH setup, literal-safe PATH persistence, validated Markdown agent assets, both skill destinations, instruction reconciliation, rollback, and final verification.
-  installers.spec.ts: Isolated recovery-installer regression coverage including Markdown agent fixtures, paths with spaces, PATH persistence, and Darwin Bash profile selection.
+  installers.spec.ts: Isolated recovery-installer regression coverage including Markdown agent fixtures, paths with spaces, fresh-shell PATH command resolution, and Darwin Bash profile selection.
 documents: {}
 tags:
   - devops
