@@ -18,6 +18,8 @@ keywords:
 
 ## Unreleased
 
+## 0.6.2 - 2026-07-19
+
 - Stream real download progress during `xdocs upgrade`, including percentages
   for known lengths, bytes for unknown lengths, human bars, JSON progress
   events, and partial-stream failure attribution; give the PowerShell installer
