@@ -54,6 +54,53 @@ describe('upgrade transaction', () => {
     }
   })
 
+  test('reports known-length percentages and unknown-length byte progress', async () => {
+    for (const knownLength of [true, false]) {
+      const fixture = await createFixture()
+      try {
+        const result = await executeUpgradeTransaction({
+          ...fixture.options,
+          fetcher: async () => new Response('MZtarget', knownLength ? { headers: { 'content-length': '8' } } : undefined),
+        })
+        const progress = result.events.filter((event) => event.phase === 'download' && event.status === 'progress')
+        expect(progress.length).toBeGreaterThan(0)
+        expect(progress.at(-1)?.progress).toEqual({
+          receivedBytes: 8,
+          totalBytes: knownLength ? 8 : null,
+          percent: knownLength ? 100 : null,
+        })
+      } finally {
+        await fixture.cleanup()
+      }
+    }
+  })
+
+  test('records a download failure after partial progress', async () => {
+    const fixture = await createFixture()
+    try {
+      let chunkSent = false
+      const body = new ReadableStream<Uint8Array>({
+        pull(controller) {
+          if (!chunkSent) {
+            chunkSent = true
+            controller.enqueue(new TextEncoder().encode('MZ'))
+            return
+          }
+          controller.error(new Error('connection interrupted'))
+        },
+      })
+      const result = await executeUpgradeTransaction({
+        ...fixture.options,
+        fetcher: async () => new Response(body, { headers: { 'content-length': '8' } }),
+      })
+      expect(result.outcome).toBe('failed')
+      expect(result.events).toContainEqual(expect.objectContaining({ phase: 'download', status: 'progress' }))
+      expect(result.events.at(-1)).toMatchObject({ phase: 'download', status: 'failed' })
+    } finally {
+      await fixture.cleanup()
+    }
+  })
+
   test('restores the byte-identical previous executable after canonical verification fails', async () => {
     const fixture = await createFixture()
     try {
