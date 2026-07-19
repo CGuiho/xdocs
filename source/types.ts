@@ -290,7 +290,7 @@ export type XDocsNativeArch = 'x64' | 'arm64'
 export type XDocsNativeVariant = 'baseline' | 'default' | 'modern'
 
 /** Release channel derived from a semantic version. */
-export type XDocsReleaseChannel = 'stable' | 'alpha' | 'beta' | 'rc' | 'prerelease'
+export type XDocsReleaseChannel = string
 
 /** One native asset attached to an xdocs GitHub release. */
 export type XDocsReleaseAsset = {
