@@ -10,7 +10,7 @@ documents:
   improve-json-output-coverage.md: Follow-up task spec for consistent JSON output coverage across xdocs commands.
   rfc-0034-cli-compliance-migration.md: Defines the required breaking outcome, global-by-default initialization setup, root-catalog help signals, scope, constraints, and completion criteria for full xdocs RFC 0034 compliance.
   rfc-0034-cli-compliance-migration-implementation.md: Records completed units, issue 7 initialization setup, issue 8 fresh-shell PATH repair, corrective root-help and Darwin installer audit, breaking removals, validation, review, and downstream handoff.
-  upgrade-reliability-implementation.md: Tracks upgrade reliability progress, decisions, verification evidence, and integration handoff.
+  upgrade-reliability-implementation.md: Records completed issue 9 upgrade/list acceptance work, transaction decisions, live-catalog evidence, and final release smoke handoff.
   upgrade-reliability.md: Defines reliable verified self-upgrade, complete release catalog, exact recovery guidance, and installer acceptance signals.
 tags:
   - todo
