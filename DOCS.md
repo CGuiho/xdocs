@@ -230,15 +230,21 @@ xdocs upgrade [--version <version>] [--arch <x64|arm64>]
               [--variant <baseline|default|modern>] [--dry-run]
               [--format <text|json>]
 xdocs upgrade check
-xdocs upgrade list [--page <n>] [--per-page <n>] [--pre-releases]
+xdocs upgrade list
 xdocs uninstall [--dry-run]
 ```
 
-Stable releases are listed by default, newest first. The x64 default variant is
-baseline. GitHub release responses and pagination flags are TypeBox-validated.
+Every published stable and prerelease is listed, newest SemVer first. Each row
+includes the normalized version, full tag, exact channel identifier,
+publication date, compatible-asset status/name, and current/latest-stable
+markers. GitHub pagination is exhausted internally; later-page failure aborts
+instead of returning a partial catalog. The x64 default variant is baseline.
+GitHub release responses are TypeBox-validated.
 
 Upgrade phases are plan, download, validate, replace, verify, cache, and
 cleanup. A journal and backup support interruption recovery and rollback.
+Text output flushes the complete immutable plan before `Downloading...`, then
+prints `Replacing...` and `Verifying...` only when those phases begin.
 After successful replacement xdocs refreshes both global skill copies and
 updates instructions in the current project.
 
