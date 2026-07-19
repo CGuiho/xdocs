@@ -18,6 +18,9 @@ keywords:
 
 ## Unreleased
 
+- Make `xdocs init` install or refresh the bundled skill in both global tool
+  locations by default, preserve `--local` project scope, and test both paths
+  idempotently with isolated home directories.
 - Rename both Markdown release artifacts to `guiho-s-xdocs.md` and
   `guiho-i-xdocs.md` while retaining the exact fourteen-asset set, validate
   their Markdown identity before installation, and isolate installer fixtures
