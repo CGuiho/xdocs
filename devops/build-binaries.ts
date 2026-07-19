@@ -2,7 +2,12 @@
  * Build and verify the exact RFC 0034 fourteen-asset release set.
  */
 
-import { assertExactReleaseAssets, xdocsNativeTargets, xdocsReleaseAssetNames } from '../source/release-assets.js'
+import {
+  assertExactReleaseAssets,
+  assertMarkdownAgentAsset,
+  xdocsNativeTargets,
+  xdocsReleaseAssetNames,
+} from '../source/release-assets.js'
 import { makeDirectory, removePath } from '../source/runtime/fs.js'
 
 assertExactReleaseAssets(xdocsReleaseAssetNames)
@@ -39,15 +44,17 @@ const promptBodies: Record<string, string> = {}
 for (const name of ['write', 'update', 'agents', 'generate']) {
   promptBodies[`${name}.md`] = await Bun.file(`${root}${slash}prompts${slash}${name}.md`).text()
 }
-await Bun.write(`${bin}${slash}guiho-s-xdocs`, `${skill.trimEnd()}\n`)
-await Bun.write(`${bin}${slash}guiho-i-xdocs`, JSON.stringify({
-  schema: 1,
-  manifest: promptManifest,
-  prompts: promptBodies,
-}, null, 2) + '\n')
+const skillAsset = `${skill.trimEnd()}\n`
+const promptAsset = `${promptManifest.trimEnd()}\n\n---\n\n${Object.entries(promptBodies)
+  .map(([file, body]) => `## Prompt: ${file.slice(0, -3)}\n\n${body.trim()}`)
+  .join('\n\n---\n\n')}\n`
+assertMarkdownAgentAsset('guiho-s-xdocs.md', skillAsset)
+assertMarkdownAgentAsset('guiho-i-xdocs.md', promptAsset)
+await Bun.write(`${bin}${slash}guiho-s-xdocs.md`, skillAsset)
+await Bun.write(`${bin}${slash}guiho-i-xdocs.md`, promptAsset)
 
 const actual: string[] = []
 for await (const entry of new Bun.Glob('*').scan({ cwd: bin, onlyFiles: true })) actual.push(entry)
 actual.sort()
 assertExactReleaseAssets(actual)
-console.log('verified exactly 12 native binaries plus guiho-s-xdocs and guiho-i-xdocs')
+console.log('verified exactly 12 native binaries plus guiho-s-xdocs.md and guiho-i-xdocs.md')
