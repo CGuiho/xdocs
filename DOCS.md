@@ -200,7 +200,7 @@ xdocs agent prompt show write
 
 IDs are `write`, `update`, `agents`, and `generate`. `show` prints only the raw
 body. Native binaries embed the manifest and all bodies. The release contains
-one `guiho-i-xdocs` catalog artifact, not four separate prompt assets.
+one `guiho-i-xdocs.md` catalog artifact, not four separate prompt assets.
 
 ## Startup and update cache
 
@@ -247,8 +247,11 @@ architecture, variant, source URL, live download progress, binary destination,
 skill destinations, discovered instruction files, reconciliation, and final
 verification.
 
-They install the matching native binary and both agent assets. Failures preserve
-or restore the previous executable.
+They install the matching native binary and download `guiho-s-xdocs.md` plus
+`guiho-i-xdocs.md`. Both files must be valid named Markdown; PE executables,
+NUL-containing content, empty responses, and invalid metadata are rejected
+before either installed `SKILL.md` is changed. Failures preserve or restore the
+previous executable.
 
 ## npm bootstrap
 
@@ -275,12 +278,16 @@ xdocs-windows-arm64.exe
 xdocs-windows-x64.exe
 xdocs-windows-x64-baseline.exe
 xdocs-windows-x64-modern.exe
-guiho-s-xdocs
-guiho-i-xdocs
+guiho-s-xdocs.md
+guiho-i-xdocs.md
 ```
 
 The build and GitHub workflow reject missing, duplicate, extra, legacy, or
 wrongly suffixed assets.
+
+The tag workflow extracts only the exact version's `## <version>` section from
+`CHANGELOG.md` for the GitHub Release description. Extraction stops at the next
+level-two heading and fails on missing, duplicate, or empty matching sections.
 
 ## TypeScript API
 
