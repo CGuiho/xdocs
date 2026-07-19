@@ -79,7 +79,7 @@ All Rights Reserved.
 - Updated: `2026-07-19`
 - Outcome: xdocs fully implements the approved breaking GUIHO RFC 0034 CLI contract, including true root-catalog help without a synthetic `home` route and global-by-default dual-tool skill setup during `xdocs init` with an explicit `--local` override, across Bun-only source, TypeBox validation, YAML configuration, agents, prompts, upgrades, installers, npm distribution, release assets, tests, and documentation.
 - Spec: [docs/todo/rfc-0034-cli-compliance-migration.md](docs/todo/rfc-0034-cli-compliance-migration.md)
-- External: GitHub issues [CGuiho/xdocs#7](https://github.com/CGuiho/xdocs/issues/7), [CGuiho/xdocs#8](https://github.com/CGuiho/xdocs/issues/8), and [CGuiho/xdocs#11](https://github.com/CGuiho/xdocs/issues/11)
+- External: GitHub issues [CGuiho/xdocs#7](https://github.com/CGuiho/xdocs/issues/7), [CGuiho/xdocs#8](https://github.com/CGuiho/xdocs/issues/8), [CGuiho/xdocs#11](https://github.com/CGuiho/xdocs/issues/11), and [CGuiho/xdocs#12](https://github.com/CGuiho/xdocs/issues/12)
 - Related files:
   - [docs/plans/rfc-0034-cli-compliance-migration.md](docs/plans/rfc-0034-cli-compliance-migration.md) - Approved step-by-step migration plan.
   - [docs/reviews/plans/rfc-0034-cli-compliance-migration-review.md](docs/reviews/plans/rfc-0034-cli-compliance-migration-review.md) - Ready-for-execution plan review.
