@@ -248,6 +248,14 @@ prints `Replacing...` and `Verifying...` only when those phases begin.
 After successful replacement xdocs refreshes both global skill copies and
 updates instructions in the current project.
 
+After every upgraded, failed, rolled-back, or already-current result, text and
+Markdown print a copy-paste native installer command pinned to the resolved
+full version, followed by a separate platform-specific process-stop command.
+Pre-plan discovery failure falls back to a visibly labeled reinstall of the
+current version. JSON exposes the equivalent `recovery.targetVersion`,
+`installCommand`, and `stopProcessCommand` fields without mixing human output
+into stdout.
+
 ## Installers
 
 `devops/install.ps1` and `devops/install.sh` print target version,
@@ -260,6 +268,9 @@ They install the matching native binary and download `guiho-s-xdocs.md` plus
 NUL-containing content, empty responses, and invalid metadata are rejected
 before either installed `SKILL.md` is changed. Failures preserve or restore the
 previous executable.
+Both installers accept an explicit full stable or prerelease version, resolve
+that release's matching platform/architecture asset, and exit nonzero unless
+the canonical installed executable reports exactly that version.
 
 ## npm bootstrap
 
