@@ -8,7 +8,7 @@ children:
 files:
   agents.ts: Explicit both-target skill operations and exact idempotent AGENTS/CLAUDE instruction management.
   cli.ts: Single raw Citty catalog whose root action owns no-argument startup, init exposes global-by-default skill setup with --local, and every root help mode renders the true public command tree.
-  cli.spec.ts: RFC command catalog, subprocess root-help, isolated global/local init, startup, YAML, agent, prompt, upgrade-routing/recovery JSON, and domain CLI regressions.
+  cli.spec.ts: RFC command catalog, root/group/leaf Unicode help trees, depth/redirect safety, subprocess root-help, isolated global/local init, startup, YAML, agent, prompt, upgrade-routing/recovery JSON, and domain CLI regressions.
   config.ts: YAML precedence, Bun parsing, TypeBox decoding, defaults, and writing.
   context.ts: Deterministic minimal reading-set recommendation.
   context-doctor.spec.ts: Context and doctor domain regression tests.
