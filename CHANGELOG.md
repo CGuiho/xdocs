@@ -18,6 +18,10 @@ keywords:
 
 ## Unreleased
 
+- Standardize every upgrade result's recovery block around the resolved full
+  version, put the pinned native-installer command before a separate
+  platform-specific stop command, and cover upgraded, failed, rolled-back,
+  already-current, and JSON outcomes.
 - Make `xdocs upgrade list` return the complete stable and prerelease catalog by
   default with full tags, exact channels, dates, compatible-asset state, and
   current/latest-stable markers; align the human upgrade transcript with the
