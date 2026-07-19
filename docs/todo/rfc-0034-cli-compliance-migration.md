@@ -54,7 +54,8 @@ overridden `guiho-s-xdocs.md` and `guiho-i-xdocs.md` Markdown release assets.
 - final Citty catalog and removal of root prompt/plural agents/scoped `-v`.
 - standardized startup and `~/.guiho/xdocs/cache.json`.
 - all help modes at every scope.
-- complete explicit agent operations and removal of normal-command agent writes.
+- complete explicit agent operations, global-by-default initialization skill
+  setup with `--local`, and removal of other normal-command agent writes.
 - consolidation of current prompts into the RFC prompt catalog/release asset.
 - upgrade pagination and post-upgrade agent reconciliation.
 - installers, Node npm bootstrap, exact fourteen assets, tests, CI, docs,
@@ -83,8 +84,9 @@ overridden `guiho-s-xdocs.md` and `guiho-i-xdocs.md` Markdown release assets.
   Markdown docs generated from the Citty tree.
 - Root help exposes the complete approved public catalog with examples, hides
   internal worker routing, and rejects `xdocs home` as an unknown command.
-- The complete singular agent namespace is explicit and idempotent; ordinary
-  scan/generate/meta/context/doctor commands do not mutate skills or
+- The complete singular agent namespace is explicit and idempotent;
+  `xdocs init` installs the skill globally by default or locally with
+  `--local`; scan/generate/meta/context/doctor do not mutate skills or
   instructions.
 - `write`, `update`, `agents`, and `generate` prompts are available through
   `xdocs agent prompt`.
