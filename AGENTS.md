@@ -37,8 +37,10 @@ Stop if you can not find it.
   and validation skills named in the approved plan.
 - The approved RFC 0034 migration may make breaking changes. xdocs is pre-1.0;
   do not keep TOML configuration, Node-based core compatibility, plural agent
-  commands, root prompt syntax, automatic agent mutations, or legacy release
-  names when they conflict with the plan.
+  commands, root prompt syntax, configuration-driven agent mutations, or legacy
+  release names when they conflict with the plan. `xdocs init` is the explicit
+  setup exception: it installs the skill globally by default and accepts
+  `--local` for project scope.
 
 
 - `xdocs` is almost always written lowercase (CLI, code, text). Only capitalize as `XDocs` when used in a title or heading.
