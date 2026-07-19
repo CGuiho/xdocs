@@ -140,6 +140,12 @@ function Add-InstallDirToPath {
   if (-not (Test-PathContains -PathValue $userPath -Directory $Directory)) {
     $entries = @(Get-PathEntries -PathValue $userPath)
     $newUserPath = (@($Directory) + $entries) -join ';'
+    if ($newUserPath -match '(?i)\$env:Path|%PATH%') {
+      throw 'Refusing to persist a literal PATH variable reference into the user Path.'
+    }
+    if (-not (Test-PathContains -PathValue $newUserPath -Directory $Directory)) {
+      throw 'Installer failed to add the install directory to the user Path.'
+    }
     [Environment]::SetEnvironmentVariable('Path', $newUserPath.TrimEnd(';'), 'User')
     Write-Host "Added $Directory to user PATH. Restart your terminal to use xdocs globally."
   } else {
@@ -160,6 +166,36 @@ function Test-NativeBinary {
   }
 
   return $bytes[0] -eq 0x4D -and $bytes[1] -eq 0x5A
+}
+
+function Test-MarkdownAgentAsset {
+  param(
+    [string]$Path,
+    [string]$ExpectedName
+  )
+
+  $bytes = [System.IO.File]::ReadAllBytes($Path)
+  if ($bytes.Length -eq 0) {
+    return $false
+  }
+  if ($bytes.Length -ge 2 -and $bytes[0] -eq 0x4D -and $bytes[1] -eq 0x5A) {
+    return $false
+  }
+  if ($bytes -contains 0) {
+    return $false
+  }
+
+  try {
+    $utf8 = New-Object System.Text.UTF8Encoding($false, $true)
+    $content = $utf8.GetString($bytes)
+  } catch {
+    return $false
+  }
+
+  $escapedName = [Regex]::Escape($ExpectedName)
+  return $content -match '\A---\r?\n' `
+    -and $content -match "(?m)^name:\s*['`"]?$escapedName['`"]?\s*$" `
+    -and $content -match '(?m)^#\s+\S'
 }
 
 function Get-NormalizedVersion {
@@ -285,16 +321,19 @@ foreach ($asset in $assetCandidates) {
     }
     Write-Host "Installed xdocs to $destination"
 
-    $skillUrl = Get-DownloadUrl -Asset 'guiho-s-xdocs'
-    $promptUrl = Get-DownloadUrl -Asset 'guiho-i-xdocs'
-    $skillTemp = Join-Path $InstallDir ".guiho-s-xdocs-$transactionId"
-    $promptTemp = Join-Path $InstallDir ".guiho-i-xdocs-$transactionId"
+    $skillUrl = Get-DownloadUrl -Asset 'guiho-s-xdocs.md'
+    $promptUrl = Get-DownloadUrl -Asset 'guiho-i-xdocs.md'
+    $skillTemp = Join-Path $InstallDir ".guiho-s-xdocs-$transactionId.md"
+    $promptTemp = Join-Path $InstallDir ".guiho-i-xdocs-$transactionId.md"
     Write-Host "Downloading skill asset: $skillUrl"
     Invoke-WebRequest -Uri $skillUrl -OutFile $skillTemp -UseBasicParsing -ErrorAction Stop
     Write-Host "Downloading instruction/prompt asset: $promptUrl"
     Invoke-WebRequest -Uri $promptUrl -OutFile $promptTemp -UseBasicParsing -ErrorAction Stop
-    if ((Get-Item -LiteralPath $skillTemp).Length -eq 0 -or (Get-Item -LiteralPath $promptTemp).Length -eq 0) {
-      throw 'Downloaded agent assets were empty.'
+    if (-not (Test-MarkdownAgentAsset -Path $skillTemp -ExpectedName 'guiho-s-xdocs')) {
+      throw 'Downloaded guiho-s-xdocs.md was not valid Markdown skill content.'
+    }
+    if (-not (Test-MarkdownAgentAsset -Path $promptTemp -ExpectedName 'guiho-i-xdocs')) {
+      throw 'Downloaded guiho-i-xdocs.md was not valid Markdown prompt content.'
     }
     $agentSkill = Join-Path $HOME '.agents\skills\guiho-s-xdocs'
     $claudeSkill = Join-Path $HOME '.claude\skills\guiho-s-xdocs'
