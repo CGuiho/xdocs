@@ -22,6 +22,7 @@ test('uses the Darwin runtime label when selecting the macOS Bash profile', asyn
 test('uses Markdown agent assets and preserves shell PATH expansion', async () => {
   const bashInstaller = await Bun.file(join(repositoryRoot, 'devops', 'install.sh')).text()
   const powerShellInstaller = await Bun.file(join(repositoryRoot, 'devops', 'install.ps1')).text()
+  const readme = await Bun.file(join(repositoryRoot, 'README.md')).text()
   for (const installer of [bashInstaller, powerShellInstaller]) {
     expect(installer).toContain('guiho-s-xdocs.md')
     expect(installer).toContain('guiho-i-xdocs.md')
@@ -29,26 +30,31 @@ test('uses Markdown agent assets and preserves shell PATH expansion', async () =
   expect(bashInstaller).toContain('export PATH=%q:$PATH')
   expect(bashInstaller).not.toContain('export PATH=%q:\\$PATH')
   expect(bashInstaller).toContain('curl --fail --location --progress-bar')
-  expect(powerShellInstaller).toContain('Refusing to persist a literal PATH variable reference')
-  expect(powerShellInstaller).toContain('Test-MarkdownAgentAsset')
-  expect(powerShellInstaller).toContain('Invoke-DownloadWithProgress')
-  expect(powerShellInstaller).toContain('Download progress:')
+  expect(powerShellInstaller).toContain('Test-MarkdownAsset')
+  expect(powerShellInstaller).toContain('Invoke-WebRequest')
+  expect(powerShellInstaller).toContain('XDOCS_DOWNLOAD_BASE_URL')
+  expect(powerShellInstaller).toContain('$stdout -notmatch "^xdocs $semanticVersionPattern$"')
+  expect(readme).toContain('irm https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.ps1 | iex')
+  expect(readme).not.toContain('& $env:TEMP\\xdocs-install.ps1')
 })
 
 if (process.platform === 'win32') {
-  test('printed Windows recovery command works from PowerShell and Git Bash', async () => {
+  test('README PowerShell pipe installs and verifies under Restricted policy', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'xdocs-powershell-installer-'))
     const fixture = join(dir, 'fixture.exe')
     const source = join(dir, 'fixture.cs')
+    const installDir = join(dir, 'install path with spaces')
+    const home = join(dir, 'isolated home')
     let server: ReturnType<typeof Bun.serve> | undefined
     try {
+      await mkdir(home, { recursive: true })
       await writeFile(source, `using System;
 
 internal static class Program
 {
     private static int Main(string[] args)
     {
-        Console.WriteLine("${fixtureVersion}");
+        Console.WriteLine("xdocs ${fixtureVersion}");
         return 0;
     }
 }
@@ -73,48 +79,33 @@ internal static class Program
         },
       })
       const baseUrl = `http://127.0.0.1:${server.port}`
-      const recovery = buildUpgradeRecovery({
-        platform: 'windows',
-        targetVersion: fixtureVersion,
-        targetSource: 'explicit',
-        installerUrl: `${baseUrl}/install.ps1`,
+      const { exitCode, stdout, stderr } = await spawnCaptured([
+        'powershell.exe',
+        '-NoProfile',
+        '-ExecutionPolicy',
+        'Restricted',
+        '-Command',
+        `Set-Location -LiteralPath $env:USERPROFILE; Invoke-RestMethod '${baseUrl}/install.ps1' | Invoke-Expression`,
+      ], {
+        ...process.env,
+        HOME: home,
+        USERPROFILE: home,
+        XDOCS_DOWNLOAD_BASE_URL: baseUrl,
+        XDOCS_INSTALL_DIR: installDir,
+        XDOCS_SKIP_PATH_UPDATE: '1',
+        XDOCS_VERSION: fixtureVersion,
       })
-      expect(recovery.installCommand).toContain(fixtureVersion)
-
-      const gitBash = await findGitBash()
-      const shells: Array<{ name: string, command: string[] }> = [
-        {
-          name: 'PowerShell',
-          command: ['powershell.exe', '-NoProfile', '-Command', recovery.installCommand],
-        },
-        {
-          name: 'Git Bash',
-          command: [gitBash, '-lc', recovery.installCommand],
-        },
-      ]
-      for (const shell of shells) {
-        const installDir = join(dir, `${shell.name} install path with spaces`)
-        const home = join(dir, `${shell.name} isolated home`)
-        await mkdir(home, { recursive: true })
-        const { exitCode, stdout, stderr } = await spawnCaptured(shell.command, {
-          ...process.env,
-          HOME: home,
-          USERPROFILE: home,
-          XDOCS_DOWNLOAD_BASE_URL: baseUrl,
-          XDOCS_INSTALL_DIR: installDir,
-          XDOCS_SKIP_PATH_UPDATE: '1',
-        })
-        expect(exitCode, `${shell.name}\n${stdout}\n${stderr}`).toBe(0)
-        const installed = join(installDir, 'xdocs.exe')
-        expect(await executableVersion(installed)).toBe(fixtureVersion)
-        expect(stdout).toContain('Download progress:')
-        expect(stdout).toContain(`Verified: ${installed} --version -> ${fixtureVersion}`)
-        for (const tool of ['.agents', '.claude']) {
-          const installedSkill = await Bun.file(join(home, tool, 'skills', 'guiho-s-xdocs', 'SKILL.md')).text()
-          expect(installedSkill).toContain('name: guiho-s-xdocs')
-          expect(installedSkill.startsWith('MZ')).toBeFalse()
-        }
+      expect(exitCode, `${stdout}\n${stderr}`).toBe(0)
+      const installed = join(installDir, 'xdocs.exe')
+      expect(await executableVersion(installed)).toBe(fixtureVersion)
+      expect(stdout).toContain(`Installed and verified XDocs ${fixtureVersion} at ${installed}`)
+      expect(stdout).not.toContain('StatusCode          : OK')
+      for (const tool of ['.agents', '.claude']) {
+        const installedSkill = await Bun.file(join(home, tool, 'skills', 'guiho-s-xdocs', 'SKILL.md')).text()
+        expect(installedSkill).toContain('name: guiho-s-xdocs')
+        expect(installedSkill.startsWith('MZ')).toBeFalse()
       }
+      expect(await Bun.file(join(home, 'AGENTS.md')).text()).toContain('<!-- BEGIN XDOCS')
     } finally {
       server?.stop(true)
       await rm(dir, { recursive: true, force: true })
@@ -254,7 +245,7 @@ async function executableVersion(path: string): Promise<string> {
     new Response(proc.stderr).text(),
   ])
   if (exitCode !== 0) throw new Error(`Fixture failed (${exitCode}): ${stderr}`)
-  return stdout.trim()
+  return stdout.trim().replace(/^xdocs /, '')
 }
 
 async function spawnCaptured(
@@ -274,15 +265,4 @@ async function spawnCaptured(
     new Response(proc.stderr).text(),
   ])
   return { exitCode, stdout, stderr }
-}
-
-async function findGitBash(): Promise<string> {
-  const candidates = [
-    'C:\\Program Files\\Git\\bin\\bash.exe',
-    'C:\\Program Files\\Git\\usr\\bin\\bash.exe',
-  ]
-  for (const candidate of candidates) {
-    if (await Bun.file(candidate).exists()) return candidate
-  }
-  throw new Error('Git Bash is required for the Windows recovery-command regression.')
 }
