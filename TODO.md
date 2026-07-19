@@ -62,8 +62,8 @@ All Rights Reserved.
 
 - Status: completed
 - Created: `2026-07-15`
-- Updated: `2026-07-18T23:59:00+02:00`
-- Outcome: Make native self-upgrade observable, immediately verified and rollback-safe, with complete release listing and exact recovery commands.
+- Updated: `2026-07-19`
+- Outcome: Make native self-upgrade observable, immediately verified and rollback-safe, with a complete unfiltered all-channel release list and exact recovery commands.
 - Spec: [docs/todo/upgrade-reliability.md](docs/todo/upgrade-reliability.md)
 - Related files:
   - [docs/superpowers/specs/2026-07-15-upgrade-reliability-design.md](docs/superpowers/specs/2026-07-15-upgrade-reliability-design.md) - Approved behavior and architecture contract.
