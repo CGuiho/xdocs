@@ -97,6 +97,20 @@ Instruction operations manage a bounded XDOCS block in `AGENTS.md`,
 `CLAUDE.md`, both, or a newly created `AGENTS.md`. Prompt operations expose the
 four embedded bodies and the `guiho-i-xdocs` release catalog.
 
+## Upgrade transactions and catalog
+
+`xdocs upgrade` resolves and prints an immutable plan before download, streams
+typed phase starts, validates a native candidate, swaps the canonical
+executable synchronously, verifies the canonical path, and rolls back on swap
+or version failure. Only deletion of a Windows backup may be deferred. JSON
+output buffers the same plan, events, result, recovery, and error into one
+document.
+
+`xdocs upgrade list` exhausts GitHub Releases pagination and keeps every stable
+and prerelease entry. SemVer ordering is newest first; rows expose the full tag,
+exact prerelease identifier, publication timestamp, compatible-asset state,
+current marker, and latest-stable marker.
+
 ## Distribution
 
 `devops/build-binaries.ts` compiles twelve native binaries:
