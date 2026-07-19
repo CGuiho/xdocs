@@ -244,6 +244,8 @@ GitHub release responses are TypeBox-validated.
 Upgrade phases are plan, download, validate, replace, verify, cache, and
 cleanup. A journal and backup support interruption recovery and rollback.
 Text output flushes the complete immutable plan before `Downloading...`, then
+streams a progress bar and percentage when `Content-Length` is known or received
+bytes when it is not, and
 prints `Replacing...` and `Verifying...` only when those phases begin.
 After successful replacement xdocs refreshes both global skill copies and
 updates instructions in the current project.
@@ -268,6 +270,9 @@ They install the matching native binary and download `guiho-s-xdocs.md` plus
 NUL-containing content, empty responses, and invalid metadata are rejected
 before either installed `SKILL.md` is changed. Failures preserve or restore the
 previous executable.
+POSIX downloads use curl's progress bar. PowerShell downloads stream through a
+bounded buffer and print deterministic percentage/byte updates for the binary,
+skill, and prompt assets.
 Both installers accept an explicit full stable or prerelease version, resolve
 that release's matching platform/architecture asset, and exit nonzero unless
 the canonical installed executable reports exactly that version.
