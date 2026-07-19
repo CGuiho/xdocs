@@ -216,7 +216,11 @@ describe('RFC 0034 Citty catalog', () => {
         '--format',
         'json',
       ]))
-      expect(JSON.parse(result.stdout).outcome).toBe('up-to-date')
+      const envelope = JSON.parse(result.stdout)
+      expect(envelope.outcome).toBe('up-to-date')
+      expect(envelope.recovery.targetVersion).toBe(readPackageVersion())
+      expect(envelope.recovery.installCommand).toContain(readPackageVersion())
+      expect(envelope.recovery.stopProcessCommand).toContain('xdocs')
       expect(result.stderr).toBe('')
     } finally {
       if (previousPath === undefined) delete process.env['XDOCS_SELF_PATH']
