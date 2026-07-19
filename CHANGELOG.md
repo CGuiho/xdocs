@@ -18,6 +18,16 @@ keywords:
 
 ## Unreleased
 
+## 0.6.3 - 2026-07-19
+
+- Replace the XDocs Windows installer with the proven RunX installer flow,
+  adapted only for XDocs identifiers and the `irm ... | iex` entrypoint.
+- Accept the canonical `xdocs <version>` output during PowerShell installer
+  verification instead of rejecting valid release binaries that do not print a
+  bare semantic version.
+- Cover the exact inline PowerShell installation under `Restricted` policy with
+  an isolated branded-version regression.
+
 ## 0.6.2 - 2026-07-19
 
 - Stream real download progress during `xdocs upgrade`, including percentages
