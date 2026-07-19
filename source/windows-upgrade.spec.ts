@@ -14,7 +14,7 @@ import { executeUpgradeTransaction, verifyExecutableVersion } from './upgrade-tr
 if (process.platform === 'win32') {
   test('replaces a running real Windows executable before returning', async () => {
     const previousDisableCleanup = process.env['XDOCS_DISABLE_SCHEDULED_CLEANUP']
-    process.env['XDOCS_DISABLE_SCHEDULED_CLEANUP'] = '1'
+    delete process.env['XDOCS_DISABLE_SCHEDULED_CLEANUP']
     const dir = await mkdtemp(join(tmpdir(), 'xdocs-windows-upgrade-'))
     const canonicalPath = join(dir, 'xdocs.exe')
     const plan: XDocsUpgradePlan = {
@@ -56,11 +56,17 @@ if (process.platform === 'win32') {
       expect(await Bun.file(plan.backupPath).exists()).toBe(true)
       expect(isProcessRunning(runningOldImage.pid)).toBe(true)
       await verifyExecutableVersion(canonicalPath, Bun.version)
+      runningOldImage.kill()
+      await runningOldImage.exited
+      await waitForFileRemoval(plan.backupPath)
+      expect(await Bun.file(plan.backupPath).exists()).toBe(false)
     } finally {
       if (previousDisableCleanup === undefined) delete process.env['XDOCS_DISABLE_SCHEDULED_CLEANUP']
       else process.env['XDOCS_DISABLE_SCHEDULED_CLEANUP'] = previousDisableCleanup
-      runningOldImage.kill()
-      await runningOldImage.exited
+      if (isProcessRunning(runningOldImage.pid)) {
+        runningOldImage.kill()
+        await runningOldImage.exited
+      }
       await Bun.sleep(250)
       await rm(dir, { recursive: true, force: true })
     }
@@ -76,4 +82,12 @@ function isProcessRunning(pid: number): boolean {
   } catch {
     return false
   }
+}
+
+async function waitForFileRemoval(path: string): Promise<void> {
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    if (!await Bun.file(path).exists()) return
+    await Bun.sleep(100)
+  }
+  throw new Error(`Scheduled cleanup did not remove ${path}.`)
 }
