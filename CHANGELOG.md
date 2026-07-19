@@ -18,6 +18,14 @@ keywords:
 
 ## Unreleased
 
+## 0.6.5 - 2026-07-19
+
+- Launch Windows backup cleanup through an independent PowerShell
+  `Start-Process` command because Bun's detached Windows spawn can exit without
+  executing the cleanup command.
+- Retry removal until the renamed old executable unlocks, and verify the real
+  backup disappears after the old Windows process exits.
+
 ## 0.6.4 - 2026-07-19
 
 - Reconcile project instruction blocks through the installed XDocs command
