@@ -32,8 +32,7 @@ upgrades, and fourteen release assets.
 ### Native installer
 
 ```powershell
-irm https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.ps1 -OutFile $env:TEMP\xdocs-install.ps1
-& $env:TEMP\xdocs-install.ps1
+irm https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.ps1 | iex
 ```
 
 ```bash
