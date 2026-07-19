@@ -108,7 +108,10 @@ function createXDocsCommand(): AnyCommand {
     return command
   }
 
-  const init = leaf('init', 'Initialize xdocs in a project.', executionArgs, 'xdocs init', (args) => runInit(options(args), {}))
+  const init = leaf('init', 'Initialize xdocs and install its agent skill globally.', {
+    ...executionArgs,
+    local: { type: 'boolean', description: 'Install the agent skill in the initialized project instead of global scope.' },
+  }, 'xdocs init', (args) => runInit(options(args), { scope: scope(args) }))
   const scan = leaf('scan', 'Scan descriptor and companion-document coverage.', executionArgs, 'xdocs scan', (args) => runScan(options(args)), true)
   const generate = leaf('generate', 'Generate documentation for a directory or project.', {
     ...executionArgs,
