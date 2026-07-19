@@ -149,6 +149,8 @@ stable-only catalog.
 After any `xdocs upgrade` outcome, preserve the printed recovery block. Its
 installer command is pinned to the resolved full version; its process-stop
 command is separate. JSON callers must read the equivalent `recovery` object.
+Download events include known-length percentage progress or unknown-length byte
+progress; human output renders them and JSON retains the structured values.
 
 Every scope supports `-h`/`--help`, `--help-tree`,
 `--help-tree-depth <positive-integer>`, and `--help-docs`. Root version uses
