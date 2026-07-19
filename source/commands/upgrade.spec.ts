@@ -25,6 +25,13 @@ test('renders the complete upgrade plan before ordered long-running phases', asy
   const options: XDocsCliOptions = { cwd: '.', format: 'text', verbose: false }
   const events: XDocsUpgradeEvent[] = [
     event(3, 'download'),
+    {
+      sequence: 4,
+      phase: 'download',
+      status: 'progress',
+      message: '62.5%',
+      progress: { receivedBytes: 5, totalBytes: 8, percent: 62.5 },
+    },
     event(7, 'replace'),
     event(9, 'verify'),
   ]
@@ -45,8 +52,21 @@ test('renders the complete upgrade plan before ordered long-running phases', asy
     'url     : https://example.test/xdocs.exe',
   ]) expect(output).toContain(expected)
   expect(output.indexOf('url     :')).toBeLessThan(output.indexOf('Downloading...'))
+  expect(output).toContain('[#########################---------------] 62.5% (5 B/8 B)')
   expect(output.indexOf('Downloading...')).toBeLessThan(output.indexOf('Replacing...'))
   expect(output.indexOf('Replacing...')).toBeLessThan(output.indexOf('Verifying...'))
+})
+
+test('renders useful download progress without a content length', async () => {
+  const options: XDocsCliOptions = { cwd: '.', format: 'text', verbose: false }
+  const output = await captureStdout(() => renderEvent(options, {
+    sequence: 4,
+    phase: 'download',
+    status: 'progress',
+    message: 'received bytes',
+    progress: { receivedBytes: 1_572_864, totalBytes: null, percent: null },
+  }))
+  expect(output).toBe('Download progress: 1.5 MiB received\n')
 })
 
 test('prints pinned install and separate stop recovery after every terminal outcome', async () => {
