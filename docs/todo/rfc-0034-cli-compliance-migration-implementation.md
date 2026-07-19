@@ -35,7 +35,9 @@ gaps before the `0.6.1` patch:
   `xdocs home` was accidentally callable;
 - standard and Markdown help omitted examples;
 - the POSIX installer's Darwin Bash profile branch compared the normalized
-  `darwin` platform with the unreachable value `macos`.
+  `darwin` platform with the unreachable value `macos`;
+- the POSIX installer persisted `\$PATH`, preventing fresh shells from
+  expanding their existing system PATH.
 
 The root now owns the no-argument lifecycle directly, returns after routed
 subcommands, renders every root help form from the true Citty tree, excludes
@@ -44,8 +46,10 @@ and both help renderers consume them. The installer now selects an existing
 Darwin `.bash_profile` correctly.
 
 Regression coverage includes live subprocess root help/catalog checks, `home`
-rejection, all three YAML precedence levels, and Darwin profile selection. The
-complete suite passes with 50 tests.
+rejection, all three YAML precedence levels, Darwin profile selection, literal
+`$PATH` persistence, and a fresh interactive Bash shell resolving `xdocs`,
+`ls`, and `mkdir`. The Windows installer rejects literal `$env:Path` and
+`%PATH%` tokens before persisting user PATH.
 
 ## Completed units
 
