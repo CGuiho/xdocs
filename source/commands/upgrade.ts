@@ -8,19 +8,13 @@ import { readPackageVersion } from '../help.js'
 import { detectNativeArch, detectNativePlatform, checkForLatestVersion, upgradeSelf } from '../self-management.js'
 import { buildUpgradeListEnvelope, fetchReleaseCatalog } from '../upgrade-catalog.js'
 
-export { runUpgrade, runUpgradeCheck, runUpgradeList }
+export { renderEvent, renderPlan, runUpgrade, runUpgradeCheck, runUpgradeList }
 
 type XDocsUpgradeInput = {
   version?: string
   arch?: string
   variant?: string
   dryRun?: boolean
-}
-
-type XDocsUpgradeListInput = {
-  page?: number
-  perPage?: number
-  preReleases?: boolean
 }
 
 async function runUpgradeCheck(options: XDocsCliOptions): Promise<void> {
@@ -36,14 +30,10 @@ async function runUpgradeCheck(options: XDocsCliOptions): Promise<void> {
   if (result.newVersionAvailable) process.stdout.write('Run: xdocs upgrade\n')
 }
 
-async function runUpgradeList(options: XDocsCliOptions, input: XDocsUpgradeListInput = {}): Promise<void> {
+async function runUpgradeList(options: XDocsCliOptions): Promise<void> {
   const platform = detectNativePlatform()
   const arch = detectNativeArch()
-  const allReleases = await fetchReleaseCatalog({ platform, arch })
-  const filtered = input.preReleases ? allReleases : allReleases.filter((release) => !release.prerelease)
-  const page = input.page ?? 1
-  const perPage = input.perPage ?? 30
-  const releases = filtered.slice((page - 1) * perPage, page * perPage)
+  const releases = await fetchReleaseCatalog({ platform, arch })
   const envelope = buildUpgradeListEnvelope(readPackageVersion(), releases)
   if (options.format === 'json') {
     process.stdout.write(JSON.stringify(envelope, null, 2) + '\n')
@@ -52,27 +42,26 @@ async function runUpgradeList(options: XDocsCliOptions, input: XDocsUpgradeListI
 
   if (options.format === 'markdown') {
     process.stdout.write('# xdocs upgrade list\n\n')
-    process.stdout.write('| Version | Channel | Published | Compatible Asset | Markers |\n')
-    process.stdout.write('| --- | --- | --- | --- | --- |\n')
+    process.stdout.write('| Version | Tag | Channel | Published | Asset | Asset Name | Markers |\n')
+    process.stdout.write('| --- | --- | --- | --- | --- | --- | --- |\n')
     for (const release of releases) {
-      process.stdout.write(`| ${release.version} | ${release.channel} | ${release.publishedAt ?? '-'} | ${release.compatibleAsset?.name ?? '-'} | ${releaseMarkers(release.version, envelope.currentVersion, envelope.latestStableVersion)} |\n`)
+      process.stdout.write(`| ${release.version} | ${release.tag} | ${release.channel} | ${release.publishedAt ?? '-'} | ${release.compatibleAsset ? 'yes' : 'no'} | ${release.compatibleAsset?.name ?? '-'} | ${releaseMarkers(release.version, envelope.currentVersion, envelope.latestStableVersion)} |\n`)
     }
-    if (releases.length === 0) process.stdout.write('| _No published releases_ | - | - | - | - |\n')
+    if (releases.length === 0) process.stdout.write('| _No published releases_ | - | - | - | - | - | - |\n')
     return
   }
 
-  process.stdout.write('Available xdocs versions\n\n')
-  process.stdout.write('Version                   Channel      Published                  Compatible Asset                         Markers\n')
-  process.stdout.write('------------------------------------------------------------------------------------------------------------------\n')
+  process.stdout.write('AVAILABLE XDOCS VERSIONS\n\n')
+  process.stdout.write('Version                   Tag                                  Channel      Published                  Asset  Asset Name                               Markers\n')
+  process.stdout.write('-----------------------------------------------------------------------------------------------------------------------------------------------------------\n')
   for (const release of releases) {
-    process.stdout.write(`${pad(release.version, 25)} ${pad(release.channel, 12)} ${pad(release.publishedAt ?? '-', 26)} ${pad(release.compatibleAsset?.name ?? '-', 40)} ${releaseMarkers(release.version, envelope.currentVersion, envelope.latestStableVersion)}\n`)
+    process.stdout.write(`${pad(release.version, 25)} ${pad(release.tag, 36)} ${pad(release.channel, 12)} ${pad(release.publishedAt ?? '-', 26)} ${pad(release.compatibleAsset ? 'yes' : 'no', 6)} ${pad(release.compatibleAsset?.name ?? '-', 40)} ${releaseMarkers(release.version, envelope.currentVersion, envelope.latestStableVersion)}\n`)
   }
   if (releases.length === 0) process.stdout.write('No published xdocs releases found.\n')
 }
 
 async function runUpgrade(options: XDocsCliOptions, input: XDocsUpgradeInput = {}): Promise<void> {
   const streaming = options.format !== 'json'
-  if (streaming) process.stdout.write(options.format === 'markdown' ? '**Upgrading the CLI...**\n\n' : 'Upgrading the CLI...\n')
   const result = await upgradeSelf({
     version: input.version,
     arch: input.arch,
@@ -103,7 +92,7 @@ function renderPlan(options: XDocsCliOptions, plan: XDocsUpgradePlan): void {
   }
 
   process.stdout.write('------------------------------------------------------------\n')
-  process.stdout.write('  xdocs upgrade\n')
+  process.stdout.write('  Upgrading the CLI\n')
   process.stdout.write('------------------------------------------------------------\n')
   for (const [field, value] of planFields(plan)) process.stdout.write(`  ${pad(field, 8)}: ${value}\n`)
   process.stdout.write('------------------------------------------------------------\n')
