@@ -3,6 +3,8 @@
  */
 
 import type { XDocsCliOptions } from '../types.js'
+import type { XDocsSkillScope } from '../types.js'
+import { installSkills } from '../agents.js'
 import { writeDefaultConfig } from '../config.js'
 import { pathExists, writeText } from '../runtime/fs.js'
 import { basename, joinPath } from '../runtime/path.js'
@@ -19,7 +21,10 @@ in the repo below; each one has its own root named \`*.xdocs.md\` descriptor.
 ## Applications
 `
 
-export const runInit = async (options: XDocsCliOptions, _input: Record<string, never> = {}): Promise<void> => {
+export const runInit = async (
+  options: XDocsCliOptions,
+  input: { scope?: XDocsSkillScope } = {},
+): Promise<void> => {
   const cwd = options.cwd
   const configPath = joinPath(cwd, 'xdocs.yaml')
   if (await pathExists(configPath)) process.stdout.write('exists: xdocs.yaml\n')
@@ -34,5 +39,12 @@ export const runInit = async (options: XDocsCliOptions, _input: Record<string, n
     await writeText(xdocsPath, createRootXDocsContent(basename(cwd)))
     process.stdout.write('created: XDOCS.md\n')
   }
-  process.stdout.write('\nxdocs initialized. Use `xdocs agent skill install --local` and `xdocs agent instruction apply` for explicit agent setup.\n')
+  const scope = input.scope ?? 'global'
+  const skills = await installSkills(scope, { cwd })
+  for (const result of skills) {
+    const action = result.installed ? 'installed' : result.updated ? 'updated' : 'current'
+    process.stdout.write(`${action}: guiho-s-xdocs skill (${result.tool}, ${scope}) -> ${result.path}\n`)
+  }
+
+  process.stdout.write('\nxdocs initialized.\n')
 }
