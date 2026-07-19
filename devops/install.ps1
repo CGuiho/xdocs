@@ -8,6 +8,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+Add-Type -AssemblyName System.Net.Http -ErrorAction Stop
 
 # === Defaults from env vars or sensible defaults ===
 if ([string]::IsNullOrWhiteSpace($Version)) {
@@ -105,6 +106,63 @@ function Get-DownloadUrl {
 
   $encodedTag = [Uri]::EscapeDataString($tag)
   return "https://github.com/$Repo/releases/download/$encodedTag/$Asset"
+}
+
+function Invoke-DownloadWithProgress {
+  param(
+    [Parameter(Mandatory = $true)][string]$Uri,
+    [Parameter(Mandatory = $true)][string]$OutFile,
+    [Parameter(Mandatory = $true)][string]$Label
+  )
+
+  $client = [System.Net.Http.HttpClient]::new()
+  $response = $null
+  $inputStream = $null
+  $outputStream = $null
+  try {
+    $client.DefaultRequestHeaders.UserAgent.ParseAdd('xdocs-installer')
+    $response = $client.GetAsync(
+      $Uri,
+      [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead
+    ).GetAwaiter().GetResult()
+    $response.EnsureSuccessStatusCode()
+    $total = $response.Content.Headers.ContentLength
+    $inputStream = $response.Content.ReadAsStreamAsync().GetAwaiter().GetResult()
+    $outputStream = [System.IO.File]::Open(
+      $OutFile,
+      [System.IO.FileMode]::Create,
+      [System.IO.FileAccess]::Write,
+      [System.IO.FileShare]::None
+    )
+    $buffer = New-Object byte[] 65536
+    [long]$received = 0
+    $lastPercent = -5
+    [long]$lastBytes = 0
+    while (($read = $inputStream.Read($buffer, 0, $buffer.Length)) -gt 0) {
+      $outputStream.Write($buffer, 0, $read)
+      $received += $read
+      if ($total -and $total -gt 0) {
+        $percent = [Math]::Min(100, [Math]::Floor(($received * 100.0) / $total))
+        if ($percent -ge ($lastPercent + 5) -or $percent -eq 100) {
+          Write-Progress -Activity $Label -Status "$percent% ($received/$total bytes)" -PercentComplete $percent
+          Write-Host "Download progress: $percent% ($received/$total bytes)"
+          $lastPercent = $percent
+        }
+      } elseif (($received - $lastBytes) -ge 1MB) {
+        Write-Host "Download progress: $received bytes received"
+        $lastBytes = $received
+      }
+    }
+    if (-not $total) {
+      Write-Host "Download progress: $received bytes received"
+    }
+    Write-Progress -Activity $Label -Completed
+  } finally {
+    if ($outputStream) { $outputStream.Dispose() }
+    if ($inputStream) { $inputStream.Dispose() }
+    if ($response) { $response.Dispose() }
+    $client.Dispose()
+  }
 }
 
 function Get-PathEntries {
@@ -282,7 +340,7 @@ foreach ($asset in $assetCandidates) {
   Write-Host "Source URL:     $url"
   Write-Host "Downloading native binary with progress..."
   try {
-    Invoke-WebRequest -Uri $url -OutFile $temporaryFile -UseBasicParsing -ErrorAction Stop
+    Invoke-DownloadWithProgress -Uri $url -OutFile $temporaryFile -Label 'Downloading xdocs native binary'
     Unblock-File -LiteralPath $temporaryFile -ErrorAction SilentlyContinue
     if (-not (Test-NativeBinary -Path $temporaryFile)) {
       Write-Host "  $asset was not a native Windows binary, trying next..."
@@ -326,9 +384,9 @@ foreach ($asset in $assetCandidates) {
     $skillTemp = Join-Path $InstallDir ".guiho-s-xdocs-$transactionId.md"
     $promptTemp = Join-Path $InstallDir ".guiho-i-xdocs-$transactionId.md"
     Write-Host "Downloading skill asset: $skillUrl"
-    Invoke-WebRequest -Uri $skillUrl -OutFile $skillTemp -UseBasicParsing -ErrorAction Stop
+    Invoke-DownloadWithProgress -Uri $skillUrl -OutFile $skillTemp -Label 'Downloading xdocs skill'
     Write-Host "Downloading instruction/prompt asset: $promptUrl"
-    Invoke-WebRequest -Uri $promptUrl -OutFile $promptTemp -UseBasicParsing -ErrorAction Stop
+    Invoke-DownloadWithProgress -Uri $promptUrl -OutFile $promptTemp -Label 'Downloading xdocs prompt catalog'
     if (-not (Test-MarkdownAgentAsset -Path $skillTemp -ExpectedName 'guiho-s-xdocs')) {
       throw 'Downloaded guiho-s-xdocs.md was not valid Markdown skill content.'
     }
