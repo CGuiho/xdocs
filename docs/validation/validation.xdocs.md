@@ -5,12 +5,15 @@ parent: xdocs-docs
 children: []
 files: {}
 documents:
+  open-issue-and-release-hardening.md: Reproducible 64-test validation, issue 7 through 12 acceptance evidence, exact fourteen-asset gate, and post-release smoke checklist.
   rfc-0034-cli-compliance-migration.md: Full local validation evidence for the 50-test corrective RFC 0034 gate and 0.6.1 readiness verdict.
 tags:
   - validation
 keywords:
   - verification
   - release readiness
+  - GitHub issues
+  - fourteen assets
 flags: []
 status: stable
 ---
