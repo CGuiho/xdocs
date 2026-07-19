@@ -102,13 +102,18 @@ four embedded bodies and the `guiho-i-xdocs` release catalog.
 - Darwin: arm64, x64, x64-baseline, x64-modern
 - Windows: arm64, x64, x64-baseline, x64-modern
 
-It then creates `guiho-s-xdocs` and `guiho-i-xdocs` and fails unless the output
-directory contains exactly those fourteen unique names.
+It then creates `guiho-s-xdocs.md` and `guiho-i-xdocs.md`, validates both as
+named Markdown rather than executable or binary payloads, and fails unless the
+output directory contains exactly those fourteen unique names.
 
 The Bash and PowerShell installers show progress, install the binary globally,
 configure PATH, install both skill copies, discover instruction files,
 reconcile instructions, and verify the final executable. Darwin Bash installs
 prefer an existing `.bash_profile` for login-shell PATH configuration.
+
+The tag publish workflow extracts the exact version's level-two section from
+`CHANGELOG.md` and uses only that section as the GitHub Release description.
+Missing, duplicate, or empty version sections fail release creation.
 
 ## Exit discipline
 
