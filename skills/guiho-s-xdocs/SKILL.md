@@ -146,6 +146,10 @@ and prerelease version. Use its channel, full-tag, publication, compatible
 asset, current, and latest-stable fields instead of assuming a truncated or
 stable-only catalog.
 
+After any `xdocs upgrade` outcome, preserve the printed recovery block. Its
+installer command is pinned to the resolved full version; its process-stop
+command is separate. JSON callers must read the equivalent `recovery` object.
+
 Every scope supports `-h`/`--help`, `--help-tree`,
 `--help-tree-depth <positive-integer>`, and `--help-docs`. Root version uses
 `-v`/`--version`.
