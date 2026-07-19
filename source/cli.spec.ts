@@ -47,11 +47,25 @@ describe('RFC 0034 Citty catalog', () => {
     expect(tree.stdout).toStartWith('COMMAND TREE\n\n')
     expect(tree.stdout).toContain('├── skill')
     expect(tree.stdout).not.toContain('|-')
+    expect(tree.stdout).not.toMatch(/\u001b\[[0-9;]*m/)
+    expect(tree.stderr).toBe('')
     const depth = await capture(() => runCli(['agent', '--help-tree-depth', '1']))
     expect(depth.stdout).toContain('skill')
     expect(depth.stdout).not.toContain('install')
+    const leaf = await capture(() => runCli(['agent', 'skill', 'show', '--help-tree']))
+    expect(leaf.stdout).toStartWith('COMMAND TREE\n\nxdocs agent skill show')
     const docs = await capture(() => runCli(['agent', 'prompt', '--help-docs']))
     expect(docs.stdout).toStartWith('# xdocs agent prompt')
+  })
+
+  test.serial('rejects invalid help-tree depths as usage errors', async () => {
+    for (const value of ['0', '-1', 'not-a-number']) {
+      const result = await capture(() => runCliWithErrorHandling(['--help-tree-depth', value]))
+      expect(result.stdout).toBe('')
+      expect(result.stderr).toContain('positive integer')
+      expect(process.exitCode).toBe(2)
+      process.exitCode = 0
+    }
   })
 
   test.serial('renders the real public catalog from every root help mode and rejects synthetic home', async () => {
