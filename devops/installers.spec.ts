@@ -172,13 +172,21 @@ esac
           XDOCS_INSTALLER_FIXTURE: fixture,
           XDOCS_INSTALLER_SCRIPT: join(repositoryRoot, 'devops', 'install.sh'),
           XDOCS_INSTALL_DIR: installDir,
-          XDOCS_SKIP_PATH_UPDATE: '1',
         },
       )
       expect(exitCode, `${stdout}\n${stderr}`).toBe(0)
       const installed = join(installDir, 'xdocs')
       expect(await executableVersion(installed)).toBe(fixtureVersion)
       expect(stdout).toContain(`Verified: ${installed} --version -> ${fixtureVersion}`)
+      const bashrc = await Bun.file(join(dir, '.bashrc')).text()
+      expect(bashrc).toContain(`export PATH=${installDir.replaceAll(' ', '\\ ')}:$PATH`)
+      expect(bashrc).not.toContain('\\$PATH')
+      const freshShell = await spawnCaptured(
+        ['bash', '--noprofile', '--rcfile', join(dir, '.bashrc'), '-i', '-c', 'command -v xdocs && command -v ls && command -v mkdir'],
+        { ...process.env, HOME: dir, SHELL: '/bin/bash' },
+      )
+      expect(freshShell.exitCode, `${freshShell.stdout}\n${freshShell.stderr}`).toBe(0)
+      expect(freshShell.stdout).toContain(installDir)
       for (const tool of ['.agents', '.claude']) {
         const installedSkill = await Bun.file(join(dir, tool, 'skills', 'guiho-s-xdocs', 'SKILL.md')).text()
         expect(installedSkill).toContain('name: guiho-s-xdocs')
