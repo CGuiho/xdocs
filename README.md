@@ -184,14 +184,16 @@ public command. Only `-h` and the root `-v` are short aliases.
 xdocs upgrade
 xdocs upgrade --version 0.7.0 --arch x64 --variant baseline --dry-run
 xdocs upgrade check
-xdocs upgrade list --page 1 --per-page 30
-xdocs upgrade list --pre-releases
+xdocs upgrade list
 ```
 
 The default x64 variant is `baseline`. Upgrades validate release metadata,
 download and verify a native candidate, replace transactionally, roll back on
 failure, update `~/.guiho/xdocs/cache.json`, refresh both global skill copies,
-and reconcile project instructions.
+and reconcile project instructions. `upgrade list` exhausts the GitHub Releases
+catalog and returns every stable and prerelease version, newest SemVer first,
+with full tags, channel identifiers, publication dates, compatible-asset
+status, and current/latest-stable markers.
 
 ## Development
 
