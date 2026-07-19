@@ -100,7 +100,8 @@ four embedded bodies and the `guiho-i-xdocs` release catalog.
 ## Upgrade transactions and catalog
 
 `xdocs upgrade` resolves and prints an immutable plan before download, streams
-typed phase starts, validates a native candidate, swaps the canonical
+typed phase starts plus known-length percentage or unknown-length byte progress,
+validates a native candidate, swaps the canonical
 executable synchronously, verifies the canonical path, and rolls back on swap
 or version failure. Only deletion of a Windows backup may be deferred. JSON
 output buffers the same plan, events, result, recovery, and error into one
@@ -132,6 +133,9 @@ The Bash and PowerShell installers show progress, install the binary globally,
 configure PATH, install both skill copies, discover instruction files,
 reconcile instructions, and verify the final executable. Darwin Bash installs
 prefer an existing `.bash_profile` for login-shell PATH configuration.
+The Bash installer delegates progress rendering to curl's progress bar.
+PowerShell uses an explicit buffered `HttpClient` stream so percentage/byte
+updates remain visible independently of host `Invoke-WebRequest` behavior.
 
 The tag publish workflow extracts the exact version's level-two section from
 `CHANGELOG.md` and uses only that section as the GitHub Release description.
