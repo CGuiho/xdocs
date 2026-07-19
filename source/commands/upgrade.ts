@@ -99,12 +99,33 @@ function renderPlan(options: XDocsCliOptions, plan: XDocsUpgradePlan): void {
 }
 
 function renderEvent(options: XDocsCliOptions, event: XDocsUpgradeEvent): void {
+  if (event.status === 'progress' && event.phase === 'download' && event.progress) {
+    const line = renderDownloadProgress(event.progress)
+    process.stdout.write(options.format === 'markdown' ? `\`${line}\`\n\n` : `${line}\n`)
+    return
+  }
   if (event.status !== 'started' || event.phase === 'plan') return
   const label: Record<XDocsUpgradeEvent['phase'], string> = {
     plan: 'Planning', download: 'Downloading', validate: 'Validating', replace: 'Replacing',
     verify: 'Verifying', cache: 'Updating cache', cleanup: 'Cleaning up',
   }
   process.stdout.write(options.format === 'markdown' ? `**${label[event.phase]}...**\n\n` : `${label[event.phase]}...\n`)
+}
+
+function renderDownloadProgress(progress: NonNullable<XDocsUpgradeEvent['progress']>): string {
+  if (progress.percent === null || progress.totalBytes === null) {
+    return `Download progress: ${formatBytes(progress.receivedBytes)} received`
+  }
+  const width = 40
+  const filled = Math.min(width, Math.max(0, Math.round((progress.percent / 100) * width)))
+  const bar = '#'.repeat(filled) + '-'.repeat(width - filled)
+  return `[${bar}] ${progress.percent.toFixed(1)}% (${formatBytes(progress.receivedBytes)}/${formatBytes(progress.totalBytes)})`
+}
+
+function formatBytes(value: number): string {
+  if (value < 1024) return `${value} B`
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KiB`
+  return `${(value / (1024 * 1024)).toFixed(1)} MiB`
 }
 
 function renderTerminal(options: XDocsCliOptions, envelope: XDocsUpgradeEnvelope): void {
