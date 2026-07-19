@@ -5,7 +5,7 @@ description: Records the global-by-default initialization behavior, explicit loc
 created: 2026-07-14
 flags:
   - decision
-  - superseded
+  - accepted
 tags:
   - cli
   - agents
@@ -22,10 +22,9 @@ owner: xdocs-decisions
 
 # Global Skill Default and Discovery Trigger
 
-> Superseded on 2026-07-18 by the approved RFC 0034 CLI migration. `xdocs init`
-> no longer mutates agent files. Explicit `xdocs agent skill` actions default
-> global, use `--local` for project scope, and always target both supported
-> skill directories.
+> Reaffirmed on 2026-07-19 while resolving GitHub issue #7. The later RFC 0034
+> migration's no-mutation rule applies to ordinary data/documentation commands,
+> not to the explicit project setup performed by `xdocs init`.
 
 ## Summary
 
@@ -43,16 +42,13 @@ maintenance.
 
 - `xdocs init` installs or refreshes the bundled skill in the user-level agent
   skill directory.
-- `xdocs init --global` remains supported as an explicit spelling of the
-  default behavior.
 - `xdocs init --local` installs or refreshes the skill beneath the initialized
   project.
-- Passing `--local` and `--global` together fails with a clear usage error and
-  performs no skill installation.
-- `xdocs agents install local|global` retains its existing explicit behavior.
-- Existing tool targeting and detection rules remain unchanged: `agents` is the
-  standard target, while Claude-specific installation requires an explicit
-  request or existing Claude project markers.
+- Both initialization scopes target `.agents/skills/guiho-s-xdocs` and
+  `.claude/skills/guiho-s-xdocs`.
+- Repeating initialization is idempotent and reports an already-current skill
+  instead of rewriting behaviorally distinct state.
+- Explicit `xdocs agent skill install [--local]` remains available.
 
 ## Agent Skill Trigger
 
@@ -74,15 +70,15 @@ The skill should direct discovery work through `xdocs context`, `xdocs meta`,
 The change covers CLI flag parsing and help, `xdocs init`, bundled skill
 frontmatter and instructions, generated AGENTS.md guidance, regression tests,
 canonical user documentation, the changelog, and affected xdocs descriptors.
-No change is required to the explicit `xdocs agents install` subcommand.
+The explicit singular `xdocs agent skill` namespace remains available.
 
 ## Validation and Release
 
 Regression tests must cover the global default, the explicit local override,
-and conflicting scope flags. Release validation includes typecheck, all tests,
-library build, native CLI compilation, and scoped xdocs health checks. After the
-release documentation is current, GUIHO Mirror will apply the patch transition
-from `0.5.2` to `0.5.3`.
+both tool destinations, idempotence, and isolated home directories. Release
+validation includes typecheck, all tests,
+library build, native CLI compilation, and scoped xdocs health checks. The
+behavior ships in the next authorized patch release.
 
 ## Rejected Alternatives
 
@@ -93,3 +89,6 @@ from `0.5.2` to `0.5.3`.
   initialized independently.
 - Changing only documentation was rejected because it would leave the CLI's
   incorrect default behavior intact.
+- Keeping `xdocs init` mutation-free was rejected because initialization is the
+  explicit setup boundary and the globally available discovery skill is part of
+  the accepted initialized state.
