@@ -18,6 +18,9 @@ keywords:
 
 ## Unreleased
 
+- Lock `--help-tree` coverage to Unicode connectors, ANSI-free redirectable
+  output, root/group/leaf scopes, positive depth limits, invalid-depth usage
+  errors, and hidden-command exclusion.
 - Standardize every upgrade result's recovery block around the resolved full
   version, put the pinned native-installer command before a separate
   platform-specific stop command, and cover upgraded, failed, rolled-back,
