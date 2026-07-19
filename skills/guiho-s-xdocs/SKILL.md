@@ -46,7 +46,9 @@ Read `ai.mode` before writing documentation:
 - `auto`: make relevant documentation changes in the same work unit.
 
 There are no configuration settings for automatic skill or instruction
-mutation. Data commands never change agent files.
+mutation. Data commands never change agent files. `xdocs init` is the setup
+exception: it installs or refreshes the skill globally by default; pass
+`--local` to keep it in the initialized project.
 
 ## Document model
 
@@ -121,7 +123,7 @@ keywords: []
 ## CLI catalog
 
 ```text
-xdocs init
+xdocs init [--local]
 xdocs scan
 xdocs generate [path]
 xdocs merge [path]
