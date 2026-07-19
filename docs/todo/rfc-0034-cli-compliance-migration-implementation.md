@@ -55,6 +55,13 @@ Issue #11's Developer Context audit also verifies Unicode tree connectors,
 root/group/leaf scopes, positive depth truncation, zero/negative/non-numeric
 usage failures, ANSI-free stdout, and hidden internal-command exclusion.
 
+Issue #12's progress audit adds streamed known-length percentage/unknown-length
+byte events to in-process upgrades, human progress bars, JSON parity,
+partial-stream failure attribution, deterministic PowerShell installer
+progress, and retained POSIX curl progress bars. The post-audit full gate passes
+64 tests and 319 expectations, TypeScript/library builds, all fourteen release
+assets, strict metadata, and doctor with zero errors or warnings.
+
 ## Completed units
 
 - XD-01: baseline inventory and validation captured before edits.
