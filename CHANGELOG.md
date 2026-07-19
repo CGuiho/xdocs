@@ -18,6 +18,13 @@ keywords:
 
 ## Unreleased
 
+## 0.6.4 - 2026-07-19
+
+- Reconcile project instruction blocks through the installed XDocs command
+  instead of inserting the `guiho-i-xdocs.md` prompt catalog into `AGENTS.md`.
+- Verify the public PowerShell installer preserves the canonical managed XDocs
+  instruction content in its isolated regression.
+
 ## 0.6.3 - 2026-07-19
 
 - Replace the XDocs Windows installer with the proven RunX installer flow,
