@@ -215,6 +215,19 @@ verify_native_binary() {
   esac
 }
 
+verify_markdown_agent_asset() {
+  local path="$1"
+  local expected_name="$2"
+  local magic2
+
+  [[ -s "$path" ]] || return 1
+  magic2="$(LC_ALL=C head -c 2 "$path" 2>/dev/null || true)"
+  [[ "$magic2" != 'MZ' ]] || return 1
+  LC_ALL=C grep -Iq . "$path" || return 1
+  LC_ALL=C grep -Eq "^name:[[:space:]]*['\"]?${expected_name}['\"]?[[:space:]]*\r?$" "$path" || return 1
+  LC_ALL=C grep -Eq '^#[[:space:]]+[^[:space:]]' "$path" || return 1
+}
+
 normalize_version() {
   local value="$1"
   value="${value#@guiho/xdocs@}"
@@ -302,7 +315,7 @@ append_path_to_profile() {
     return 0
   fi
 
-  printf '\n# Added by xdocs installer\nexport PATH=%q:\$PATH\n' "$INSTALL_DIR" >>"$profile"
+  printf '\n# Added by xdocs installer\nexport PATH=%q:$PATH\n' "$INSTALL_DIR" >>"$profile"
 }
 
 ensure_path() {
@@ -318,7 +331,7 @@ ensure_path() {
 
   printf 'xdocs: ensured %s is added to PATH in %s\n' "$INSTALL_DIR" "$profile"
   printf 'xdocs: restart your terminal, or run this for the current shell:\n'
-  printf '  export PATH=%q:\$PATH\n' "$INSTALL_DIR"
+  printf '  export PATH=%q:$PATH\n' "$INSTALL_DIR"
 }
 
 check_shadowing() {
@@ -397,16 +410,19 @@ install_binary() {
       printf 'Installed xdocs to %s\n' "$destination"
       local skill_url
       local prompt_url
-      skill_url="$(build_url guiho-s-xdocs)"
-      prompt_url="$(build_url guiho-i-xdocs)"
+      skill_url="$(build_url guiho-s-xdocs.md)"
+      prompt_url="$(build_url guiho-i-xdocs.md)"
       printf 'Downloading skill asset: %s\n' "$skill_url"
-      curl --fail --location --progress-bar --proto '=https' --tlsv1.2 "$skill_url" --output "$TMP/guiho-s-xdocs"
+      curl --fail --location --progress-bar --proto '=https' --tlsv1.2 "$skill_url" --output "$TMP/guiho-s-xdocs.md"
       printf 'Downloading instruction/prompt asset: %s\n' "$prompt_url"
-      curl --fail --location --progress-bar --proto '=https' --tlsv1.2 "$prompt_url" --output "$TMP/guiho-i-xdocs"
-      [[ -s "$TMP/guiho-s-xdocs" && -s "$TMP/guiho-i-xdocs" ]] || fail 'downloaded agent assets were empty'
+      curl --fail --location --progress-bar --proto '=https' --tlsv1.2 "$prompt_url" --output "$TMP/guiho-i-xdocs.md"
+      verify_markdown_agent_asset "$TMP/guiho-s-xdocs.md" 'guiho-s-xdocs' \
+        || fail 'downloaded guiho-s-xdocs.md was not valid Markdown skill content'
+      verify_markdown_agent_asset "$TMP/guiho-i-xdocs.md" 'guiho-i-xdocs' \
+        || fail 'downloaded guiho-i-xdocs.md was not valid Markdown prompt content'
       for skill_destination in "$HOME/.agents/skills/guiho-s-xdocs" "$HOME/.claude/skills/guiho-s-xdocs"; do
         mkdir -p "$skill_destination"
-        install -m 0644 "$TMP/guiho-s-xdocs" "$skill_destination/SKILL.md"
+        install -m 0644 "$TMP/guiho-s-xdocs.md" "$skill_destination/SKILL.md"
         printf 'Installed skill: %s\n' "$skill_destination"
       done
       for instruction_file in AGENTS.md CLAUDE.md; do
