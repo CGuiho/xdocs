@@ -141,6 +141,11 @@ xdocs upgrade list
 xdocs uninstall
 ```
 
+`xdocs upgrade list` always exhausts GitHub pagination and includes every stable
+and prerelease version. Use its channel, full-tag, publication, compatible
+asset, current, and latest-stable fields instead of assuming a truncated or
+stable-only catalog.
+
 Every scope supports `-h`/`--help`, `--help-tree`,
 `--help-tree-depth <positive-integer>`, and `--help-docs`. Root version uses
 `-v`/`--version`.
