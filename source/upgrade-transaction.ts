@@ -30,6 +30,7 @@ export {
 
 type UpgradeFetcher = (input: string | URL | Request, init?: RequestInit) => Promise<Response>
 type ExecutableVerifier = (path: string, expectedVersion: string) => Promise<void>
+type DownloadProgress = NonNullable<XDocsUpgradeEvent['progress']>
 
 type UpgradeTransactionOptions = {
   plan: XDocsUpgradePlan
@@ -55,8 +56,13 @@ type UpgradeJournal = {
 
 async function executeUpgradeTransaction(options: UpgradeTransactionOptions): Promise<XDocsUpgradeEnvelope> {
   const events: XDocsUpgradeEvent[] = []
-  const emit = (phase: XDocsUpgradeEvent['phase'], status: XDocsUpgradeEvent['status'], message: string): void => {
-    const event = { sequence: events.length + 1, phase, status, message } satisfies XDocsUpgradeEvent
+  const emit = (
+    phase: XDocsUpgradeEvent['phase'],
+    status: XDocsUpgradeEvent['status'],
+    message: string,
+    progress?: DownloadProgress,
+  ): void => {
+    const event = { sequence: events.length + 1, phase, status, message, ...(progress ? { progress } : {}) } satisfies XDocsUpgradeEvent
     events.push(event)
     options.onEvent?.(event)
   }
@@ -96,7 +102,9 @@ async function executeUpgradeTransaction(options: UpgradeTransactionOptions): Pr
     emit('download', 'started', 'Downloading upgrade asset.')
     const response = await (options.fetcher ?? fetch)(plan.downloadUrl, { headers: { 'User-Agent': 'xdocs-cli' } })
     if (!response.ok) throw new XDocsError(`Upgrade download failed: ${response.status} ${response.statusText}`)
-    await Bun.write(plan.temporaryPath, response)
+    await downloadResponse(response, plan.temporaryPath, (progress) => {
+      emit('download', 'progress', downloadProgressMessage(progress), progress)
+    })
     if ((await stat(plan.temporaryPath)).size === 0) throw new XDocsError('Upgrade download was empty.')
     emit('download', 'succeeded', 'Upgrade asset downloaded.')
 
@@ -185,6 +193,63 @@ async function executeUpgradeTransaction(options: UpgradeTransactionOptions): Pr
   } finally {
     if (ownsLock) await rm(lockPath, { force: true }).catch(() => undefined)
   }
+}
+
+async function downloadResponse(
+  response: Response,
+  destination: string,
+  onProgress: (progress: DownloadProgress) => void,
+): Promise<void> {
+  if (!response.body) throw new XDocsError('Upgrade download response had no body.')
+  const rawTotal = response.headers.get('content-length')
+  const parsedTotal = rawTotal ? Number(rawTotal) : Number.NaN
+  const totalBytes = Number.isFinite(parsedTotal) && parsedTotal >= 0 ? parsedTotal : null
+  const reader = response.body.getReader()
+  const writer = Bun.file(destination).writer()
+  let receivedBytes = 0
+  let lastPercentBucket = -1
+  let lastUnknownBucket = 0
+  let lastReportedReceived = -1
+  try {
+    while (true) {
+      const chunk = await reader.read()
+      if (chunk.done) break
+      writer.write(chunk.value)
+      receivedBytes += chunk.value.byteLength
+      if (totalBytes !== null && totalBytes > 0) {
+        const percent = Math.min(100, (receivedBytes / totalBytes) * 100)
+        const bucket = Math.floor(percent / 5)
+        if (bucket > lastPercentBucket || percent === 100) {
+          lastPercentBucket = bucket
+          lastReportedReceived = receivedBytes
+          onProgress({ receivedBytes, totalBytes, percent })
+        }
+      } else {
+        const bucket = Math.floor(receivedBytes / (1024 * 1024))
+        if (bucket > lastUnknownBucket) {
+          lastUnknownBucket = bucket
+          lastReportedReceived = receivedBytes
+          onProgress({ receivedBytes, totalBytes: null, percent: null })
+        }
+      }
+    }
+  } finally {
+    await writer.end()
+    reader.releaseLock()
+  }
+  if (totalBytes === null && receivedBytes !== lastReportedReceived) {
+    onProgress({ receivedBytes, totalBytes: null, percent: null })
+  } else if (totalBytes !== null && receivedBytes !== lastReportedReceived) {
+    const percent = totalBytes === 0 ? 100 : Math.min(100, (receivedBytes / totalBytes) * 100)
+    onProgress({ receivedBytes, totalBytes, percent })
+  }
+}
+
+function downloadProgressMessage(progress: DownloadProgress): string {
+  if (progress.percent === null || progress.totalBytes === null) {
+    return `Downloaded ${progress.receivedBytes} bytes.`
+  }
+  return `Downloaded ${progress.receivedBytes} of ${progress.totalBytes} bytes (${progress.percent.toFixed(1)}%).`
 }
 
 async function recoverInterruptedUpgrade(executablePath: string, verify: ExecutableVerifier = verifyExecutableVersion): Promise<boolean> {
@@ -318,8 +383,13 @@ function envelope(
 }
 
 function activePhase(events: XDocsUpgradeEvent[]): XDocsUpgradeEvent['phase'] | null {
-  const last = events.at(-1)
-  return last?.status === 'started' ? last.phase : null
+  for (let index = events.length - 1; index >= 0; index -= 1) {
+    const event = events[index]
+    if (!event) continue
+    if (event.status === 'progress') continue
+    return event.status === 'started' ? event.phase : null
+  }
+  return null
 }
 
 function errorCode(error: Error): string {
