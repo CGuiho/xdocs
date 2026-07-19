@@ -40,8 +40,8 @@ xdocs uses Bun, strict TypeScript ESM, raw Citty, and TypeBox; reads only
 `xdocs.yaml`; implements exact startup, storage, Developer Context help, agent
 skill/instruction/prompt, upgrade, installer, output, and npm bootstrap
 contracts; keeps its four prompt workflows available through the agent
-namespace; and publishes exactly twelve RFC binaries plus `guiho-s-xdocs` and
-`guiho-i-xdocs`.
+namespace; and publishes exactly twelve RFC binaries plus the explicitly
+overridden `guiho-s-xdocs.md` and `guiho-i-xdocs.md` Markdown release assets.
 
 ## Scope
 
