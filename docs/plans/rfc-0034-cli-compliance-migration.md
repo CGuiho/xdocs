@@ -430,20 +430,21 @@ continues in a later session.
   - `--dry-run`
   - `--format`.
 - `upgrade list`:
-  - `--page`
-  - `--per-page`
-  - `--pre-releases`
-  - stable-only default, latest first.
+  - no output-page or prerelease filter flags;
+  - exhaust GitHub pagination and list every stable/prerelease, latest first;
+  - expose full tags, exact channels, dates, compatible assets, current, and
+    latest-stable markers.
 - Actions:
   1. Default x64 to baseline.
-  2. TypeBox-validate pages, releases, assets, and numeric flags.
+  2. TypeBox-validate GitHub pages, releases, and assets.
   3. Keep observable transaction, rollback, verification, and recovery.
   4. Write RFC cache after canonical verification.
   5. Update global skills in both locations after success.
   6. Reconcile instruction files for the current project.
 - Acceptance:
   - Existing Windows/transaction reliability tests remain and expand for
-    pagination, pre-releases, JSON, new cache, and agent reconciliation.
+    complete pagination, prereleases, missing assets, JSON, new cache, and agent
+    reconciliation.
 
 ### Unit XD-13 - Rebuild Installers For Binary And Agent Assets
 
