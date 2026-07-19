@@ -8,7 +8,7 @@ files:
   context.ts: Renders deterministic task-specific reading sets.
   doctor.ts: Renders descriptor, companion, tree, and documented-file health checks.
   generate.ts: Produces project or module Markdown from descriptor metadata.
-  init.ts: Creates xdocs.yaml and XDOCS.md without implicit agent mutations.
+  init.ts: Creates xdocs.yaml and XDOCS.md, then idempotently installs the bundled skill globally by default or locally with --local.
   list.ts: Lists documented implementation files and companion documents.
   meta.ts: Reads descriptor and optional companion frontmatter with strict filters.
   merge.ts: Consolidates scoped descriptors into one document.
