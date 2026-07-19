@@ -42,8 +42,11 @@ bash /tmp/xdocs-install.sh
 ```
 
 Both installers select the native binary, show download progress, configure
-the global binary directory in `PATH`, install `guiho-s-xdocs` into both
+the global binary directory in `PATH`, download and validate
+`guiho-s-xdocs.md` and `guiho-i-xdocs.md`, install the skill into both
 `~/.agents/skills` and `~/.claude/skills`, and reconcile project instructions.
+Executable or otherwise invalid Markdown agent payloads are rejected before
+either `SKILL.md` is written.
 
 ### npm bootstrap
 
@@ -201,8 +204,8 @@ bun run binaries
 ```
 
 `bun run binaries` produces exactly twelve native assets plus
-`guiho-s-xdocs` and `guiho-i-xdocs`. Darwin assets use `darwin`; only Windows
-assets use `.exe`.
+`guiho-s-xdocs.md` and `guiho-i-xdocs.md`. Darwin assets use `darwin`; only
+Windows binaries use `.exe`.
 
 See [DOCS.md](DOCS.md) for the complete command and library contract and
 [ARCHITECTURE.md](ARCHITECTURE.md) for implementation boundaries.
