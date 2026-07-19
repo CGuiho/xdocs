@@ -22,4 +22,5 @@ prompts:
 # xdocs Prompt Catalog
 
 This manifest identifies the four prompt bodies embedded in native xdocs
-binaries and packaged together as the single `guiho-i-xdocs` release artifact.
+binaries and packaged together as the single `guiho-i-xdocs.md` Markdown
+release artifact.
