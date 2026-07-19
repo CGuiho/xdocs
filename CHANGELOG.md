@@ -18,6 +18,10 @@ keywords:
 
 ## Unreleased
 
+- Make `xdocs upgrade list` return the complete stable and prerelease catalog by
+  default with full tags, exact channels, dates, compatible-asset state, and
+  current/latest-stable markers; align the human upgrade transcript with the
+  required pre-download plan and add canonical-swap obstruction coverage.
 - Make `xdocs init` install or refresh the bundled skill in both global tool
   locations by default, preserve `--local` project scope, and test both paths
   idempotently with isolated home directories.
