@@ -77,7 +77,7 @@ describe('RFC 0034 Citty catalog', () => {
     const depth = await runSourceCli(['--help-tree-depth', '1'])
     expect(depth.exitCode).toBe(0)
     expect(depth.stdout).toContain('agent')
-    expect(depth.stdout).not.toContain('skill')
+    expect(depth.stdout).not.toMatch(/^[│ ]*[├└]── skill\b/m)
 
     const docs = await runSourceCli(['--help-docs'])
     expect(docs.exitCode).toBe(0)
@@ -129,13 +129,36 @@ describe('RFC 0034 Citty catalog', () => {
     expect(await readFile(join(root, 'AGENTS.md'), 'utf8')).toBe('# Agent\n')
   })
 
-  test.serial('initializes YAML without implicit agent mutations', async () => {
-    const root = await temp()
-    await capture(() => runCli(['init', '--cwd', root]))
-    expect(existsSync(join(root, 'xdocs.yaml'))).toBeTrue()
-    expect(existsSync(join(root, 'XDOCS.md'))).toBeTrue()
-    expect(existsSync(join(root, 'AGENTS.md'))).toBeFalse()
-    expect(existsSync(join(root, '.agents'))).toBeFalse()
+  test.serial('initializes YAML and installs the skill globally by default or locally on request', async () => {
+    const home = await temp()
+    const globalRoot = await temp()
+    const localRoot = await temp()
+    const previousHome = process.env['HOME']
+    const previousUserProfile = process.env['USERPROFILE']
+    process.env['HOME'] = home
+    process.env['USERPROFILE'] = home
+    try {
+      const global = await capture(() => runCli(['init', '--cwd', globalRoot]))
+      expect(global.stdout).toContain('installed: guiho-s-xdocs skill (agents, global)')
+      expect(existsSync(join(globalRoot, 'xdocs.yaml'))).toBeTrue()
+      expect(existsSync(join(globalRoot, 'XDOCS.md'))).toBeTrue()
+      expect(existsSync(join(home, '.agents', 'skills', 'guiho-s-xdocs', 'SKILL.md'))).toBeTrue()
+      expect(existsSync(join(home, '.claude', 'skills', 'guiho-s-xdocs', 'SKILL.md'))).toBeTrue()
+      expect(existsSync(join(globalRoot, '.agents'))).toBeFalse()
+
+      const repeated = await capture(() => runCli(['init', '--cwd', globalRoot]))
+      expect(repeated.stdout).toContain('current: guiho-s-xdocs skill (agents, global)')
+
+      const local = await capture(() => runCli(['init', '--local', '--cwd', localRoot]))
+      expect(local.stdout).toContain('installed: guiho-s-xdocs skill (agents, local)')
+      expect(existsSync(join(localRoot, '.agents', 'skills', 'guiho-s-xdocs', 'SKILL.md'))).toBeTrue()
+      expect(existsSync(join(localRoot, '.claude', 'skills', 'guiho-s-xdocs', 'SKILL.md'))).toBeTrue()
+    } finally {
+      if (previousHome === undefined) delete process.env['HOME']
+      else process.env['HOME'] = previousHome
+      if (previousUserProfile === undefined) delete process.env['USERPROFILE']
+      else process.env['USERPROFILE'] = previousUserProfile
+    }
   })
 
   test.serial('preserves structured documentation domain commands under YAML', async () => {
