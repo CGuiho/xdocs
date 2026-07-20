@@ -260,6 +260,16 @@ into stdout.
 
 ## Installers
 
+Use the public copy-paste installers directly:
+
+```powershell
+irm https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.ps1 | iex
+```
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.sh | bash
+```
+
 `devops/install.ps1` and `devops/install.sh` print target version,
 architecture, variant, source URL, live download progress, binary destination,
 skill destinations, discovered instruction files, reconciliation, and final
