@@ -18,6 +18,13 @@ keywords:
 
 ## Unreleased
 
+## 0.6.6 - 2026-07-20
+
+- Publish the Bash native installer as the same simple one-line
+  `curl -fsSL ... | bash` command used by the working RunX installation flow.
+- Keep the verified `irm ... | iex` PowerShell path and add regression coverage
+  for both public copy-paste commands.
+
 ## 0.6.5 - 2026-07-19
 
 - Launch Windows backup cleanup through an independent PowerShell
