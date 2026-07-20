@@ -10,6 +10,24 @@ on:
       - main
 
 jobs:
+  public-bash-installer:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify public one-line Bash installer
+        env:
+          XDOCS_INSTALL_DIR: ${{ runner.temp }}/xdocs-public/bin
+          XDOCS_SKIP_PATH_UPDATE: '1'
+        run: |
+          export HOME="${RUNNER_TEMP}/xdocs-public/home"
+          mkdir -p "$HOME" "$XDOCS_INSTALL_DIR"
+          cd "${RUNNER_TEMP}/xdocs-public"
+          curl -fsSL https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.sh | bash
+          "$XDOCS_INSTALL_DIR/xdocs" --version | grep -Eq '^xdocs [0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$'
+          grep -F '<!-- BEGIN XDOCS' AGENTS.md
+          grep -F '## XDocs Structured Documentation' AGENTS.md
+          ! grep -F '# xdocs Prompt Catalog' AGENTS.md
+
   test:
     runs-on: ubuntu-latest
     steps:
