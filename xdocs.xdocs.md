@@ -21,9 +21,9 @@ documents:
   ARCHITECTURE.md: Architecture and technical design notes for xdocs file conventions, metadata, CLI behavior, verified upgrade transactions, complete release catalogs, distribution, and agent workflows.
   BRAINSTORM.md: Product and design brainstorming notes for the xdocs structured documentation model and future directions.
   CHANGELOG.md: Release changelog including global-by-default initialization skill setup, RFC 0034 corrections, validated Markdown release assets, literal-safe installer PATH handling, and exact-version release notes.
-  DOCS.md: Canonical full documentation including global-by-default initialization, live-root help, streamed upgrade/installer progress, transaction ordering, complete release listing, exact recovery, validated .md agent assets, and agent-skill behavior.
+  DOCS.md: Canonical full documentation including one-line public native installers, global-by-default initialization, live-root help, streamed upgrade/installer progress, transaction ordering, complete release listing, exact recovery, validated .md agent assets, and agent-skill behavior.
   LICENSE.md: Package license document shipped with @guiho/xdocs.
-  README.md: Public package overview with global-by-default initialization skill setup, validated Markdown agent assets, live Citty help/catalog behavior, observable verified self-upgrade, exact-version recovery, complete release listing, CLI reference, metadata schema, and API examples.
+  README.md: Public package overview with one-line PowerShell and Bash installers, global-by-default initialization skill setup, validated Markdown agent assets, live Citty help/catalog behavior, observable verified self-upgrade, exact-version recovery, complete release listing, CLI reference, metadata schema, and API examples.
   TECHNICAL.md: Short technical notes placeholder for xdocs implementation context.
   TODO.md: Local task list for pending xdocs repository work.
 tags:
