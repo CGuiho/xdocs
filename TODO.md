@@ -34,7 +34,7 @@ All Rights Reserved.
 | in progress | 0 |
 | testing | 0 |
 | stopped | 0 |
-| completed | 3 |
+| completed | 4 |
 
 ## Tasks
 
@@ -87,3 +87,11 @@ All Rights Reserved.
 - Review: [docs/reviews/implementation/rfc-0034-cli-compliance-migration-review.md](docs/reviews/implementation/rfc-0034-cli-compliance-migration-review.md)
 - Validation: [docs/validation/rfc-0034-cli-compliance-migration.md](docs/validation/rfc-0034-cli-compliance-migration.md)
 - Downstream handoff: [docs/migrations/xdocs-yaml-downstream-handoff.md](docs/migrations/xdocs-yaml-downstream-handoff.md)
+
+### 5. Simplify Public Native Installation
+
+- Status: completed
+- Created: `2026-07-20`
+- Updated: `2026-07-20`
+- Outcome: Provide tested one-line PowerShell and Bash installers using the same direct public invocation pattern as RunX.
+- Spec: [docs/todo/simple-public-installers.md](docs/todo/simple-public-installers.md)
