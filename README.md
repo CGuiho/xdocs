@@ -36,8 +36,7 @@ irm https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.ps1 | iex
 ```
 
 ```bash
-curl -fL https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.sh -o /tmp/xdocs-install.sh
-bash /tmp/xdocs-install.sh
+curl -fsSL https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.sh | bash
 ```
 
 Both installers select the native binary, show download progress, configure
