@@ -35,7 +35,9 @@ test('uses Markdown agent assets and preserves shell PATH expansion', async () =
   expect(powerShellInstaller).toContain('XDOCS_DOWNLOAD_BASE_URL')
   expect(powerShellInstaller).toContain('$stdout -notmatch "^xdocs $semanticVersionPattern$"')
   expect(readme).toContain('irm https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.ps1 | iex')
+  expect(readme).toContain('curl -fsSL https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.sh | bash')
   expect(readme).not.toContain('& $env:TEMP\\xdocs-install.ps1')
+  expect(readme).not.toContain('/tmp/xdocs-install.sh')
 })
 
 if (process.platform === 'win32') {
