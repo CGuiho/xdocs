@@ -220,8 +220,14 @@ New version available. Run this command to upgrade: xdocs upgrade
 ```
 
 The hidden worker is detached and performs remote work after the foreground
-continues. Cache data is TypeBox-validated. Corrupt cache never blocks normal
-commands.
+continues. Its exact internal flag is handled before Citty, so it cannot enter
+the normal root lifecycle or launch another worker. An exclusive lease permits
+at most one check per cache directory, a 15-second deadline bounds the entire
+remote check, and every outcome releases its ownership token. Valid stale,
+corrupt, and orphaned leases are recoverable after 30 seconds without allowing
+an old worker to remove a newer lease. Cache and lease data are TypeBox-
+validated. Corrupt cache never blocks normal commands, and scheduler failures
+never reject into foreground command execution.
 
 ## Upgrade and uninstall
 
