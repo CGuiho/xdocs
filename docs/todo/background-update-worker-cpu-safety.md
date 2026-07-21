@@ -21,7 +21,7 @@ keywords:
 ## Todo Index
 
 - Task: `6. Bound Background Update Worker CPU Usage`
-- Status: testing
+- Status: completed
 - External: [CGuiho/xdocs#14](https://github.com/CGuiho/xdocs/issues/14)
 
 ## Outcome
@@ -60,6 +60,13 @@ lease after success, failure, or timeout.
   its bounded check.
 - Typecheck, full tests, build, native build, xdocs validation, CI, the public
   patch release, and exact fourteen-asset validation pass before issue closure.
+
+## Completion
+
+XDocs 0.6.7 passed the local, native-process, CI, publish, exact fourteen-asset,
+public installer, and public-binary concurrency gates. The public 16-way smoke
+test observed at most one update worker, then zero, with a written cache and no
+remaining lease directories.
 
 ## Operational recovery
 
