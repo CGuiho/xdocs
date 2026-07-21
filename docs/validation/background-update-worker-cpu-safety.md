@@ -20,9 +20,10 @@ keywords:
 
 ## Summary
 
-Local implementation and native process validation pass. Public release and CI
-evidence will be added before
-[CGuiho/xdocs#14](https://github.com/CGuiho/xdocs/issues/14) is closed.
+Local implementation, native process validation, CI, publishing, exact release
+asset validation, and public installation all pass for XDocs 0.6.7. The public
+binary remained bounded to one short-lived worker under 16 simultaneous
+foreground invocations and returned to zero matching worker processes.
 
 ## Reproduction
 
@@ -64,6 +65,16 @@ lifecycle and schedule another detached worker.
 | `xdocs doctor docs/validation --format json` | valid after required companion metadata correction |
 | `xdocs tree` | passed; source, TODO, and validation modules remained linked |
 
+## External release evidence
+
+| Check | Result |
+| --- | --- |
+| [Main CI](https://github.com/CGuiho/xdocs/actions/runs/29864121049) | passed; Linux build/test/native gates, Windows upgrade gates, and the public Bash installer gate completed successfully |
+| [Protected publish](https://github.com/CGuiho/xdocs/actions/runs/29864126030) | passed; build, test, twelve native binaries, release-note extraction, publication, and exact fourteen-asset validation completed successfully |
+| [XDocs 0.6.7 release](https://github.com/CGuiho/xdocs/releases/tag/%40guiho%2Fxdocs%400.6.7) | published with exactly twelve native binaries and the `.md` skill/instruction assets; notes contain only the 0.6.7 changelog section |
+| Public PowerShell installer | passed through the documented raw GitHub command; installed and verified `C:\Users\crist\.local\bin\xdocs.exe` as 0.6.7 and installed both Markdown assets |
+| 16-way public binary smoke | all foreground exits were 0; maximum workers was 1; final workers was 0; cache existed; primary and mutation locks were absent |
+
 ## Implementation evidence
 
 - The exact internal flag is routed before Citty and runs only the worker.
@@ -76,14 +87,8 @@ lifecycle and schedule another detached worker.
   seconds.
 - Scheduler errors resolve to `false` and never reject into a `void` caller.
 
-## Pending release evidence
-
-- Mirror plan/apply for patch 0.6.7.
-- Main CI and protected publish workflows.
-- Public release with exactly fourteen assets and version-only notes.
-- Public install/upgrade smoke and final zero-process verification.
-
 ## Readiness
 
-Testing. Local source, full-suite, build, documentation, and native process
-gates are correct; remote release gates remain intentionally open.
+Complete. All source, test, build, documentation, native-process, CI, publish,
+release-contract, and public-install gates required for
+[CGuiho/xdocs#14](https://github.com/CGuiho/xdocs/issues/14) passed.
