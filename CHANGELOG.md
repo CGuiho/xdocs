@@ -18,6 +18,17 @@ keywords:
 
 ## Unreleased
 
+## 0.6.7 - 2026-07-21
+
+- Route the exact background update-worker flag before Citty so it cannot enter
+  the ordinary root lifecycle and recursively launch replacement workers.
+- Coalesce simultaneous checks with ownership-safe cache leases, bound remote
+  work to 15 seconds, recover stale or orphaned locks after 30 seconds, and
+  isolate every scheduler failure from foreground commands.
+- Add process-lifecycle, 64-way coalescing, stale-reclaimer, ownership,
+  network-hang, termination, and path-with-spaces regression coverage for
+  GitHub issue 14.
+
 ## 0.6.6 - 2026-07-20
 
 - Publish the Bash native installer as the same simple one-line
