@@ -12,9 +12,9 @@ keywords:
   - guiho-s-xdocs
   - xdocs metadata
   - documentation workflow
-version: "0.6.6"
+version: "0.6.7"
 metadata:
-  version: "0.6.6"
+  version: "0.6.7"
 ---
 
 # xdocs Structured Documentation
@@ -140,6 +140,12 @@ xdocs upgrade check
 xdocs upgrade list
 xdocs uninstall
 ```
+
+Foreground commands read only `~/.guiho/xdocs/cache.json`. An expired cache may
+start one short-lived detached update worker. The cache-scoped lease coalesces
+simultaneous invocations, the entire remote check is bounded to 15 seconds, and
+stale or orphaned leases recover after 30 seconds. The internal worker route is
+handled before Citty and never enters the ordinary startup lifecycle.
 
 `xdocs upgrade list` always exhausts GitHub pagination and includes every stable
 and prerelease version. Use its channel, full-tag, publication, compatible
