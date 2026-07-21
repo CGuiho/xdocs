@@ -173,8 +173,19 @@ xdocs <scope> --help-docs
 
 Root help renders the complete public command catalog; nested help renders the
 selected subtree. Usage and Markdown help include examples from the same live
-Citty definitions. Internal worker routing is hidden and `xdocs home` is not a
-public command. Only `-h` and the root `-v` are short aliases.
+Citty definitions. The internal update-worker flag is routed before Citty and
+is absent from the public command tree; `xdocs home` is not a public command.
+Only `-h` and the root `-v` are short aliases.
+
+## Background update check
+
+Foreground commands read only `~/.guiho/xdocs/cache.json`. When that cache is
+expired, XDocs may launch one detached, short-lived update worker. A cache-
+scoped ownership lease coalesces simultaneous commands, the complete remote
+check has a 15-second deadline, and all outcomes release the lease. Stale,
+corrupt, or orphaned leases become recoverable after 30 seconds. The worker
+cannot route through the ordinary root lifecycle or recursively launch another
+worker, and scheduler failures never block the requested command.
 
 ## Upgrade
 
