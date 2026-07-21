@@ -72,9 +72,18 @@ The structured-documentation domain remains separate:
 2. Print the exact cached update notice when a newer version exists.
 3. Resolve and decode configuration for config-aware commands.
 4. Report the absolute loaded YAML path.
-5. Spawn `--check-updates-worker` detached without awaiting network work.
-6. Route through Citty.
+5. Atomically acquire one cache-scoped update lease and spawn
+   `--check-updates-worker` detached without awaiting network work.
+6. Route the exact worker flag before Citty so a worker can never enter the
+   ordinary startup lifecycle or recursively schedule another worker.
 7. With no arguments, print `Hello Windows - xdocs v<version>`.
+
+The complete remote check is bounded to 15 seconds. A TypeBox-decoded lease
+with a unique ownership token coalesces concurrent invocations, is released on
+every terminal outcome, and becomes reclaimable after 30 seconds. Primary
+lease mutation uses a short ownership-checked guard so an old suspended worker
+cannot delete a newer lease. Foreground scheduling errors are isolated and do
+not reject into command routing.
 
 Data/documentation commands do not mutate skills or instruction files.
 Initialization is the deliberate setup exception: `xdocs init` installs the
