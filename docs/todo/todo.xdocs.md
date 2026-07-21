@@ -5,6 +5,7 @@ parent: xdocs-docs
 children: []
 files: {}
 documents:
+  background-update-worker-cpu-safety.md: Defines the non-recursive bounded worker, cache-scoped lease, stale recovery, process-count tests, and issue 14 release gate.
   citty-cli-migration-implementation.md: Tracks migration progress, decisions, verification evidence, and handoff state for the Citty CLI migration.
   citty-cli-migration.md: Defines the required full migration from xdocs handwritten CLI parsing and routing to Citty.
   improve-json-output-coverage.md: Follow-up task spec for consistent JSON output coverage across xdocs commands.
@@ -28,6 +29,8 @@ keywords:
   - format flag
   - upgrade reliability
   - rollback
+  - background worker
+  - CPU safety
 flags: []
 status: stable
 ---
