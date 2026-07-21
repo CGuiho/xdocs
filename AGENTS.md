@@ -186,3 +186,16 @@ repository's AGENTS.md GUIHO Project section.
 - Keep cross-component planning and parent delegation in the parent TODO file.
 - Read this component's existing local instructions before editing source code.
 - Do not publish, deploy, run migrations, rotate secrets, or mutate production resources without explicit user approval.
+
+<!-- BEGIN XDOCS — DO NOT EDIT THIS SECTION -->
+## XDocs Structured Documentation
+
+This project uses **xdocs** (`@guiho/xdocs`) for structured, machine-readable
+documentation. Load the `guiho-s-xdocs` agent skill before creating,
+updating, scanning, merging, validating, or navigating xdocs descriptors.
+
+The project configuration is `xdocs.yaml`. Respect `ai.mode`: `prompt`
+requires confirmation before documentation writes, while `auto` permits
+immediate descriptor maintenance. Use `xdocs meta`, `xdocs context`,
+`xdocs tree`, and `xdocs doctor` to discover and validate documentation.
+<!-- END XDOCS -->
