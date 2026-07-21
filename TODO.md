@@ -32,9 +32,9 @@ All Rights Reserved.
 | --- | ---: |
 | todo | 1 |
 | in progress | 0 |
-| testing | 1 |
+| testing | 0 |
 | stopped | 0 |
-| completed | 4 |
+| completed | 5 |
 
 ## Tasks
 
@@ -98,10 +98,11 @@ All Rights Reserved.
 
 ### 6. Bound Background Update Worker CPU Usage
 
-- Status: testing
+- Status: completed
 - Created: `2026-07-21`
 - Updated: `2026-07-21`
 - Outcome: Route the internal update worker outside Citty, coalesce cache-scoped checks, enforce timeout and ownership-safe stale recovery, and eliminate persistent recursive worker chains.
 - Spec: [docs/todo/background-update-worker-cpu-safety.md](docs/todo/background-update-worker-cpu-safety.md)
 - External: [CGuiho/xdocs#14](https://github.com/CGuiho/xdocs/issues/14)
 - Validation: [docs/validation/background-update-worker-cpu-safety.md](docs/validation/background-update-worker-cpu-safety.md)
+- Release: [@guiho/xdocs@0.6.7](https://github.com/CGuiho/xdocs/releases/tag/%40guiho%2Fxdocs%400.6.7)
