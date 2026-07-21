@@ -32,7 +32,7 @@ All Rights Reserved.
 | --- | ---: |
 | todo | 1 |
 | in progress | 0 |
-| testing | 0 |
+| testing | 1 |
 | stopped | 0 |
 | completed | 4 |
 
@@ -95,3 +95,13 @@ All Rights Reserved.
 - Updated: `2026-07-20`
 - Outcome: Provide tested one-line PowerShell and Bash installers using the same direct public invocation pattern as RunX.
 - Spec: [docs/todo/simple-public-installers.md](docs/todo/simple-public-installers.md)
+
+### 6. Bound Background Update Worker CPU Usage
+
+- Status: testing
+- Created: `2026-07-21`
+- Updated: `2026-07-21`
+- Outcome: Route the internal update worker outside Citty, coalesce cache-scoped checks, enforce timeout and ownership-safe stale recovery, and eliminate persistent recursive worker chains.
+- Spec: [docs/todo/background-update-worker-cpu-safety.md](docs/todo/background-update-worker-cpu-safety.md)
+- External: [CGuiho/xdocs#14](https://github.com/CGuiho/xdocs/issues/14)
+- Validation: [docs/validation/background-update-worker-cpu-safety.md](docs/validation/background-update-worker-cpu-safety.md)
