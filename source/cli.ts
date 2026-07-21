@@ -262,9 +262,6 @@ function createXDocsCommand(): AnyCommand {
     ...executionArgs,
     'dry-run': { type: 'boolean', description: 'Preview without removing the binary.' },
   }, 'xdocs uninstall', (args) => runUninstall(options(args), { dryRun: Boolean(args['dryRun']) }))
-  const worker = leaf('--check-updates-worker', 'Internal detached update worker.', executionArgs, 'xdocs --check-updates-worker', () =>
-    runBackgroundUpdateCheck(), false, false, true)
-
   root = defineCommand({
     meta: {
       name: 'xdocs',
@@ -286,7 +283,6 @@ function createXDocsCommand(): AnyCommand {
       agent,
       upgrade,
       uninstall,
-      '--check-updates-worker': worker,
     },
     run: async ({ args: parsed, rawArgs }) => {
       if (Array.isArray(parsed._) && parsed._.length > 0) return
@@ -388,6 +384,10 @@ async function reportCachedUpdateNotice(format: XDocsFormat): Promise<void> {
 }
 
 async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise<void> {
+  if (rawArgs.length === 1 && rawArgs[0] === '--check-updates-worker') {
+    await runBackgroundUpdateCheck()
+    return
+  }
   await runCommand(createXDocsCommand(), { rawArgs })
 }
 
