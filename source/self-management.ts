@@ -2,25 +2,28 @@
  * @copyright Copyright (c) 2026 GUIHO Technologies as represented by Cristóvão GUIHO. All Rights Reserved.
  */
 
+import { $ } from 'bun'
+import { XDocsError } from './errors.js'
+import { readPackageVersion } from './help.js'
+import { buildUpgradeRecovery, compareSemanticVersions, fetchReleaseCatalog, normalizeXDocsVersion } from './upgrade-catalog.js'
+import { executeUpgradeTransaction } from './upgrade-transaction.js'
+import { XDocsUpdateCacheSchema, XDocsUpdateLeaseSchema, decodeWithSchema } from './schemas.js'
+import { homeDirectory } from './runtime/home.js'
+import { makeDirectory, pathExists, readText, removePath, writeText } from './runtime/fs.js'
+import { dirname, joinPath, resolvePath } from './runtime/path.js'
+import { updateInstructions, updateSkills } from './agents.js'
+
 import type {
   XDocsNativeArch,
   XDocsNativePlatform,
   XDocsNativeVariant,
   XDocsUninstallResult,
   XDocsUpdateCache,
+  XDocsUpdateLease,
   XDocsUpgradeEnvelope,
   XDocsUpgradeEvent,
   XDocsUpgradePlan,
 } from './types.js'
-import { XDocsError } from './errors.js'
-import { readPackageVersion } from './help.js'
-import { buildUpgradeRecovery, compareSemanticVersions, fetchReleaseCatalog, normalizeXDocsVersion } from './upgrade-catalog.js'
-import { executeUpgradeTransaction } from './upgrade-transaction.js'
-import { XDocsUpdateCacheSchema, decodeWithSchema } from './schemas.js'
-import { homeDirectory } from './runtime/home.js'
-import { pathExists, readText, removePath, writeText } from './runtime/fs.js'
-import { dirname, joinPath, resolvePath } from './runtime/path.js'
-import { updateInstructions, updateSkills } from './agents.js'
 
 export {
   checkForLatestVersion,
@@ -30,6 +33,7 @@ export {
   readUpdateCache,
   resolveCachePath,
   resolveExecutablePath,
+  resolveUpdateLockPath,
   runBackgroundUpdateCheck,
   scheduleBackgroundUpdateCheck,
   uninstallSelf,
@@ -38,11 +42,36 @@ export {
 
 const defaultRepo = 'CGuiho/xdocs'
 const cacheTtlMilliseconds = 4 * 60 * 60 * 1000
+const updateCheckTimeoutMilliseconds = 15_000
+const updateLockStaleMilliseconds = 30_000
+const updateLeaseFileName = 'lease.json'
+const updateLeaseTokenEnvironmentName = 'XDOCS_UPDATE_LEASE_TOKEN'
+const updateMutationGuardName = '.update-check-mutation.lock'
 
 type SelfManagementOptions = {
   readonly repo?: string
   readonly cacheDir?: string
   readonly executablePath?: string
+}
+
+type BackgroundUpdateOptions = SelfManagementOptions & {
+  readonly fetcher?: UpgradeFetcher
+  readonly now?: () => number
+  readonly timeoutMilliseconds?: number
+  readonly staleLockMilliseconds?: number
+  readonly createToken?: () => string
+  readonly isUpdateCheckDisabled?: () => boolean
+  readonly isSourceCheckout?: () => Promise<boolean>
+  readonly spawnWorker?: (command: string[], environment: Record<string, string | undefined>) => WorkerProcess
+}
+
+type WorkerProcess = {
+  unref?: () => void
+}
+
+type UpdateMutationGuard = {
+  path: string
+  lease: XDocsUpdateLease
 }
 
 type UpgradeFetcher = (input: string | URL | Request, init?: RequestInit) => Promise<Response>
@@ -81,12 +110,17 @@ function resolveCachePath(options: SelfManagementOptions = {}): string {
   return joinPath(cacheDirectory, 'cache.json')
 }
 
-async function checkForLatestVersion(options: SelfManagementOptions = {}): Promise<XDocsUpdateCache> {
+function resolveUpdateLockPath(options: SelfManagementOptions = {}): string {
+  return joinPath(dirname(resolveCachePath(options)), '.update-check.lock')
+}
+
+async function checkForLatestVersion(options: BackgroundUpdateOptions = {}): Promise<XDocsUpdateCache> {
   const currentVersion = readPackageVersion()
   const releases = await fetchReleaseCatalog({
     repo: options.repo,
     platform: detectNativePlatform(),
     arch: detectNativeArch(),
+    fetcher: options.fetcher,
   })
   const latest = releases.find((release) => release.compatibleAsset)
   if (!latest) throw new XDocsError('No compatible published xdocs release is available.')
@@ -102,27 +136,228 @@ async function checkForLatestVersion(options: SelfManagementOptions = {}): Promi
   return cache
 }
 
-async function runBackgroundUpdateCheck(options: SelfManagementOptions = {}): Promise<void> {
-  await checkForLatestVersion(options)
-}
+async function runBackgroundUpdateCheck(options: BackgroundUpdateOptions = {}): Promise<boolean> {
+  if (options.isUpdateCheckDisabled?.() ?? (process.env['XDOCS_DISABLE_UPDATE_CHECK'] === '1')) return false
 
-async function scheduleBackgroundUpdateCheck(options: SelfManagementOptions = {}): Promise<boolean> {
-  if (process.env['XDOCS_DISABLE_UPDATE_CHECK'] === '1') return false
-
-  const cache = await readUpdateCache(options)
-  if (cache && Date.now() - Date.parse(cache.lastCheck) < cacheTtlMilliseconds) return false
-  if (await isSourceCheckout()) return false
+  const inheritedToken = process.env[updateLeaseTokenEnvironmentName]
+  const lease = inheritedToken
+    ? await readUpdateLease(options)
+    : await acquireUpdateLease(options)
+  if (!lease || (inheritedToken && lease.token !== inheritedToken)) return false
 
   try {
-    const proc = Bun.spawn([resolveExecutablePath(options), '--check-updates-worker'], {
-      detached: true,
-      stdin: 'ignore',
-      stdout: 'ignore',
-      stderr: 'ignore',
-      env: { ...process.env, XDOCS_BACKGROUND_UPDATE_CHECK: '1' },
-    })
-    ;(proc as unknown as { unref?: () => void }).unref?.()
+    await runUpdateCheckWithDeadline(options)
     return true
+  } catch {
+    return false
+  } finally {
+    await releaseUpdateLease(lease, options)
+  }
+}
+
+async function scheduleBackgroundUpdateCheck(options: BackgroundUpdateOptions = {}): Promise<boolean> {
+  try {
+    if (options.isUpdateCheckDisabled?.() ?? (process.env['XDOCS_DISABLE_UPDATE_CHECK'] === '1')) return false
+
+    const cache = await readUpdateCache(options)
+    const now = options.now?.() ?? Date.now()
+    if (cache && now - Date.parse(cache.lastCheck) < cacheTtlMilliseconds) return false
+    if (await (options.isSourceCheckout?.() ?? isSourceCheckout())) return false
+
+    const lease = await acquireUpdateLease(options)
+    if (!lease) return false
+
+    const command = [resolveExecutablePath(options), '--check-updates-worker']
+    const environment = { ...process.env, [updateLeaseTokenEnvironmentName]: lease.token }
+    try {
+      const proc = options.spawnWorker
+        ? options.spawnWorker(command, environment)
+        : Bun.spawn(command, {
+            detached: true,
+            stdin: 'ignore',
+            stdout: 'ignore',
+            stderr: 'ignore',
+            env: environment,
+          })
+      proc.unref?.()
+      return true
+    } catch {
+      await releaseUpdateLease(lease, options)
+      return false
+    }
+  } catch {
+    return false
+  }
+}
+
+async function runUpdateCheckWithDeadline(options: BackgroundUpdateOptions): Promise<void> {
+  const timeoutMilliseconds = options.timeoutMilliseconds ?? updateCheckTimeoutMilliseconds
+  const controller = new AbortController()
+  const fetcher = options.fetcher ?? fetch
+  const timedFetcher: UpgradeFetcher = (input, init) => fetcher(input, { ...init, signal: controller.signal })
+  let timeout: ReturnType<typeof setTimeout> | undefined
+
+  try {
+    await Promise.race([
+      checkForLatestVersion({ ...options, fetcher: timedFetcher }),
+      new Promise<never>((_, reject) => {
+        timeout = setTimeout(() => {
+          controller.abort()
+          reject(new XDocsError(`xdocs background update check timed out after ${timeoutMilliseconds}ms.`, 4))
+        }, timeoutMilliseconds)
+      }),
+    ])
+  } finally {
+    if (timeout) clearTimeout(timeout)
+  }
+}
+
+async function acquireUpdateLease(options: BackgroundUpdateOptions): Promise<XDocsUpdateLease | null> {
+  const guard = await acquireUpdateMutationGuard(options)
+  if (!guard) return null
+
+  try {
+    return await acquireUpdateLeaseInsideGuard(options)
+  } finally {
+    await releaseUpdateMutationGuard(guard).catch(() => false)
+  }
+}
+
+async function acquireUpdateLeaseInsideGuard(options: BackgroundUpdateOptions): Promise<XDocsUpdateLease | null> {
+  const lockPath = resolveUpdateLockPath(options)
+  await makeDirectory(dirname(lockPath))
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const result = await $`mkdir ${lockPath}`.quiet().nothrow()
+    if (result.exitCode === 0) {
+      const now = options.now?.() ?? Date.now()
+      const lease: XDocsUpdateLease = {
+        token: options.createToken?.() ?? crypto.randomUUID(),
+        pid: process.pid,
+        createdAt: new Date(now).toISOString(),
+      }
+      try {
+        await writeText(joinPath(lockPath, updateLeaseFileName), JSON.stringify(lease, null, 2) + '\n')
+        return lease
+      } catch {
+        await removePath(lockPath, { recursive: true, force: true }).catch(() => undefined)
+        return null
+      }
+    }
+
+    const existing = await readUpdateLease(options)
+    if (existing) {
+      if (!isUpdateLeaseStale(existing, options)) return null
+      if (!(await releaseUpdateLeaseInsideGuard(existing, options))) return null
+      continue
+    }
+
+    if (!(await isOrphanedUpdateLockStale(options))) return null
+    await removePath(lockPath, { recursive: true, force: true })
+  }
+
+  return null
+}
+
+async function acquireUpdateMutationGuard(options: SelfManagementOptions): Promise<UpdateMutationGuard | null> {
+  const guardPath = joinPath(dirname(resolveCachePath(options)), updateMutationGuardName)
+  await makeDirectory(dirname(guardPath))
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const result = await $`mkdir ${guardPath}`.quiet().nothrow()
+    if (result.exitCode === 0) {
+      const lease: XDocsUpdateLease = {
+        token: crypto.randomUUID(),
+        pid: process.pid,
+        createdAt: new Date().toISOString(),
+      }
+      try {
+        await writeText(joinPath(guardPath, updateLeaseFileName), JSON.stringify(lease, null, 2) + '\n')
+        return { path: guardPath, lease }
+      } catch {
+        await removePath(guardPath, { recursive: true, force: true }).catch(() => undefined)
+        return null
+      }
+    }
+
+    const existing = await readLeaseAtPath(guardPath, 'xdocs update-check mutation guard')
+    const stale = existing
+      ? isLeaseStale(existing, Date.now(), updateLockStaleMilliseconds)
+      : await isPathStale(guardPath, Date.now(), updateLockStaleMilliseconds)
+    if (!stale) return null
+    const observedToken = existing?.token ?? `orphan-${crypto.randomUUID()}`
+    const tombstonePath = `${guardPath}.stale-${observedToken}`
+    const moved = await $`mv ${guardPath} ${tombstonePath}`.quiet().nothrow()
+    if (moved.exitCode !== 0) return null
+    const movedLease = await readLeaseAtPath(tombstonePath, 'xdocs stale update-check mutation guard')
+    if (existing && (!movedLease || movedLease.token !== existing.token)) return null
+    await removePath(tombstonePath, { recursive: true, force: true })
+  }
+
+  return null
+}
+
+async function readUpdateLease(options: SelfManagementOptions): Promise<XDocsUpdateLease | null> {
+  return readLeaseAtPath(resolveUpdateLockPath(options), 'xdocs update-check lease')
+}
+
+function isUpdateLeaseStale(lease: XDocsUpdateLease, options: BackgroundUpdateOptions): boolean {
+  const now = options.now?.() ?? Date.now()
+  return isLeaseStale(lease, now, options.staleLockMilliseconds ?? updateLockStaleMilliseconds)
+}
+
+async function releaseUpdateLease(lease: XDocsUpdateLease, options: SelfManagementOptions): Promise<boolean> {
+  const guard = await acquireUpdateMutationGuard(options)
+  if (!guard) return false
+
+  try {
+    return await releaseUpdateLeaseInsideGuard(lease, options)
+  } finally {
+    await releaseUpdateMutationGuard(guard).catch(() => false)
+  }
+}
+
+async function releaseUpdateLeaseInsideGuard(lease: XDocsUpdateLease, options: SelfManagementOptions): Promise<boolean> {
+  const current = await readUpdateLease(options)
+  if (!current || current.token !== lease.token) return false
+  await removePath(resolveUpdateLockPath(options), { recursive: true, force: true })
+  return true
+}
+
+async function isOrphanedUpdateLockStale(options: BackgroundUpdateOptions): Promise<boolean> {
+  return isPathStale(
+    resolveUpdateLockPath(options),
+    options.now?.() ?? Date.now(),
+    options.staleLockMilliseconds ?? updateLockStaleMilliseconds,
+  )
+}
+
+async function readLeaseAtPath(path: string, source: string): Promise<XDocsUpdateLease | null> {
+  try {
+    const value = JSON.parse(await readText(joinPath(path, updateLeaseFileName)))
+    return decodeWithSchema<XDocsUpdateLease>(XDocsUpdateLeaseSchema, value, source)
+  } catch {
+    return null
+  }
+}
+
+function isLeaseStale(lease: XDocsUpdateLease, now: number, staleMilliseconds: number): boolean {
+  const createdAt = Date.parse(lease.createdAt)
+  return Number.isFinite(createdAt) && now - createdAt >= staleMilliseconds
+}
+
+async function releaseUpdateMutationGuard(guard: UpdateMutationGuard): Promise<boolean> {
+  const current = await readLeaseAtPath(guard.path, 'xdocs update-check mutation guard')
+  if (!current || current.token !== guard.lease.token) return false
+  await removePath(guard.path, { recursive: true, force: true })
+  return true
+}
+
+async function isPathStale(path: string, now: number, staleMilliseconds: number): Promise<boolean> {
+  try {
+    const stat = await Bun.file(path).stat()
+    const modifiedAt = Number(stat.mtimeMs)
+    return Number.isFinite(modifiedAt) && now - modifiedAt >= staleMilliseconds
   } catch {
     return false
   }
