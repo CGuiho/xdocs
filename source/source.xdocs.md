@@ -28,7 +28,8 @@ files:
   release-assets.spec.ts: Exact fourteen-asset, Markdown agent-payload validation, and prohibited-import tests.
   release-assets.ts: Exact native and .md agent release asset contract with frontmatter, identity, and Markdown guards.
   schemas.ts: TypeBox schemas and shared decoding diagnostics.
-  self-management.ts: RFC cache, detached worker, upgrade, agent reconciliation, and uninstall orchestration.
+  self-management.spec.ts: Cache-scoped coalescing, stale and orphan lease recovery, ownership, timeout, path-with-spaces, termination, and scheduler failure-isolation regressions.
+  self-management.ts: RFC cache, non-recursive bounded detached worker, ownership-checked leases, upgrade, agent reconciliation, and uninstall orchestration.
   tree.ts: Containment tree assembly, validation, and rendering.
   types.ts: Public and internal domain/platform TypeScript types.
   upgrade-catalog.spec.ts: GitHub pagination, TypeBox response, SemVer, exact channel, prerelease retention, and missing/compatible asset tests.
