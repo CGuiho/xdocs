@@ -280,6 +280,13 @@ export type XDocsUpdateCache = {
   lastCheck: string
 }
 
+/** Exclusive lease that coalesces background update checks for one cache. */
+export type XDocsUpdateLease = {
+  token: string
+  pid: number
+  createdAt: string
+}
+
 /** Supported native binary platform labels. */
 export type XDocsNativePlatform = 'linux' | 'darwin' | 'windows'
 
