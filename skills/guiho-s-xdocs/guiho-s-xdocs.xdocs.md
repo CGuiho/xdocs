@@ -5,7 +5,7 @@ parent: xdocs-skills
 children: []
 files: {}
 documents:
-  SKILL.md: Versioned xdocs workflow skill defining global-by-default initialization, descriptor maintenance, Citty usage, metadata/context/doctor workflows, and observable verified upgrade/release-list behavior.
+  SKILL.md: Versioned xdocs workflow skill defining global-by-default initialization, descriptor maintenance, Citty usage, bounded cache-leased update checks, metadata/context/doctor workflows, and observable verified upgrade/release-list behavior.
 tags:
   - skills
   - agents
@@ -21,6 +21,7 @@ keywords:
   - Citty
   - upgrade recovery
   - release catalog
+  - background update worker
 flags: []
 status: stable
 ---
