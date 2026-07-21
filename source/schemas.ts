@@ -63,6 +63,14 @@ export const XDocsUpdateCacheSchema = Type.Object({
 
 export type XDocsUpdateCacheValue = Static<typeof XDocsUpdateCacheSchema>
 
+export const XDocsUpdateLeaseSchema = Type.Object({
+  token: Type.String({ minLength: 1 }),
+  pid: Type.Integer({ minimum: 1 }),
+  createdAt: Type.String({ minLength: 1 }),
+}, { additionalProperties: false })
+
+export type XDocsUpdateLeaseValue = Static<typeof XDocsUpdateLeaseSchema>
+
 export const GitHubAssetSchema = Type.Object({
   name: Type.String({ minLength: 1 }),
   browser_download_url: Type.String({ minLength: 1 }),
