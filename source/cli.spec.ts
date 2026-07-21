@@ -244,17 +244,27 @@ describe('RFC 0034 Citty catalog', () => {
     }
   })
 
-  test('keeps only the hidden worker internal and the final upgrade subtree public', () => {
+  test.serial('keeps the worker outside Citty and routes its exact bootstrap flag without root output', async () => {
     const root = createXDocsCommand()
     const commands = root.subCommands as Record<string, { subCommands?: Record<string, { args?: Record<string, unknown> }> }>
     expect(root.default).toBeUndefined()
     expect(root.run).toBeFunction()
     expect(commands['home']).toBeUndefined()
+    expect(commands['--check-updates-worker']).toBeUndefined()
     expect(Object.keys(commands['upgrade']?.subCommands ?? {})).toEqual(['check', 'list'])
     const listArgs = Object.keys(commands['upgrade']?.subCommands?.['list']?.args ?? {})
     expect(listArgs).not.toContain('page')
     expect(listArgs).not.toContain('per-page')
     expect(listArgs).not.toContain('pre-releases')
+
+    const previous = process.env['XDOCS_DISABLE_UPDATE_CHECK']
+    process.env['XDOCS_DISABLE_UPDATE_CHECK'] = '1'
+    try {
+      expect(await capture(() => runCli(['--check-updates-worker']))).toEqual({ stdout: '', stderr: '' })
+    } finally {
+      if (previous === undefined) delete process.env['XDOCS_DISABLE_UPDATE_CHECK']
+      else process.env['XDOCS_DISABLE_UPDATE_CHECK'] = previous
+    }
   })
 })
 
