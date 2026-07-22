@@ -206,21 +206,32 @@ one `guiho-i-xdocs.md` catalog artifact, not four separate prompt assets.
 
 ## Startup and update cache
 
-Bare startup prints exactly:
+Bare startup prints the deterministic GUIHO welcome:
 
 ```text
-Hello Windows - xdocs v<version>
+╔════════════════════════════════════════════════════════════╗
+║  XDOCS                                                     ║
+║  Structured documentation for codebases and AI agents     ║
+╚════════════════════════════════════════════════════════════╝
+
+  organization  GUIHO
+  platform      Windows x64
+  version       v<version>
+
+  Run `xdocs --help` to see available commands.
 ```
 
 The foreground reads only `~/.guiho/xdocs/cache.json`. When
-`newVersionAvailable` is true it prints:
+`newVersionAvailable` is true and `latestVersion` is newer than the running
+SemVer, it prints:
 
 ```text
-New version available. Run this command to upgrade: xdocs upgrade
+  ⚠ New version available: v<latest>
+    Run `xdocs upgrade` to update.
 ```
 
-The hidden worker is detached and performs remote work after the foreground
-continues. Its exact internal flag is handled before Citty, so it cannot enter
+The foreground awaits only the local lease-and-detached-spawn handoff, never
+the remote request. Its exact internal flag is handled before Citty, so it cannot enter
 the normal root lifecycle or launch another worker. An exclusive lease permits
 at most one check per cache directory, a 15-second deadline bounds the entire
 remote check, and every outcome releases its ownership token. Valid stale,
@@ -236,14 +247,17 @@ xdocs upgrade [--version <version>] [--arch <x64|arm64>]
               [--variant <baseline|default|modern>] [--dry-run]
               [--format <text|json>]
 xdocs upgrade check
-xdocs upgrade list
+xdocs upgrade list [--page <page>] [--size <size>]
 xdocs uninstall [--dry-run]
 ```
 
-Every published stable and prerelease is listed, newest SemVer first. Each row
+The complete stable and prerelease catalog is fetched, decoded, deduplicated,
+and sorted newest SemVer first before local pagination. Page defaults to 1 and
+size defaults to 8, with a maximum size of 100. Each visible row
 includes the normalized version, full tag, exact channel identifier,
 publication date, compatible-asset status/name, and current/latest-stable
-markers. GitHub pagination is exhausted internally; later-page failure aborts
+markers. Text and Markdown print copyable previous/next commands. JSON schema
+version 2 includes pagination totals and navigation. GitHub pagination is exhausted internally; later-page failure aborts
 instead of returning a partial catalog. The x64 default variant is baseline.
 GitHub release responses are TypeBox-validated.
 
