@@ -320,11 +320,24 @@ export type XDocsRelease = {
 
 /** Complete machine-readable release-catalog response. */
 export type XDocsUpgradeListEnvelope = {
-  schemaVersion: 1
+  schemaVersion: 2
   command: 'xdocs upgrade list'
   currentVersion: string
   latestStableVersion: string | null
+  pagination: XDocsUpgradeListPagination
   releases: XDocsRelease[]
+}
+
+/** Navigation metadata for one user-visible release-catalog page. */
+export type XDocsUpgradeListPagination = {
+  page: number
+  size: number
+  totalItems: number
+  totalPages: number
+  hasPreviousPage: boolean
+  hasNextPage: boolean
+  previousCommand: string | null
+  nextCommand: string | null
 }
 
 /** Immutable plan resolved before an upgrade asset body is downloaded. */
