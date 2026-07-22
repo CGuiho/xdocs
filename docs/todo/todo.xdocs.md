@@ -14,6 +14,7 @@ documents:
   rfc-0034-cli-compliance-migration-implementation.md: Records completed units, issue 7 initialization, issue 8 PATH repair, issue 11 help-tree, issue 12 streamed progress, corrective audits, breaking removals, validation, review, and downstream handoff.
   upgrade-reliability-implementation.md: Records completed issue 9 upgrade/list acceptance work, transaction decisions, live-catalog evidence, and final release smoke handoff.
   upgrade-reliability.md: Defines reliable verified self-upgrade, complete release catalog, exact recovery guidance, and installer acceptance signals.
+  welcome-update-pagination.md: Defines the XDocs 0.7.0 welcome, reliable stable-only update notice, eight-item pagination, YAML migration, publishing, and issue closure gates.
 tags:
   - todo
   - planning
