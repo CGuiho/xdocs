@@ -4,9 +4,34 @@
 
 import { expect, test } from 'bun:test'
 
-import type { XDocsCliOptions, XDocsUpgradeEnvelope, XDocsUpgradeEvent, XDocsUpgradePlan } from '../types.js'
+import type { XDocsCliOptions, XDocsRelease, XDocsUpgradeEnvelope, XDocsUpgradeEvent, XDocsUpgradePlan } from '../types.js'
 import { buildUpgradeRecovery } from '../upgrade-catalog.js'
-import { renderEvent, renderPlan, renderTerminal } from './upgrade.js'
+import { buildUpgradeListEnvelope } from '../upgrade-catalog.js'
+import { renderEvent, renderPlan, renderTerminal, renderUpgradeList } from './upgrade.js'
+
+test('renders one paged catalog with stable navigation in text, Markdown, and JSON', async () => {
+  const releases = Array.from({ length: 10 }, (_, index): XDocsRelease => ({
+    version: `1.0.${9 - index}`,
+    tag: `@guiho/xdocs@1.0.${9 - index}`,
+    channel: 'stable',
+    prerelease: false,
+    publishedAt: null,
+    releaseUrl: 'https://example.test/release',
+    assets: [],
+    compatibleAsset: null,
+  }))
+  const envelope = buildUpgradeListEnvelope('1.0.0', releases)
+  const textOutput = await captureStdout(() => renderUpgradeList({ cwd: '.', format: 'text', verbose: false }, envelope))
+  expect(textOutput).toContain('1.0.9')
+  expect(textOutput).not.toContain('1.0.1')
+  expect(textOutput).toContain('Run: xdocs upgrade list --page 2 --size 8')
+
+  const markdownOutput = await captureStdout(() => renderUpgradeList({ cwd: '.', format: 'markdown', verbose: false }, envelope))
+  expect(markdownOutput).toContain('`xdocs upgrade list --page 2 --size 8`')
+
+  const jsonOutput = await captureStdout(() => renderUpgradeList({ cwd: '.', format: 'json', verbose: false }, envelope))
+  expect(JSON.parse(jsonOutput).pagination).toEqual(envelope.pagination)
+})
 
 test('renders the complete upgrade plan before ordered long-running phases', async () => {
   const plan: XDocsUpgradePlan = {
