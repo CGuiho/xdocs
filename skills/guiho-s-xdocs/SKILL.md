@@ -147,10 +147,16 @@ simultaneous invocations, the entire remote check is bounded to 15 seconds, and
 stale or orphaned leases recover after 30 seconds. The internal worker route is
 handled before Citty and never enters the ordinary startup lifecycle.
 
-`xdocs upgrade list` always exhausts GitHub pagination and includes every stable
-and prerelease version. Use its channel, full-tag, publication, compatible
-asset, current, and latest-stable fields instead of assuming a truncated or
-stable-only catalog.
+`xdocs upgrade list` always exhausts GitHub pagination before applying its
+user-visible page. It defaults to `--page 1 --size 8`; size accepts positive
+integers up to 100. Use its channel, full-tag, publication, compatible asset,
+current, latest-stable, and pagination fields instead of treating one visible
+page as the complete catalog.
+
+A bare invocation prints the deterministic GUIHO XDocs welcome. The foreground
+reads the cache and awaits only the local lease-and-detached-spawn handoff. The
+remote request remains bounded and detached. A notice is rendered only when a
+stable cached SemVer is newer than the running version.
 
 After any `xdocs upgrade` outcome, preserve the printed recovery block. Its
 installer command is pinned to the resolved full version; its process-stop
