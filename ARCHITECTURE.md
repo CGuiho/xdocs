@@ -69,14 +69,14 @@ The structured-documentation domain remains separate:
 ## Startup lifecycle
 
 1. Read and TypeBox-decode `~/.guiho/xdocs/cache.json`.
-2. Print the exact cached update notice when a newer version exists.
+2. Render a cached notice only when its stable SemVer is newer than the running version.
 3. Resolve and decode configuration for config-aware commands.
 4. Report the absolute loaded YAML path.
-5. Atomically acquire one cache-scoped update lease and spawn
-   `--check-updates-worker` detached without awaiting network work.
+5. Await local acquisition of one cache-scoped update lease and the detached
+   `--check-updates-worker` spawn, without awaiting network work.
 6. Route the exact worker flag before Citty so a worker can never enter the
    ordinary startup lifecycle or recursively schedule another worker.
-7. With no arguments, print `Hello Windows - xdocs v<version>`.
+7. With no arguments, print the deterministic GUIHO XDocs welcome window.
 
 The complete remote check is bounded to 15 seconds. A TypeBox-decoded lease
 with a unique ownership token coalesces concurrent invocations, is released on
@@ -122,9 +122,11 @@ command followed by a separate platform process-stop command. Discovery
 failure uses the current version as an explicit repair target.
 
 `xdocs upgrade list` exhausts GitHub Releases pagination and keeps every stable
-and prerelease entry. SemVer ordering is newest first; rows expose the full tag,
+and prerelease entry internally. After decoding, deduplication, and newest-first
+SemVer ordering it returns `--page 1 --size 8` by default; rows expose the full tag,
 exact prerelease identifier, publication timestamp, compatible-asset state,
-current marker, and latest-stable marker.
+current marker, and latest-stable marker. JSON schema version 2 carries totals
+and previous/next navigation commands.
 
 ## Distribution
 
