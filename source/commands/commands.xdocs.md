@@ -9,14 +9,14 @@ files:
   doctor.ts: Renders descriptor, companion, tree, and documented-file health checks.
   generate.ts: Produces project or module Markdown from descriptor metadata.
   init.ts: Creates xdocs.yaml and XDOCS.md, then idempotently installs the bundled skill globally by default or locally with --local.
-  upgrade.spec.ts: Human upgrade-plan, known/unknown-length progress rendering, long-running phase ordering, and every-outcome exact-version recovery regression coverage.
+  upgrade.spec.ts: Paged release-list text/Markdown/JSON navigation, human upgrade-plan, progress, phase ordering, and exact-version recovery coverage.
   list.ts: Lists documented implementation files and companion documents.
   meta.ts: Reads descriptor and optional companion frontmatter with strict filters.
   merge.ts: Consolidates scoped descriptors into one document.
   scan.ts: Reports descriptor and companion-document coverage.
   tree.ts: Renders containment hierarchy as text, Markdown, or JSON.
   uninstall.ts: Removes or schedules removal of the native executable.
-  upgrade.ts: Renders the pre-download upgrade plan, streamed progress, ordered phases, complete all-channel release list, and exact recovery guidance.
+  upgrade.ts: Renders the pre-download upgrade plan, streamed progress, ordered phases, post-normalization paginated all-channel release list, and exact recovery guidance.
 documents: {}
 tags:
   - cli
