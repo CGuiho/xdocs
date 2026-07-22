@@ -8,6 +8,7 @@ documents:
   citty-cli-migration.md: Executable unit-by-unit plan for replacing handwritten CLI parsing and routing with Citty.
   rfc-0034-cli-compliance-migration.md: Approved breaking migration plan for Bun-only source, TypeBox, YAML, startup, help, agents, prompts, upgrades, distribution, twelve native binaries plus two named .md agent assets, docs, and validation.
   upgrade-reliability-implementation.md: Executable plan for complete release discovery, immediate verified self-upgrade, recovery guidance, installer hardening, and validation.
+  xdocs-0.7.0-welcome-update-pagination.md: Approved execution plan for issues 15 and 16, Mirror YAML migration, release validation, and public acceptance.
 tags:
   - plans
   - implementation
