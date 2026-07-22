@@ -60,7 +60,10 @@ and does not require Bun to be preinstalled.
 
 ```bash
 xdocs
-# Hello Windows - xdocs v<version>
+# ╔════════════════════════════════════════════════════════════╗
+# ║  XDOCS                                                     ║
+# ║  Structured documentation for codebases and AI agents     ║
+# ╚════════════════════════════════════════════════════════════╝
 
 xdocs init
 xdocs scan
@@ -194,6 +197,7 @@ xdocs upgrade
 xdocs upgrade --version 0.7.0 --arch x64 --variant baseline --dry-run
 xdocs upgrade check
 xdocs upgrade list
+xdocs upgrade list --page 2 --size 8
 ```
 
 The default x64 variant is `baseline`. Upgrades validate release metadata,
@@ -201,8 +205,10 @@ stream known-length percentage/bar progress or unknown-length byte progress,
 verify a native candidate, replace transactionally, roll back on failure,
 update `~/.guiho/xdocs/cache.json`, refresh both global skill copies, and
 reconcile project instructions. `upgrade list` exhausts the GitHub Releases
-catalog and returns every stable and prerelease version, newest SemVer first,
-with full tags, channel identifiers, publication dates, compatible-asset
+catalog before returning one user-visible page of stable and prerelease
+versions, newest SemVer first. It defaults to page 1 with eight versions;
+use `--page` and `--size` (maximum 100) to navigate. Rows retain
+full tags, channel identifiers, publication dates, compatible-asset
 status, and current/latest-stable markers.
 
 Every upgrade outcome prints a recovery block after its final result. The
