@@ -32,7 +32,7 @@ All Rights Reserved.
 | --- | ---: |
 | todo | 1 |
 | in progress | 0 |
-| testing | 0 |
+| testing | 1 |
 | stopped | 0 |
 | completed | 5 |
 
@@ -106,3 +106,15 @@ All Rights Reserved.
 - External: [CGuiho/xdocs#14](https://github.com/CGuiho/xdocs/issues/14)
 - Validation: [docs/validation/background-update-worker-cpu-safety.md](docs/validation/background-update-worker-cpu-safety.md)
 - Release: [@guiho/xdocs@0.6.7](https://github.com/CGuiho/xdocs/releases/tag/%40guiho%2Fxdocs%400.6.7)
+
+### 7. Deliver The Welcome, Reliable Update Notice, And Paginated Release Catalog
+
+- Status: testing
+- Created: `2026-07-22`
+- Updated: `2026-07-22`
+- Outcome: Ship the deterministic welcome window, reliable stable-only cached
+  update notice, and eight-item `upgrade list` pagination in XDocs 0.7.0.
+- Spec: [docs/todo/welcome-update-pagination.md](docs/todo/welcome-update-pagination.md)
+- Plan: [docs/plans/xdocs-0.7.0-welcome-update-pagination.md](docs/plans/xdocs-0.7.0-welcome-update-pagination.md)
+- External: [CGuiho/xdocs#15](https://github.com/CGuiho/xdocs/issues/15) and
+  [CGuiho/xdocs#16](https://github.com/CGuiho/xdocs/issues/16)
