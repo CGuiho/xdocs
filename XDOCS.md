@@ -14,7 +14,7 @@
   - [xdocs.xdocs.md](xdocs.xdocs.md): The package-root xdocs descriptor for `@guiho/xdocs`; this repository root is the package root.
   - [package.json](package.json): npm package metadata, scripts, package exports, and CLI bin mapping.
   - [jsr.json](jsr.json): JSR package metadata and publish include list.
-  - [mirror.config.toml](mirror.config.toml): GUIHO Mirror versioning and release configuration.
+  - [mirror.yaml](mirror.yaml): GUIHO Mirror YAML versioning and release configuration.
 
 ## Directories
   - [source/](source/): TypeScript source for the xdocs library, CLI, commands, config, discovery, metadata, tree, prompt, and agent behavior.
