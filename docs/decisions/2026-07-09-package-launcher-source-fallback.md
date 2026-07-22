@@ -17,7 +17,7 @@ keywords:
   - native binary
   - vendor
   - package root
-  - mirror.config.toml
+  - legacy Mirror TOML release configuration
 ---
 
 # Package Launcher Source Fallback
@@ -48,7 +48,7 @@ source entrypoint is absent.
    local development and repository-root package execution working without
    downloading a release artifact.
 3. Keep package-root metadata consistent with the current layout. The package now
-   lives at the repository root, so `repository.directory`, `mirror.config.toml`,
+   lives at the repository root, so `repository.directory`, the legacy Mirror TOML configuration,
    `AGENTS.md`, `XDOCS.md`, and the root xdocs descriptor must not point at a
    nested `xdocs/` package directory.
 
