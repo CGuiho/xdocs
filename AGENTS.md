@@ -128,13 +128,13 @@ Stop if you can not find it.
   paths. This repository explicitly overrides the extensionless RFC 0034
   filenames while retaining exactly fourteen release assets.
 - The skill frontmatter top-level `version` and `metadata.version` must match the package version for a release.
-- Versioning is handled by `@guiho/mirror` via `mirror.config.toml`, not by xdocs itself. Do not confuse xdocs (documentation) with mirror (versioning).
+- Versioning is handled by `@guiho/mirror` via `mirror.yaml`, not by xdocs itself. Do not confuse xdocs (documentation) with mirror (versioning).
 
 ## Semantic Project Versioning -- GUIHO Mirror
 
 Invoke the guiho-s-mirror agent skill every time the user wants to bump, tag, release, plan, initialize, configure, or troubleshoot semantic project versioning with GUIHO Mirror.
 
-Before editing release docs or changelogs, inspect mirror.config.toml. If [agents].write_changelog is false, skip changelog edits. If it is missing or true, changelog edits are allowed when the project has a changelog.
+Before editing release docs or changelogs, inspect `mirror.yaml`. If `agents.write_changelog` is false, skip changelog edits. If it is missing or true, changelog edits are allowed when the project has a changelog.
 
 Use [agents].changelog_path as the changelog file path. If it is missing, use CHANGELOG.md in the project root.
 
