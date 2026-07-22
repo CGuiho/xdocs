@@ -11,6 +11,7 @@ import {
   compareSemanticVersions,
   fetchReleaseCatalog,
   normalizeXDocsVersion,
+  paginateReleaseCatalog,
 } from './upgrade-catalog.js'
 
 describe('upgrade release catalog', () => {
@@ -61,7 +62,10 @@ describe('upgrade release catalog', () => {
     expect(releases[0]?.version).toBe('2.0.0-alpha.1')
     expect(releases[0]?.channel).toBe('alpha')
     expect(releases[0]?.compatibleAsset?.name).toBe('xdocs-windows-x64-baseline.exe')
-    expect(buildUpgradeListEnvelope('1.0.99', releases).latestStableVersion).toBe('1.0.99')
+    const envelope = buildUpgradeListEnvelope('1.0.99', releases)
+    expect(envelope.latestStableVersion).toBe('1.0.99')
+    expect(envelope.releases).toHaveLength(8)
+    expect(envelope.pagination.totalItems).toBe(101)
   })
 
   test('fails instead of returning a partial catalog when a later page fails', async () => {
@@ -87,6 +91,37 @@ describe('upgrade release catalog', () => {
       { version: '3.0.0', channel: 'stable' },
     ])
     expect(envelope.releases[1]?.compatibleAsset).toBeNull()
+  })
+
+  test('paginates only after the complete SemVer-sorted catalog is normalized', async () => {
+    const fetcher = async (): Promise<Response> => Response.json(
+      Array.from({ length: 19 }, (_, index) => release(`1.0.${index}`, 'xdocs-linux-x64-baseline')),
+    )
+    const releases = await fetchReleaseCatalog({ platform: 'linux', arch: 'x64', fetcher })
+    const first = buildUpgradeListEnvelope('1.0.0', releases)
+    expect(first.schemaVersion).toBe(2)
+    expect(first.releases.map((value) => value.version)).toEqual(['1.0.18', '1.0.17', '1.0.16', '1.0.15', '1.0.14', '1.0.13', '1.0.12', '1.0.11'])
+    expect(first.pagination).toEqual({
+      page: 1,
+      size: 8,
+      totalItems: 19,
+      totalPages: 3,
+      hasPreviousPage: false,
+      hasNextPage: true,
+      previousCommand: null,
+      nextCommand: 'xdocs upgrade list --page 2 --size 8',
+    })
+    const last = buildUpgradeListEnvelope('1.0.0', releases, 3, 8)
+    expect(last.releases).toHaveLength(3)
+    expect(last.pagination.previousCommand).toBe('xdocs upgrade list --page 2 --size 8')
+    expect(last.pagination.nextCommand).toBeNull()
+    expect(buildUpgradeListEnvelope('1.0.0', releases, 5, 8).releases).toEqual([])
+  })
+
+  test('rejects invalid page and size values', () => {
+    expect(() => paginateReleaseCatalog([], 0, 8)).toThrow('positive integer')
+    expect(() => paginateReleaseCatalog([], 1, 0)).toThrow('positive integer')
+    expect(() => paginateReleaseCatalog([], 1, 101)).toThrow('no greater than 100')
   })
 
   test('builds exact-version recovery commands with installer before optional stop guidance', () => {
