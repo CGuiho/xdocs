@@ -37,6 +37,8 @@ files:
   upgrade-transaction.spec.ts: Upgrade progress, partial-stream failure, transaction, rollback, cache, locking, and recovery tests.
   upgrade-transaction.ts: Streamed observable download plus journaled replacement, verification, rollback, and cleanup.
   windows-upgrade.spec.ts: Running-Windows-executable replacement regression.
+  welcome.ts: Pure deterministic GUIHO welcome window and SemVer-verified cached update notice renderer.
+  welcome.spec.ts: Cross-platform welcome layout and stale/older cache-notice regression coverage.
 documents: {}
 tags:
   - source
