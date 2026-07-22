@@ -18,6 +18,20 @@ keywords:
 
 ## Unreleased
 
+- Replace the one-line root greeting with a deterministic GUIHO welcome window
+  that reports product identity, platform, architecture, version, and help.
+- Await the local update-worker lease-and-spawn handoff without waiting for
+  network work, preserve the bounded non-recursive worker, and warn only when
+  a cached stable SemVer is newer than the running version.
+- Page `xdocs upgrade list` after exhaustive GitHub collection, validation,
+  deduplication, and SemVer sorting; default to `--page 1 --size 8`, expose
+  navigation in text and Markdown, and publish JSON envelope schema version 2.
+- Replace the repository's legacy Mirror TOML configuration with `mirror.yaml`
+  and remove obsolete agent-automation fields.
+- Remove the protected-environment approval gate from release publication while
+  retaining typecheck, tests, build, exact-version notes, and exact-fourteen-
+  asset verification.
+
 ## 0.6.7 - 2026-07-21
 
 - Route the exact background update-worker flag before Citty so it cannot enter
