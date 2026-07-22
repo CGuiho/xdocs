@@ -32,7 +32,11 @@ describe('RFC 0034 Citty catalog', () => {
     const previous = process.env['XDOCS_DISABLE_UPDATE_CHECK']
     process.env['XDOCS_DISABLE_UPDATE_CHECK'] = '1'
     try {
-      expect((await capture(() => runCli([]))).stdout).toBe(`Hello Windows - xdocs v${readPackageVersion()}\n`)
+      const welcome = (await capture(() => runCli([]))).stdout
+      expect(welcome).toStartWith('╔════════════════════════════════════════════════════════════╗\n')
+      expect(welcome).toContain('║  XDOCS')
+      expect(welcome).toContain(`  version       v${readPackageVersion()}\n`)
+      expect(welcome).toEndWith('  Run `xdocs --help` to see available commands.\n')
       expect((await capture(() => runCli(['-v']))).stdout).toBe(`xdocs ${readPackageVersion()}\n`)
       expect((await capture(() => runCli(['--version']))).stdout).toBe(`xdocs ${readPackageVersion()}\n`)
     } finally {
@@ -198,10 +202,10 @@ describe('RFC 0034 Citty catalog', () => {
     }))
     try {
       const text = await capture(() => runCli(['agent', 'prompt', 'list', '--names']))
-      expect(text.stdout).toStartWith('New version available. Run this command to upgrade: xdocs upgrade\n')
+      expect(text.stdout).toStartWith('  ⚠ New version available: v9.9.9\n    Run `xdocs upgrade` to update.\n')
       const json = await capture(() => runCli(['scan', '--cwd', root, '--format', 'json']))
       expect(JSON.parse(json.stdout).xdocsFiles.length).toBeGreaterThan(0)
-      expect(json.stderr).toStartWith('New version available. Run this command to upgrade: xdocs upgrade\n')
+      expect(json.stderr).toStartWith('  ⚠ New version available: v9.9.9\n    Run `xdocs upgrade` to update.\n')
       expect(json.stderr).toContain('configuration file loaded:')
     } finally {
       if (previousCache === undefined) delete process.env['XDOCS_CACHE_DIR']
@@ -214,6 +218,20 @@ describe('RFC 0034 Citty catalog', () => {
     expect(result.stdout).toBe('')
     expect(result.stderr).toContain('Unknown command')
     expect(process.exitCode).toBe(2)
+  })
+
+  test.serial('validates upgrade-list page and size before remote discovery', async () => {
+    for (const args of [
+      ['upgrade', 'list', '--page', '0'],
+      ['upgrade', 'list', '--size', '0'],
+      ['upgrade', 'list', '--size', '101'],
+    ]) {
+      const result = await capture(() => runCliWithErrorHandling(args))
+      expect(result.stdout).toBe('')
+      expect(result.stderr).toMatch(/positive integer|no greater than 100/)
+      expect(process.exitCode).toBe(2)
+      process.exitCode = 0
+    }
   })
 
   test.serial('routes nested upgrade version flags to the direct upgrade action', async () => {
@@ -253,7 +271,8 @@ describe('RFC 0034 Citty catalog', () => {
     expect(commands['--check-updates-worker']).toBeUndefined()
     expect(Object.keys(commands['upgrade']?.subCommands ?? {})).toEqual(['check', 'list'])
     const listArgs = Object.keys(commands['upgrade']?.subCommands?.['list']?.args ?? {})
-    expect(listArgs).not.toContain('page')
+    expect(listArgs).toContain('page')
+    expect(listArgs).toContain('size')
     expect(listArgs).not.toContain('per-page')
     expect(listArgs).not.toContain('pre-releases')
 
