@@ -47,6 +47,7 @@ export type {
   XDocsUpgradeEnvelope,
   XDocsUpgradeEvent,
   XDocsUpgradeListEnvelope,
+  XDocsUpgradeListPagination,
   XDocsUpgradeMutationResult,
   XDocsUpgradeOutcome,
   XDocsUpgradePhase,
@@ -96,6 +97,7 @@ export {
   compareSemanticVersions,
   fetchReleaseCatalog,
   normalizeXDocsVersion,
+  paginateReleaseCatalog,
 } from './upgrade-catalog.js'
 
 export { executeUpgradeTransaction, recoverInterruptedUpgrade, verifyExecutableVersion } from './upgrade-transaction.js'
