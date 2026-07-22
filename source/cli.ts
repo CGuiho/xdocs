@@ -32,6 +32,7 @@ import {
 } from './commands/agent.js'
 import { runUpgrade, runUpgradeCheck, runUpgradeList } from './commands/upgrade.js'
 import { runUninstall } from './commands/uninstall.js'
+import { renderUpdateNotice, renderWelcome } from './welcome.js'
 
 export { createXDocsCommand, runCli, runCliWithErrorHandling }
 
@@ -101,7 +102,7 @@ function createXDocsCommand(): AnyCommand {
         const resolvedOptions = options(parsed)
         if (startupLifecycle) await reportCachedUpdateNotice(resolvedOptions.format)
         if (configAware) await reportLoadedConfiguration(resolvedOptions)
-        if (startupLifecycle) void scheduleBackgroundUpdateCheck()
+        if (startupLifecycle) await scheduleBackgroundUpdateCheck()
         await action(parsed)
       },
     })
@@ -247,8 +248,15 @@ function createXDocsCommand(): AnyCommand {
   } satisfies ArgsDef
   const upgradeCheck = leaf('check', 'Check whether a newer release exists.', executionArgs, 'xdocs upgrade check', (args) =>
     runUpgradeCheck(options(args)))
-  const upgradeList = leaf('list', 'List every published release.', executionArgs, 'xdocs upgrade list', (args) =>
-    runUpgradeList(options(args)))
+  const upgradeList = leaf('list', 'List published releases eight at a time.', {
+    ...executionArgs,
+    page: { type: 'string', valueHint: 'page', description: 'Positive result page (default: 1).' },
+    size: { type: 'string', valueHint: 'size', description: 'Positive page size up to 100 (default: 8).' },
+  }, 'xdocs upgrade list', (args) =>
+    runUpgradeList(options(args), {
+      page: parsePositiveInteger(optionalString(args['page']), 'page') ?? 1,
+      size: parsePageSize(optionalString(args['size'])),
+    }))
   const upgrade = group('upgrade', 'Upgrade the installed xdocs binary.', upgradeArgs, 'xdocs upgrade', {
     check: upgradeCheck,
     list: upgradeList,
@@ -295,9 +303,9 @@ function createXDocsCommand(): AnyCommand {
         process.stdout.write(showVersion() + '\n')
         return
       }
-      await reportCachedUpdateNotice(options(parsed).format)
-      void scheduleBackgroundUpdateCheck()
-      process.stdout.write(`Hello Windows - xdocs v${readPackageVersion()}\n`)
+      const notice = await readUpdateCache()
+      process.stdout.write(renderWelcome({ version: readPackageVersion(), update: notice }))
+      await scheduleBackgroundUpdateCheck()
     },
   })
   return root
@@ -331,7 +339,7 @@ function group(
           verbose: Boolean(parsed['verbose']),
         }
         await reportCachedUpdateNotice(resolvedOptions.format)
-        void scheduleBackgroundUpdateCheck()
+        await scheduleBackgroundUpdateCheck()
         await defaultAction(parsed)
         return
       }
@@ -352,6 +360,12 @@ function handleDeveloperHelp(args: ParsedArgs, command: AnyCommand, path: string
     return true
   }
   return false
+}
+
+function parsePageSize(value: string | undefined): number {
+  const size = parsePositiveInteger(value, 'size') ?? 8
+  if (size > 100) throw new XDocsError('size must be no greater than 100.', 2)
+  return size
 }
 
 async function renderScopedUsage(command: AnyCommand, path: string): Promise<string> {
@@ -377,8 +391,8 @@ async function reportLoadedConfiguration(options: XDocsCliOptions): Promise<void
 
 async function reportCachedUpdateNotice(format: XDocsFormat): Promise<void> {
   const notice = await readUpdateCache()
-  if (!notice?.newVersionAvailable) return
-  const message = `New version available. Run this command to upgrade: ${notice.upgradeCommand ?? 'xdocs upgrade'}\n`
+  const message = renderUpdateNotice(readPackageVersion(), notice)
+  if (!message) return
   if (format === 'json') process.stderr.write(message)
   else process.stdout.write(message)
 }
