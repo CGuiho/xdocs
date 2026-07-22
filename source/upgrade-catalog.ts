@@ -22,6 +22,7 @@ export {
   compareSemanticVersions,
   fetchReleaseCatalog,
   normalizeXDocsVersion,
+  paginateReleaseCatalog,
 }
 
 type ReleaseCatalogOptions = {
@@ -97,14 +98,39 @@ async function fetchReleaseCatalog(options: ReleaseCatalogOptions): Promise<XDoc
   return [...unique.values()]
 }
 
-function buildUpgradeListEnvelope(currentVersion: string, releases: XDocsRelease[]): XDocsUpgradeListEnvelope {
+function buildUpgradeListEnvelope(currentVersion: string, releases: XDocsRelease[], page = 1, size = 8): XDocsUpgradeListEnvelope {
   const normalizedCurrent = requireSemanticVersion(currentVersion)
+  const paginated = paginateReleaseCatalog(releases, page, size)
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     command: 'xdocs upgrade list',
     currentVersion: normalizedCurrent,
     latestStableVersion: releases.find((release) => release.channel === 'stable')?.version ?? null,
-    releases,
+    pagination: paginated.pagination,
+    releases: paginated.releases,
+  }
+}
+
+function paginateReleaseCatalog(releases: XDocsRelease[], page = 1, size = 8): Pick<XDocsUpgradeListEnvelope, 'pagination' | 'releases'> {
+  if (!Number.isInteger(page) || page < 1) throw new XDocsError('page must be a positive integer.', 2)
+  if (!Number.isInteger(size) || size < 1 || size > 100) throw new XDocsError('size must be a positive integer no greater than 100.', 2)
+  const totalItems = releases.length
+  const totalPages = Math.ceil(totalItems / size)
+  const start = (page - 1) * size
+  const values = releases.slice(start, start + size)
+  const command = (target: number) => `xdocs upgrade list --page ${target} --size ${size}`
+  return {
+    pagination: {
+      page,
+      size,
+      totalItems,
+      totalPages,
+      hasPreviousPage: page > 1,
+      hasNextPage: page < totalPages,
+      previousCommand: page > 1 ? command(page - 1) : null,
+      nextCommand: page < totalPages ? command(page + 1) : null,
+    },
+    releases: values,
   }
 }
 
