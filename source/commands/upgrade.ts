@@ -2,19 +2,24 @@
  * @copyright Copyright (c) 2026 GUIHO Technologies as represented by Cristóvão GUIHO. All Rights Reserved.
  */
 
-import type { XDocsCliOptions, XDocsUpgradeEnvelope, XDocsUpgradeEvent, XDocsUpgradePlan } from '../types.js'
+import type { XDocsCliOptions, XDocsUpgradeEnvelope, XDocsUpgradeEvent, XDocsUpgradeListEnvelope, XDocsUpgradePlan } from '../types.js'
 import { XDocsError } from '../errors.js'
 import { readPackageVersion } from '../help.js'
 import { detectNativeArch, detectNativePlatform, checkForLatestVersion, upgradeSelf } from '../self-management.js'
 import { buildUpgradeListEnvelope, fetchReleaseCatalog } from '../upgrade-catalog.js'
 
-export { renderEvent, renderPlan, renderTerminal, runUpgrade, runUpgradeCheck, runUpgradeList }
+export { renderEvent, renderPlan, renderTerminal, renderUpgradeList, runUpgrade, runUpgradeCheck, runUpgradeList }
 
 type XDocsUpgradeInput = {
   version?: string
   arch?: string
   variant?: string
   dryRun?: boolean
+}
+
+type XDocsUpgradeListInput = {
+  page?: number
+  size?: number
 }
 
 async function runUpgradeCheck(options: XDocsCliOptions): Promise<void> {
@@ -30,11 +35,16 @@ async function runUpgradeCheck(options: XDocsCliOptions): Promise<void> {
   if (result.newVersionAvailable) process.stdout.write('Run: xdocs upgrade\n')
 }
 
-async function runUpgradeList(options: XDocsCliOptions): Promise<void> {
+async function runUpgradeList(options: XDocsCliOptions, input: XDocsUpgradeListInput = {}): Promise<void> {
   const platform = detectNativePlatform()
   const arch = detectNativeArch()
   const releases = await fetchReleaseCatalog({ platform, arch })
-  const envelope = buildUpgradeListEnvelope(readPackageVersion(), releases)
+  const envelope = buildUpgradeListEnvelope(readPackageVersion(), releases, input.page ?? 1, input.size ?? 8)
+  renderUpgradeList(options, envelope)
+}
+
+function renderUpgradeList(options: XDocsCliOptions, envelope: XDocsUpgradeListEnvelope): void {
+  const visibleReleases = envelope.releases
   if (options.format === 'json') {
     process.stdout.write(JSON.stringify(envelope, null, 2) + '\n')
     return
@@ -44,20 +54,35 @@ async function runUpgradeList(options: XDocsCliOptions): Promise<void> {
     process.stdout.write('# xdocs upgrade list\n\n')
     process.stdout.write('| Version | Tag | Channel | Published | Asset | Asset Name | Markers |\n')
     process.stdout.write('| --- | --- | --- | --- | --- | --- | --- |\n')
-    for (const release of releases) {
+    for (const release of visibleReleases) {
       process.stdout.write(`| ${release.version} | ${release.tag} | ${release.channel} | ${release.publishedAt ?? '-'} | ${release.compatibleAsset ? 'yes' : 'no'} | ${release.compatibleAsset?.name ?? '-'} | ${releaseMarkers(release.version, envelope.currentVersion, envelope.latestStableVersion)} |\n`)
     }
-    if (releases.length === 0) process.stdout.write('| _No published releases_ | - | - | - | - | - | - |\n')
+    if (visibleReleases.length === 0) process.stdout.write('| _No releases on this page_ | - | - | - | - | - | - |\n')
+    renderPageNavigation(options, envelope)
     return
   }
 
   process.stdout.write('AVAILABLE XDOCS VERSIONS\n\n')
   process.stdout.write('Version                   Tag                                  Channel      Published                  Asset  Asset Name                               Markers\n')
   process.stdout.write('-----------------------------------------------------------------------------------------------------------------------------------------------------------\n')
-  for (const release of releases) {
+  for (const release of visibleReleases) {
     process.stdout.write(`${pad(release.version, 25)} ${pad(release.tag, 36)} ${pad(release.channel, 12)} ${pad(release.publishedAt ?? '-', 26)} ${pad(release.compatibleAsset ? 'yes' : 'no', 6)} ${pad(release.compatibleAsset?.name ?? '-', 40)} ${releaseMarkers(release.version, envelope.currentVersion, envelope.latestStableVersion)}\n`)
   }
-  if (releases.length === 0) process.stdout.write('No published xdocs releases found.\n')
+  if (visibleReleases.length === 0) process.stdout.write(envelope.pagination.totalItems === 0 ? 'No published xdocs releases found.\n' : 'No xdocs releases exist on this page.\n')
+  renderPageNavigation(options, envelope)
+}
+
+function renderPageNavigation(options: XDocsCliOptions, envelope: XDocsUpgradeListEnvelope): void {
+  const page = envelope.pagination
+  const commands = [page.previousCommand, page.nextCommand].filter((value): value is string => value !== null)
+  if (commands.length === 0) return
+  if (options.format === 'markdown') {
+    process.stdout.write('\nMore versions are available.\n\n')
+    for (const command of commands) process.stdout.write(`- \`${command}\`\n`)
+    return
+  }
+  process.stdout.write('\nMore versions are available.\n')
+  for (const command of commands) process.stdout.write(`Run: ${command}\n`)
 }
 
 async function runUpgrade(options: XDocsCliOptions, input: XDocsUpgradeInput = {}): Promise<void> {
