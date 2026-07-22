@@ -122,8 +122,8 @@ async function checkForLatestVersion(options: BackgroundUpdateOptions = {}): Pro
     arch: detectNativeArch(),
     fetcher: options.fetcher,
   })
-  const latest = releases.find((release) => release.compatibleAsset)
-  if (!latest) throw new XDocsError('No compatible published xdocs release is available.')
+  const latest = releases.find((release) => release.channel === 'stable' && release.compatibleAsset)
+  if (!latest) throw new XDocsError('No compatible stable xdocs release is available.')
   const latestVersion = latest.version
   const cache: XDocsUpdateCache = {
     newVersionAvailable: compareSemanticVersions(latestVersion, currentVersion) > 0,
