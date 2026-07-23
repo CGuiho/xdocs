@@ -13,7 +13,7 @@ keywords: [Mirror issue 16, RunX table, JSON, Markdown]
 
 ## Verdict
 
-Accepted for XDocs 0.7.1 release preparation.
+Accepted and publicly verified in XDocs 0.7.1.
 
 ## Review Scope
 
@@ -51,8 +51,13 @@ No blocking or correctness finding remains.
 - Live compiled Markdown and JSON retained full tag, release URL, and asset
   metadata.
 - Strict XDocs metadata and doctor passed; Mirror config and 0.7.1 plan passed.
+- Main CI and the 0.7.1 Publish workflow passed.
+- The public release contains exactly twelve native binaries and the two
+  required `.md` agent assets, with only the 0.7.1 changelog section as notes.
+- Canonical PowerShell and Bash installers installed and verified XDocs 0.7.1.
+- Installed text, Markdown, JSON, and pagination behavior passed acceptance.
+- XDocs evidence was posted to Mirror issue 16 for coordinated closure.
 
 ## Residual Risk
 
-Public assets, installers, release notes, installed output, and issue evidence
-remain to be verified after publication.
+None identified for the XDocs half of Mirror issue 16.
