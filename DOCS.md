@@ -253,11 +253,14 @@ xdocs uninstall [--dry-run]
 
 The complete stable and prerelease catalog is fetched, decoded, deduplicated,
 and sorted newest SemVer first before local pagination. Page defaults to 1 and
-size defaults to 8, with a maximum size of 100. Each visible row
-includes the normalized version, full tag, exact channel identifier,
-publication date, compatible-asset status/name, and current/latest-stable
-markers. Text and Markdown print copyable previous/next commands. JSON schema
-version 2 includes pagination totals and navigation. GitHub pagination is exhausted internally; later-page failure aborts
+size defaults to 8, with a maximum size of 100. Human text uses only
+`VERSION`, `CHANNEL`, `PUBLISHED`, `CURRENT`, `LATEST`, and `ASSET`; dates use
+`YYYY-MM-DD`, marker cells use `yes` or remain blank, and asset compatibility
+uses `yes`/`no`. Text intentionally omits full tags, release URLs, and asset
+names. Markdown preserves its complete release table, and JSON schema version 2
+preserves complete release objects plus pagination totals and navigation. Text
+and Markdown print copyable previous/next commands. GitHub pagination is
+exhausted internally; later-page failure aborts
 instead of returning a partial catalog. The x64 default variant is baseline.
 GitHub release responses are TypeBox-validated.
 
