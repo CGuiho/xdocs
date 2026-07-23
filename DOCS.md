@@ -345,6 +345,13 @@ wrongly suffixed assets.
 The tag workflow extracts only the exact version's `## <version>` section from
 `CHANGELOG.md` for the GitHub Release description. Extraction stops at the next
 level-two heading and fails on missing, duplicate, or empty matching sections.
+Stable releases are explicitly marked latest and prereleases are explicitly
+marked prerelease. After the exact fourteen assets are public, the workflow
+downloads the installer from the immutable tag, requests that exact version,
+and accepts the release only when the installed binary reports exactly
+`xdocs <version>`, both global skill copies exist, and the project instruction
+block was reconciled. Main-branch CI's unpinned installer check remains a
+generic latest-stable smoke and is not release evidence.
 
 ## TypeScript API
 
