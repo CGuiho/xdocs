@@ -207,9 +207,10 @@ update `~/.guiho/xdocs/cache.json`, refresh both global skill copies, and
 reconcile project instructions. `upgrade list` exhausts the GitHub Releases
 catalog before returning one user-visible page of stable and prerelease
 versions, newest SemVer first. It defaults to page 1 with eight versions;
-use `--page` and `--size` (maximum 100) to navigate. Rows retain
-full tags, channel identifiers, publication dates, compatible-asset
-status, and current/latest-stable markers.
+use `--page` and `--size` (maximum 100) to navigate. Human text uses the concise
+`VERSION CHANNEL PUBLISHED CURRENT LATEST ASSET` table shared with RunX.
+Markdown and JSON retain full tags, publication timestamps, asset names,
+release metadata, and pagination.
 
 Every upgrade outcome prints a recovery block after its final result. The
 direct-install command is pinned to the fully resolved stable or prerelease
