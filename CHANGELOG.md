@@ -16,7 +16,7 @@ keywords:
 
 # GUIHO XDocs Changelog
 
-## Unreleased
+## 0.7.1 - 2026-07-23
 
 - Simplify human `xdocs upgrade list` output to the RunX-style `VERSION`,
   `CHANNEL`, `PUBLISHED`, `CURRENT`, `LATEST`, and `ASSET` columns while
