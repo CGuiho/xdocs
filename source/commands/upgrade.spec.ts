@@ -15,22 +15,38 @@ test('renders one paged catalog with stable navigation in text, Markdown, and JS
     tag: `@guiho/xdocs@1.0.${9 - index}`,
     channel: 'stable',
     prerelease: false,
-    publishedAt: null,
-    releaseUrl: 'https://example.test/release',
-    assets: [],
-    compatibleAsset: null,
+    publishedAt: `2026-07-${String(10 - index).padStart(2, '0')}T12:34:56Z`,
+    releaseUrl: `https://example.test/release/${9 - index}`,
+    assets: [{ name: 'xdocs-linux-x64-baseline', downloadUrl: 'https://example.test/xdocs', size: 42 }],
+    compatibleAsset: index === 1 ? { name: 'xdocs-linux-x64-baseline', downloadUrl: 'https://example.test/xdocs', size: 42 } : null,
   }))
-  const envelope = buildUpgradeListEnvelope('1.0.0', releases)
+  const envelope = buildUpgradeListEnvelope('1.0.8', releases)
   const textOutput = await captureStdout(() => renderUpgradeList({ cwd: '.', format: 'text', verbose: false }, envelope))
-  expect(textOutput).toContain('1.0.9')
+  expect(textOutput).toStartWith([
+    'AVAILABLE XDOCS VERSIONS',
+    '',
+    'VERSION  CHANNEL  PUBLISHED   CURRENT  LATEST  ASSET',
+    '1.0.9    stable   2026-07-10           yes     no',
+    '1.0.8    stable   2026-07-09  yes              yes',
+  ].join('\n'))
   expect(textOutput).not.toContain('1.0.1')
+  expect(textOutput).not.toContain('@guiho/xdocs@')
+  expect(textOutput).not.toContain('xdocs-linux-x64-baseline')
+  expect(textOutput).not.toContain('https://example.test')
   expect(textOutput).toContain('Run: xdocs upgrade list --page 2 --size 8')
 
   const markdownOutput = await captureStdout(() => renderUpgradeList({ cwd: '.', format: 'markdown', verbose: false }, envelope))
+  expect(markdownOutput).toContain('| Version | Tag | Channel | Published | Asset | Asset Name | Markers |')
+  expect(markdownOutput).toContain('@guiho/xdocs@1.0.9')
+  expect(markdownOutput).toContain('xdocs-linux-x64-baseline')
   expect(markdownOutput).toContain('`xdocs upgrade list --page 2 --size 8`')
 
   const jsonOutput = await captureStdout(() => renderUpgradeList({ cwd: '.', format: 'json', verbose: false }, envelope))
-  expect(JSON.parse(jsonOutput).pagination).toEqual(envelope.pagination)
+  const json = JSON.parse(jsonOutput)
+  expect(json.pagination).toEqual(envelope.pagination)
+  expect(json.releases[0].tag).toBe('@guiho/xdocs@1.0.9')
+  expect(json.releases[0].releaseUrl).toBe('https://example.test/release/9')
+  expect(json.releases[0].assets[0].name).toBe('xdocs-linux-x64-baseline')
 })
 
 test('renders the complete upgrade plan before ordered long-running phases', async () => {
