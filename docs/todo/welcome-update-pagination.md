@@ -13,8 +13,8 @@ keywords: [welcome window, background worker, page, size, GitHub issues 15 and 1
 
 ## Status
 
-Testing. Source implementation and local validation are complete; coordinated
-public release and issue closure remain.
+Completed in XDocs 0.7.0. Source, CI, publication, both public installers,
+welcome/cache lifecycle, live pagination, and GitHub issue closure passed.
 
 ## Outcome
 
@@ -41,3 +41,6 @@ notices, and an eight-item paginated release catalog.
 - [Implementation plan](../plans/xdocs-0.7.0-welcome-update-pagination.md)
 - [Plan review](../reviews/plans/xdocs-0.7.0-welcome-update-pagination-review.md)
 - [Validation](../validation/xdocs-0.7.0-welcome-update-pagination.md)
+- [Release](https://github.com/CGuiho/xdocs/releases/tag/%40guiho%2Fxdocs%400.7.0)
+- [Issue 15 evidence](https://github.com/CGuiho/xdocs/issues/15#issuecomment-5061538257)
+- [Issue 16 evidence](https://github.com/CGuiho/xdocs/issues/16#issuecomment-5061538669)
