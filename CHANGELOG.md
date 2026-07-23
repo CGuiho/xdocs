@@ -16,6 +16,13 @@ keywords:
 
 # GUIHO XDocs Changelog
 
+## Unreleased
+
+- Simplify human `xdocs upgrade list` output to the RunX-style `VERSION`,
+  `CHANNEL`, `PUBLISHED`, `CURRENT`, `LATEST`, and `ASSET` columns while
+  preserving full Markdown/JSON metadata, default-eight pagination, `--page`,
+  `--size`, and navigation.
+
 ## 0.7.0 - 2026-07-22
 
 - Replace the one-line root greeting with a deterministic GUIHO welcome window
