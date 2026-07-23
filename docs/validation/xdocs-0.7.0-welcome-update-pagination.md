@@ -13,8 +13,8 @@ keywords: [XDocs 0.7.0, welcome, worker, pagination]
 
 ## Status
 
-Local implementation validation passed. Public release validation is pending
-the coordinated Mirror release.
+Complete. Local implementation, CI, publication, public installation, native
+runtime, live catalog, and issue-closure validation passed.
 
 ## Required Evidence
 
@@ -52,8 +52,28 @@ the coordinated Mirror release.
 - `mirror config check --config mirror.yaml` passed.
 - Static scans found no obsolete Mirror TOML filename and no protected
   production environment gate.
+- [Publish run 30030108905](https://github.com/CGuiho/xdocs/actions/runs/30030108905)
+  passed and created the public 0.7.0 release.
+- The public release contains exactly fourteen assets: twelve native binaries
+  plus `guiho-s-xdocs.md` and `guiho-i-xdocs.md`.
+- Release notes contain only the exact `0.7.0` changelog section and no 0.6.7
+  content.
+- The public PowerShell installer installed and verified XDocs 0.7.0, both
+  global skill copies, and project instructions.
+- The exact public Bash installer installed and verified XDocs 0.7.0 on Linux
+  x64; the installed Linux welcome passed.
+- An installed cold invocation created cache version 0.7.0, released the lease,
+  and left zero worker processes. A fresh simulated stable 0.7.1 cache displayed
+  the expected welcome warning and upgrade command.
+- Live installed JSON pagination returned schema version 2, default page 1,
+  default size 8, exactly eight visible releases, and twenty-one total releases.
+  Page 2/size 3 returned three releases with previous/next metadata and text
+  rendered the exact next command.
+- Evidence was posted to issues
+  [#15](https://github.com/CGuiho/xdocs/issues/15#issuecomment-5061538257) and
+  [#16](https://github.com/CGuiho/xdocs/issues/16#issuecomment-5061538669), then
+  both issues were closed as completed.
 
 ## Readiness
 
-Ready for coordinated version preparation. Public release assets, release notes,
-installers, 0.7.0 update lifecycle, and GitHub issue closure remain pending.
+Released and accepted. No known blocker or residual delivery risk remains.
