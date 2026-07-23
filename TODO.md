@@ -32,9 +32,9 @@ All Rights Reserved.
 | --- | ---: |
 | todo | 1 |
 | in progress | 0 |
-| testing | 1 |
+| testing | 0 |
 | stopped | 0 |
-| completed | 6 |
+| completed | 7 |
 
 ## Tasks
 
@@ -124,10 +124,12 @@ All Rights Reserved.
 
 ### 8. Simplify Upgrade List Human Output
 
-- Status: testing
+- Status: completed
 - Created: `2026-07-23`
 - Updated: `2026-07-23`
 - Outcome: Match RunX's concise six-column human table while retaining XDocs
   pagination and complete Markdown/JSON release metadata.
 - Spec: [docs/todo/simple-upgrade-list-output.md](docs/todo/simple-upgrade-list-output.md)
 - External: [CGuiho/mirror#16](https://github.com/CGuiho/mirror/issues/16)
+- Release: [@guiho/xdocs@0.7.1](https://github.com/CGuiho/xdocs/releases/tag/%40guiho%2Fxdocs%400.7.1)
+- Evidence: [XDocs acceptance](https://github.com/CGuiho/mirror/issues/16#issuecomment-5061756753)
