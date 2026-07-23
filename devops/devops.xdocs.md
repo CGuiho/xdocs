@@ -10,6 +10,7 @@ files:
   install.ps1: Buffered percentage/byte-progress Windows installer for binary and agent assets, literal-safe PATH mutation, both skill destinations, instruction reconciliation, rollback, and final verification.
   install.sh: Progress-visible Linux/Darwin installer with Darwin-aware shell-profile PATH setup, literal-safe PATH persistence, validated Markdown agent assets, both skill destinations, instruction reconciliation, rollback, and final verification.
   installers.spec.ts: Isolated recovery-installer regression coverage including the public one-line PowerShell and Bash commands, progress, Markdown fixtures, paths with spaces, fresh-shell PATH command resolution, and Darwin Bash profile selection.
+  publish-workflow.spec.ts: Locks generic latest smoke ownership, stable/prerelease classification, post-asset ordering, tag-pinned exact-version installation, installed agent-resource acceptance, and workflow YAML validity.
 documents: {}
 tags:
   - devops
