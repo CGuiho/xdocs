@@ -63,13 +63,28 @@ function renderUpgradeList(options: XDocsCliOptions, envelope: XDocsUpgradeListE
   }
 
   process.stdout.write('AVAILABLE XDOCS VERSIONS\n\n')
-  process.stdout.write('Version                   Tag                                  Channel      Published                  Asset  Asset Name                               Markers\n')
-  process.stdout.write('-----------------------------------------------------------------------------------------------------------------------------------------------------------\n')
-  for (const release of visibleReleases) {
-    process.stdout.write(`${pad(release.version, 25)} ${pad(release.tag, 36)} ${pad(release.channel, 12)} ${pad(release.publishedAt ?? '-', 26)} ${pad(release.compatibleAsset ? 'yes' : 'no', 6)} ${pad(release.compatibleAsset?.name ?? '-', 40)} ${releaseMarkers(release.version, envelope.currentVersion, envelope.latestStableVersion)}\n`)
-  }
+  renderTextReleaseTable(envelope)
   if (visibleReleases.length === 0) process.stdout.write(envelope.pagination.totalItems === 0 ? 'No published xdocs releases found.\n' : 'No xdocs releases exist on this page.\n')
   renderPageNavigation(options, envelope)
+}
+
+function renderTextReleaseTable(envelope: XDocsUpgradeListEnvelope): void {
+  const headers = ['VERSION', 'CHANNEL', 'PUBLISHED', 'CURRENT', 'LATEST', 'ASSET']
+  const rows = envelope.releases.map((release) => [
+    release.version,
+    release.channel,
+    release.publishedAt?.slice(0, 10) ?? '-',
+    release.version === envelope.currentVersion ? 'yes' : '',
+    release.version === envelope.latestStableVersion ? 'yes' : '',
+    release.compatibleAsset ? 'yes' : 'no',
+  ])
+  const widths = headers.map((header, index) =>
+    Math.max(header.length, ...rows.map((row) => row[index]?.length ?? 0)))
+  const renderRow = (row: string[]) =>
+    row.map((value, index) => value.padEnd(widths[index] ?? value.length)).join('  ').trimEnd()
+
+  process.stdout.write(renderRow(headers) + '\n')
+  for (const row of rows) process.stdout.write(renderRow(row) + '\n')
 }
 
 function renderPageNavigation(options: XDocsCliOptions, envelope: XDocsUpgradeListEnvelope): void {
