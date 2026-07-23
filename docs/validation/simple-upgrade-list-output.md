@@ -13,7 +13,7 @@ keywords: [Mirror issue 16, upgrade list, concise table]
 
 ## Status
 
-Local implementation validation passed. Public 0.7.1 acceptance remains.
+Complete. Local and public XDocs 0.7.1 acceptance passed.
 
 ## Required Evidence
 
@@ -32,7 +32,7 @@ Local implementation validation passed. Public 0.7.1 acceptance remains.
 
 ## Readiness
 
-Ready for XDocs 0.7.1 release preparation.
+Publicly accepted.
 
 ## Local Evidence
 
@@ -49,3 +49,24 @@ Ready for XDocs 0.7.1 release preparation.
   columns.
 - Strict XDocs metadata and doctor passed with zero errors and warnings.
 - Mirror 3.6.1 config validation and the exact 0.7.1 plan passed.
+
+## Public Evidence
+
+- Main implementation CI passed:
+  [30031761558](https://github.com/CGuiho/xdocs/actions/runs/30031761558).
+- Release-preparation CI passed:
+  [30031921014](https://github.com/CGuiho/xdocs/actions/runs/30031921014).
+- Versioned CI passed:
+  [30032031534](https://github.com/CGuiho/xdocs/actions/runs/30032031534).
+- Publish passed:
+  [30032030887](https://github.com/CGuiho/xdocs/actions/runs/30032030887).
+- [@guiho/xdocs@0.7.1](https://github.com/CGuiho/xdocs/releases/tag/%40guiho%2Fxdocs%400.7.1)
+  contains exactly twelve native binaries plus `guiho-s-xdocs.md` and
+  `guiho-i-xdocs.md`; its body contains only the 0.7.1 changelog section.
+- The canonical PowerShell installer installed and verified XDocs 0.7.1, and
+  the installed Windows binary passed text, Markdown, JSON, and pagination
+  acceptance.
+- The canonical Bash installer installed and verified XDocs 0.7.1 under WSL,
+  and the installed Linux binary rendered the same concise text contract.
+- [XDocs acceptance evidence](https://github.com/CGuiho/mirror/issues/16#issuecomment-5061756753)
+  was posted for coordinated Mirror issue 16 closure.
