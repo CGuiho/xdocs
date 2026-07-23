@@ -16,6 +16,16 @@ keywords:
 
 # GUIHO XDocs Changelog
 
+## 0.7.2 - 2026-07-23
+
+- Classify stable and prerelease GitHub Releases explicitly, then verify the
+  published tag through a tag-pinned exact-version public Bash installation
+  after confirming the exact fourteen assets.
+- Lock release acceptance to the exact `xdocs <version>` binary output, both
+  installed global skill copies, and reconciled project instructions so
+  main-branch latest-release smoke checks cannot falsely validate an older
+  release.
+
 ## 0.7.1 - 2026-07-23
 
 - Simplify human `xdocs upgrade list` output to the RunX-style `VERSION`,
