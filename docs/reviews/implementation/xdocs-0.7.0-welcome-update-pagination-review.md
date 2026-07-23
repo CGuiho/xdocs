@@ -13,8 +13,8 @@ keywords: [XDocs 0.7.0, issue 15, issue 16, pagination, worker]
 
 ## Verdict
 
-Accepted for release preparation. Public release and issue closure remain gated
-on coordinated Mirror 3.6.0 availability and post-release acceptance.
+Accepted and publicly verified in XDocs 0.7.0. GitHub issues #15 and #16 are
+closed with reproducible acceptance evidence.
 
 ## Findings
 
@@ -52,7 +52,9 @@ No blocking or correctness findings remain.
   with schema version 2 and a valid next command.
 - Strict metadata, tree, doctor, and Mirror config checks passed.
 
-## Residual Risk
+## Public Acceptance
 
-The released 0.7.0 asset, public installers, release notes, exact public asset
-set, and issue evidence cannot be validated until coordinated publication.
+The publish workflow, exact fourteen assets, `.md` agent names, version-scoped
+notes, PowerShell and Bash installers, Windows/Linux welcome, cold/warm cache
+lifecycle, live page/size catalog, and both issue closures passed. No known
+delivery risk remains.
