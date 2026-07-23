@@ -18,12 +18,12 @@ files:
   xdocs.yaml: YAML configuration for xdocs documentation workflows in this repository.
 documents:
   AGENTS.md: Repository instructions requiring the GUIHO SWE agent and CLI engineer skill for xdocs CLI work, including commands, metadata workflows, release rules, and the approved breaking RFC 0034 migration.
-  ARCHITECTURE.md: Architecture and technical design notes for xdocs file conventions, metadata, deterministic welcome, bounded cache-leased update workers, verified upgrade transactions, paginated complete release catalogs, distribution, and agent workflows.
+  ARCHITECTURE.md: Architecture and technical design notes for xdocs file conventions, metadata, deterministic welcome, bounded cache-leased update workers, concise text and complete structured release catalogs, distribution, and agent workflows.
   BRAINSTORM.md: Product and design brainstorming notes for the xdocs structured documentation model and future directions.
-  CHANGELOG.md: Release changelog including the XDocs 0.7.0 welcome, reliable update notice, paginated release catalog, YAML migration, and publishing workflow change.
-  DOCS.md: Canonical full documentation including the deterministic welcome, stable-only cached update notice, bounded worker handoff, paginated complete release catalog, native installers, upgrades, and agent-skill behavior.
+  CHANGELOG.md: Release changelog including concise RunX-style upgrade-list text while preserving complete structured metadata and pagination.
+  DOCS.md: Canonical full documentation including the deterministic welcome, stable-only cached update notice, bounded worker handoff, concise text and complete structured release catalogs, native installers, upgrades, and agent-skill behavior.
   LICENSE.md: Package license document shipped with @guiho/xdocs.
-  README.md: Public package overview with one-line installers, deterministic welcome, bounded update checks, paginated release listing, agent setup, self-upgrade, CLI reference, metadata schema, and API examples.
+  README.md: Public package overview with one-line installers, deterministic welcome, bounded update checks, concise paginated release listing, structured metadata, agent setup, self-upgrade, CLI reference, and API examples.
   TECHNICAL.md: Short technical notes placeholder for xdocs implementation context.
   TODO.md: Local task list for pending xdocs repository work.
 tags:
