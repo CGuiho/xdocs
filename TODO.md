@@ -32,9 +32,9 @@ All Rights Reserved.
 | --- | ---: |
 | todo | 1 |
 | in progress | 0 |
-| testing | 1 |
+| testing | 0 |
 | stopped | 0 |
-| completed | 5 |
+| completed | 6 |
 
 ## Tasks
 
@@ -109,7 +109,7 @@ All Rights Reserved.
 
 ### 7. Deliver The Welcome, Reliable Update Notice, And Paginated Release Catalog
 
-- Status: testing
+- Status: completed
 - Created: `2026-07-22`
 - Updated: `2026-07-22`
 - Outcome: Ship the deterministic welcome window, reliable stable-only cached
@@ -118,3 +118,6 @@ All Rights Reserved.
 - Plan: [docs/plans/xdocs-0.7.0-welcome-update-pagination.md](docs/plans/xdocs-0.7.0-welcome-update-pagination.md)
 - External: [CGuiho/xdocs#15](https://github.com/CGuiho/xdocs/issues/15) and
   [CGuiho/xdocs#16](https://github.com/CGuiho/xdocs/issues/16)
+- Release: [@guiho/xdocs@0.7.0](https://github.com/CGuiho/xdocs/releases/tag/%40guiho%2Fxdocs%400.7.0)
+- Evidence: [issue 15 acceptance](https://github.com/CGuiho/xdocs/issues/15#issuecomment-5061538257) and
+  [issue 16 acceptance](https://github.com/CGuiho/xdocs/issues/16#issuecomment-5061538669)
