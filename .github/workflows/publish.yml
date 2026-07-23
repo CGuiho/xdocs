@@ -39,11 +39,20 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          VERSION=$(bun -e "const p = await Bun.file('./package.json').json(); console.log(p.version)")
+          RELEASE_FLAGS=()
+
+          if [[ "$VERSION" == *-* ]]; then
+            RELEASE_FLAGS+=(--prerelease)
+          else
+            RELEASE_FLAGS+=(--latest)
+          fi
+
           if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
             gh release upload "${GITHUB_REF_NAME}" bin/* --clobber
-            gh release edit "${GITHUB_REF_NAME}" --notes-file "${RUNNER_TEMP}/xdocs-release-notes.md"
+            gh release edit "${GITHUB_REF_NAME}" --title "${GITHUB_REF_NAME}" --notes-file "${RUNNER_TEMP}/xdocs-release-notes.md" "${RELEASE_FLAGS[@]}"
           else
-            gh release create "${GITHUB_REF_NAME}" bin/* --title "${GITHUB_REF_NAME}" --notes-file "${RUNNER_TEMP}/xdocs-release-notes.md"
+            gh release create "${GITHUB_REF_NAME}" bin/* --title "${GITHUB_REF_NAME}" --notes-file "${RUNNER_TEMP}/xdocs-release-notes.md" --verify-tag "${RELEASE_FLAGS[@]}"
           fi
 
       - name: Verify exact fourteen-asset GitHub release
@@ -58,3 +67,24 @@ jobs:
             diff -u <(printf '%s\n' "$EXPECTED") <(printf '%s\n' "$ACTUAL") >&2 || true
             exit 1
           fi
+
+      - name: Verify exact-version public Linux installer
+        run: |
+          VERSION=$(bun -e "const p = await Bun.file('./package.json').json(); console.log(p.version)")
+          public_home="$(mktemp -d)"
+          project_dir="$(mktemp -d)"
+          install_dir="$public_home/.local/bin"
+          trap 'rm -rf "$public_home" "$project_dir"' EXIT
+          export HOME="$public_home"
+          export XDOCS_INSTALL_DIR="$install_dir"
+          export XDOCS_SKIP_PATH_UPDATE=1
+          export XDOCS_DISABLE_UPDATE_CHECK=1
+          cd "$project_dir"
+          curl -fsSL "https://raw.githubusercontent.com/CGuiho/xdocs/${GITHUB_REF_NAME}/devops/install.sh" \
+            | bash -s -- --version "$VERSION"
+          test "$("$install_dir/xdocs" --version)" = "xdocs $VERSION"
+          test -s "$HOME/.agents/skills/guiho-s-xdocs/SKILL.md"
+          test -s "$HOME/.claude/skills/guiho-s-xdocs/SKILL.md"
+          test -s "$project_dir/AGENTS.md"
+          grep -Fq '<!-- BEGIN XDOCS — DO NOT EDIT THIS SECTION -->' "$project_dir/AGENTS.md"
+          grep -Fq '<!-- END XDOCS -->' "$project_dir/AGENTS.md"
