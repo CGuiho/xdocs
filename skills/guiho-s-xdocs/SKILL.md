@@ -153,6 +153,11 @@ integers up to 100. Use its channel, full-tag, publication, compatible asset,
 current, latest-stable, and pagination fields instead of treating one visible
 page as the complete catalog.
 
+Human text intentionally projects the complete catalog into the concise
+`VERSION CHANNEL PUBLISHED CURRENT LATEST ASSET` table shared with RunX.
+Markdown and JSON retain complete tags, timestamps, release/asset metadata, and
+pagination; use a structured format whenever those details are required.
+
 A bare invocation prints the deterministic GUIHO XDocs welcome. The foreground
 reads the cache and awaits only the local lease-and-detached-spawn handoff. The
 remote request remains bounded and detached. A notice is rendered only when a
