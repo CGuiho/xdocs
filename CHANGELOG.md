@@ -16,7 +16,7 @@ keywords:
 
 # GUIHO XDocs Changelog
 
-## Unreleased
+## 0.7.0 - 2026-07-22
 
 - Replace the one-line root greeting with a deterministic GUIHO welcome window
   that reports product identity, platform, architecture, version, and help.
