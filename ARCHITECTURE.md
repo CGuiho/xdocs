@@ -126,7 +126,10 @@ and prerelease entry internally. After decoding, deduplication, and newest-first
 SemVer ordering it returns `--page 1 --size 8` by default; rows expose the full tag,
 exact prerelease identifier, publication timestamp, compatible-asset state,
 current marker, and latest-stable marker. JSON schema version 2 carries totals
-and previous/next navigation commands.
+and previous/next navigation commands. The human text renderer deliberately
+projects that complete model into six concise columns: version, channel,
+date-only publication, current, latest, and compatible asset. Markdown and JSON
+continue rendering the complete model.
 
 ## Distribution
 
