@@ -13,8 +13,8 @@ keywords: [Mirror issue 16, RunX, upgrade list, concise table]
 
 ## Status
 
-Testing. Source, tests, structured formats, builds, native matrix, XDocs
-metadata, and the Mirror patch plan pass; public 0.7.1 acceptance remains.
+Complete. XDocs 0.7.1 passed local, CI, publication, exact-asset,
+release-note, installer, installed-output, and public-issue acceptance.
 
 ## Outcome
 
@@ -37,6 +37,8 @@ preserving the 0.7.0 pagination and structured-output contracts.
 ## External
 
 - [CGuiho/mirror#16](https://github.com/CGuiho/mirror/issues/16)
+- [XDocs acceptance evidence](https://github.com/CGuiho/mirror/issues/16#issuecomment-5061756753)
+- [XDocs 0.7.1 release](https://github.com/CGuiho/xdocs/releases/tag/%40guiho%2Fxdocs%400.7.1)
 
 ## References
 
