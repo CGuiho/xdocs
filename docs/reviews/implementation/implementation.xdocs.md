@@ -9,6 +9,7 @@ documents:
   rfc-0034-cli-compliance-migration-review.md: Findings-first acceptance review including the resolved root-help, live examples, and Darwin installer corrections.
   simple-upgrade-list-output-review.md: Reviews the concise six-column text output, preserved structured formats, pagination, tests, and release evidence for Mirror issue 16.
   xdocs-0.7.0-welcome-update-pagination-review.md: Findings-first review accepting the welcome, stable update notice, bounded spawn handoff, release pagination, YAML migration, workflow, tests, and docs for release preparation.
+  xdocs-go-rewrite-review.md: Findings-first review of the native Go runtime, Git versioning, portable release matrix, and resolved release, update, and upgrade defects.
 tags:
   - reviews
   - implementation
@@ -16,6 +17,7 @@ keywords:
   - implementation review
   - RFC 0034
   - release hardening
+  - Go rewrite
 flags: []
 status: stable
 ---
