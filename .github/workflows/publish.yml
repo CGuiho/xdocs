@@ -3,7 +3,7 @@ name: Publish
 on:
   push:
     tags:
-      - '@guiho/xdocs@*'
+      - 'xdocs/v*'
 
 permissions:
   contents: write
@@ -12,65 +12,91 @@ jobs:
   publish:
     name: Publish
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
-      - name: Checkout
-        run: |
-          git init .
-          git remote add origin "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git"
-          git fetch --depth=1 origin "${GITHUB_REF}"
-          git checkout --detach FETCH_HEAD
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 1.26.5
+          cache: true
 
-      - name: Install Bun
+      - name: Resolve Git version
+        id: version
+        shell: bash
         run: |
-          curl -fsSL https://bun.sh/install | bash
-          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
-          "$HOME/.bun/bin/bun" --version
+          case "${GITHUB_REF_NAME}" in
+            xdocs/v*) VERSION="${GITHUB_REF_NAME#xdocs/v}" ;;
+            *) echo "invalid XDocs Go tag: ${GITHUB_REF_NAME}" >&2; exit 1 ;;
+          esac
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-      - run: bun install --frozen-lockfile
-      - run: bun run typecheck
-      - run: bun test
-      - run: bun run build
-      - run: bun run binaries
+      - name: Validate Go implementation
+        run: |
+          test -z "$(gofmt -l .)"
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
+          go test ./...
+          go vet ./...
+
+      - name: Build exact eleven-artifact release
+        run: |
+          go run ./devops/build-binaries.go \
+            --version "${{ steps.version.outputs.version }}" \
+            --commit "${GITHUB_SHA}" \
+            --build-date "$(git show -s --format=%cI "${GITHUB_SHA}")"
+          test "$(find dist -maxdepth 1 -type f | wc -l)" -eq 11
+          (cd dist && sha256sum --check checksums.txt)
 
       - name: Extract exact-version release notes
-        run: bun devops/extract-release-notes.ts "${GITHUB_REF_NAME}" CHANGELOG.md "${RUNNER_TEMP}/xdocs-release-notes.md"
+        run: go run ./devops/extract-release-notes "${GITHUB_REF_NAME}" CHANGELOG.md "${RUNNER_TEMP}/xdocs-release-notes.md"
 
-      - name: Publish exact RFC 0034 assets to GitHub release
+      - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
+        shell: bash
         run: |
-          VERSION=$(bun -e "const p = await Bun.file('./package.json').json(); console.log(p.version)")
-          RELEASE_FLAGS=()
-
-          if [[ "$VERSION" == *-* ]]; then
-            RELEASE_FLAGS+=(--prerelease)
-          else
-            RELEASE_FLAGS+=(--latest)
+          RELEASE_FLAGS=(--latest)
+          if [[ "${{ steps.version.outputs.version }}" == *-* ]]; then
+            RELEASE_FLAGS=(--prerelease)
           fi
-
           if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
-            gh release upload "${GITHUB_REF_NAME}" bin/* --clobber
-            gh release edit "${GITHUB_REF_NAME}" --title "${GITHUB_REF_NAME}" --notes-file "${RUNNER_TEMP}/xdocs-release-notes.md" "${RELEASE_FLAGS[@]}"
+            while IFS= read -r asset; do
+              if [ -n "$asset" ] && [ ! -f "dist/$asset" ]; then
+                gh release delete-asset "${GITHUB_REF_NAME}" "$asset" --yes
+              fi
+            done < <(gh release view "${GITHUB_REF_NAME}" --json assets --jq '.assets[].name')
+            gh release upload "${GITHUB_REF_NAME}" dist/* --clobber
+            gh release edit "${GITHUB_REF_NAME}" \
+              --title "${GITHUB_REF_NAME}" \
+              --notes-file "${RUNNER_TEMP}/xdocs-release-notes.md" \
+              "${RELEASE_FLAGS[@]}"
           else
-            gh release create "${GITHUB_REF_NAME}" bin/* --title "${GITHUB_REF_NAME}" --notes-file "${RUNNER_TEMP}/xdocs-release-notes.md" --verify-tag "${RELEASE_FLAGS[@]}"
+            gh release create "${GITHUB_REF_NAME}" dist/* \
+              --title "${GITHUB_REF_NAME}" \
+              --notes-file "${RUNNER_TEMP}/xdocs-release-notes.md" \
+              --verify-tag \
+              "${RELEASE_FLAGS[@]}"
           fi
 
-      - name: Verify exact fourteen-asset GitHub release
+      - name: Verify exact eleven GitHub release assets
         env:
           GH_TOKEN: ${{ github.token }}
+        shell: bash
         run: |
-          EXPECTED=$(find bin -maxdepth 1 -type f -printf '%f\n' | sort)
-          ACTUAL=$(gh release view "${GITHUB_REF_NAME}" --json assets --jq '.assets[].name' | sort)
-          test "$(printf '%s\n' "$EXPECTED" | sed '/^$/d' | wc -l)" -eq 14
+          EXPECTED="$(find dist -maxdepth 1 -type f -printf '%f\n' | sort)"
+          ACTUAL="$(gh release view "${GITHUB_REF_NAME}" --json assets --jq '.assets[].name' | sort)"
+          test "$(printf '%s\n' "$EXPECTED" | sed '/^$/d' | wc -l)" -eq 11
           if [ "$EXPECTED" != "$ACTUAL" ]; then
-            echo "GitHub release does not contain the exact RFC 0034 fourteen-asset set." >&2
+            echo "XDocs release does not contain the exact eleven Go CLI assets." >&2
             diff -u <(printf '%s\n' "$EXPECTED") <(printf '%s\n' "$ACTUAL") >&2 || true
             exit 1
           fi
 
       - name: Verify exact-version public Linux installer
         run: |
-          VERSION=$(bun -e "const p = await Bun.file('./package.json').json(); console.log(p.version)")
           public_home="$(mktemp -d)"
           project_dir="$(mktemp -d)"
           install_dir="$public_home/.local/bin"
@@ -80,11 +106,40 @@ jobs:
           export XDOCS_SKIP_PATH_UPDATE=1
           export XDOCS_DISABLE_UPDATE_CHECK=1
           cd "$project_dir"
-          curl -fsSL "https://raw.githubusercontent.com/CGuiho/xdocs/${GITHUB_REF_NAME}/devops/install.sh" \
-            | bash -s -- --version "$VERSION"
-          test "$("$install_dir/xdocs" --version)" = "xdocs $VERSION"
+          curl -fsSL "https://raw.githubusercontent.com/CGuiho/xdocs/${GITHUB_SHA}/devops/install.sh" |
+            sh -s -- --version "${{ steps.version.outputs.version }}"
+          test "$("$install_dir/xdocs" --version)" = "xdocs v${{ steps.version.outputs.version }}"
           test -s "$HOME/.agents/skills/guiho-s-xdocs/SKILL.md"
           test -s "$HOME/.claude/skills/guiho-s-xdocs/SKILL.md"
-          test -s "$project_dir/AGENTS.md"
-          grep -Fq '<!-- BEGIN XDOCS — DO NOT EDIT THIS SECTION -->' "$project_dir/AGENTS.md"
-          grep -Fq '<!-- END XDOCS -->' "$project_dir/AGENTS.md"
+          grep -q '<!-- BEGIN XDOCS' AGENTS.md
+
+  windows-installer:
+    name: Verify exact-version public Windows installer
+    needs:
+      - publish
+    runs-on: windows-latest
+    steps:
+      - name: Install the exact tagged XDocs release
+        shell: pwsh
+        env:
+          XDOCS_VERSION: ${{ needs.publish.outputs.version }}
+          XDOCS_INSTALL_DIR: ${{ runner.temp }}\xdocs-public\bin
+          XDOCS_SKIP_PATH_UPDATE: '1'
+          XDOCS_DISABLE_UPDATE_CHECK: '1'
+        run: |
+          New-Item -ItemType Directory -Force -Path $env:XDOCS_INSTALL_DIR | Out-Null
+          $source = Invoke-RestMethod "https://raw.githubusercontent.com/CGuiho/xdocs/${{ github.sha }}/devops/install.ps1"
+          & ([scriptblock]::Create($source))
+          $actual = & "$env:XDOCS_INSTALL_DIR\xdocs.exe" --version
+          if ($actual -ne "xdocs v$env:XDOCS_VERSION") {
+            throw "Unexpected installed version: $actual"
+          }
+          if (-not (Test-Path -LiteralPath "$HOME\.agents\skills\guiho-s-xdocs\SKILL.md")) {
+            throw "Missing .agents skill installation."
+          }
+          if (-not (Test-Path -LiteralPath "$HOME\.claude\skills\guiho-s-xdocs\SKILL.md")) {
+            throw "Missing .claude skill installation."
+          }
+          if (-not (Select-String -LiteralPath AGENTS.md -SimpleMatch "<!-- BEGIN XDOCS" -Quiet)) {
+            throw "Missing reconciled XDocs instruction block."
+          }
