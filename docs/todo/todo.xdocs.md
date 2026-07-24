@@ -16,6 +16,8 @@ documents:
   upgrade-reliability-implementation.md: Records completed issue 9 upgrade/list acceptance work, transaction decisions, live-catalog evidence, and final release smoke handoff.
   upgrade-reliability.md: Defines reliable verified self-upgrade, complete release catalog, exact recovery guidance, and installer acceptance signals.
   welcome-update-pagination.md: Defines the XDocs 0.7.0 welcome, reliable stable-only update notice, eight-item pagination, YAML migration, publishing, and issue closure gates.
+  xdocs-go-rewrite.md: Defines the required breaking outcome and completion signals for the native Go XDocs rewrite.
+  xdocs-go-rewrite-implementation.md: Tracks Go rewrite execution, decisions, test evidence, release readiness, and final handoff.
 tags:
   - todo
   - planning
@@ -33,6 +35,8 @@ keywords:
   - rollback
   - background worker
   - CPU safety
+  - Go rewrite
+  - Git version
 flags: []
 status: stable
 ---
