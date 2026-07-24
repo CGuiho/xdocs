@@ -10,8 +10,66 @@ on:
       - main
 
 jobs:
-  public-bash-installer:
+  go:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 1.26.5
+          cache: true
+      - name: Verify formatting
+        run: test -z "$(gofmt -l .)"
+      - name: Verify module graph
+        run: |
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
+      - run: go test ./...
+      - run: go vet ./...
+      - run: go build -trimpath -o "${RUNNER_TEMP}/xdocs" .
+      - name: Smoke native executable
+        run: |
+          XDOCS_DISABLE_UPDATE_CHECK=1 "${RUNNER_TEMP}/xdocs" --version
+          XDOCS_DISABLE_UPDATE_CHECK=1 "${RUNNER_TEMP}/xdocs" --help-tree-depth 1
+      - name: Build exact eleven-artifact release matrix
+        run: |
+          SKILL_VERSION="$(awk -F: '/^version:/ { value=$2; gsub(/[[:space:]"]/, "", value); print value; exit }' skills/guiho-s-xdocs/SKILL.md)"
+          test -n "$SKILL_VERSION"
+          go run ./devops/build-binaries.go --version "$SKILL_VERSION" --commit "${GITHUB_SHA}" --build-date "2026-01-01T00:00:00Z"
+      - name: Verify exact assets and checksums
+        run: |
+          test "$(find dist -maxdepth 1 -type f | wc -l)" -eq 11
+          (cd dist && sha256sum --check checksums.txt)
+      - name: Validate Bash installer syntax
+        run: sh -n devops/install.sh
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 1.26.5
+          cache: true
+      - run: go test ./...
+      - run: go vet ./...
+      - name: Build and smoke native Windows executable
+        shell: pwsh
+        run: |
+          go build -trimpath -o "$env:RUNNER_TEMP\xdocs.exe" .
+          $env:XDOCS_DISABLE_UPDATE_CHECK = "1"
+          & "$env:RUNNER_TEMP\xdocs.exe" --version
+          & "$env:RUNNER_TEMP\xdocs.exe" --help-tree-depth 1
+      - name: Validate PowerShell installer syntax
+        shell: pwsh
+        run: |
+          [scriptblock]::Create((Get-Content -LiteralPath devops/install.ps1 -Raw)) | Out-Null
+
+  public-installers:
     if: github.event_name == 'push'
+    needs:
+      - go
+      - windows
     runs-on: ubuntu-latest
     steps:
       - name: Verify public one-line Bash installer
@@ -19,61 +77,20 @@ jobs:
           XDOCS_INSTALL_DIR: ${{ runner.temp }}/xdocs-public/bin
           XDOCS_SKIP_PATH_UPDATE: '1'
         run: |
+          latest_tag="$(curl -fsSL https://api.github.com/repos/CGuiho/xdocs/releases/latest |
+            sed -n 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)"
+          case "$latest_tag" in
+            xdocs/v*) ;;
+            *)
+              echo "Skipping public installer until the first xdocs/v* Go release exists."
+              exit 0
+              ;;
+          esac
           export HOME="${RUNNER_TEMP}/xdocs-public/home"
           mkdir -p "$HOME" "$XDOCS_INSTALL_DIR"
           cd "${RUNNER_TEMP}/xdocs-public"
-          curl -fsSL https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.sh | bash
-          "$XDOCS_INSTALL_DIR/xdocs" --version | grep -Eq '^xdocs [0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$'
-          grep -F '<!-- BEGIN XDOCS' AGENTS.md
-          grep -F '## XDocs Structured Documentation' AGENTS.md
-          ! grep -F '# xdocs Prompt Catalog' AGENTS.md
-
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        run: |
-          git init .
-          git remote add origin "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git"
-          git fetch --depth=1 origin "${GITHUB_REF}"
-          git checkout --detach FETCH_HEAD
-
-      - name: Install Bun
-        run: |
-          curl -fsSL https://bun.sh/install | bash
-          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
-          "$HOME/.bun/bin/bun" --version
-
-      - run: bun install --frozen-lockfile
-      - run: bun run typecheck
-      - run: bun test
-      - run: bun run build
-      - run: bun run binary
-      - run: bun run binaries
-      - name: Validate Bash recovery installer syntax
-        run: bash -n devops/install.sh
-
-  windows-upgrade:
-    runs-on: windows-latest
-    steps:
-      - name: Checkout
-        shell: pwsh
-        run: |
-          git init .
-          git remote add origin "${env:GITHUB_SERVER_URL}/${env:GITHUB_REPOSITORY}.git"
-          git fetch --depth=1 origin "${env:GITHUB_REF}"
-          git checkout --detach FETCH_HEAD
-
-      - name: Install Bun
-        shell: pwsh
-        run: |
-          powershell -NoProfile -Command "irm bun.sh/install.ps1 | iex"
-          "$env:USERPROFILE\.bun\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
-      - run: bun install --frozen-lockfile
-      - run: bun run typecheck
-      - run: bun test
-      - name: Validate PowerShell recovery installer syntax
-        shell: pwsh
-        run: |
-          [scriptblock]::Create((Get-Content -LiteralPath devops/install.ps1 -Raw)) | Out-Null
+          curl -fsSL https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.sh | sh
+          XDOCS_DISABLE_UPDATE_CHECK=1 "$XDOCS_INSTALL_DIR/xdocs" --version
+          test -s "$HOME/.agents/skills/guiho-s-xdocs/SKILL.md"
+          test -s "$HOME/.claude/skills/guiho-s-xdocs/SKILL.md"
+          grep -q '<!-- BEGIN XDOCS' AGENTS.md
