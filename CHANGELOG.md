@@ -16,6 +16,11 @@ keywords:
 
 # GUIHO XDocs Changelog
 
+## 0.8.1 - 2026-07-24
+
+- Normalize checked-in GitHub workflow text before contract assertions so the
+  same Go test suite passes on both LF-based runners and Windows CRLF checkouts.
+
 ## 0.8.0 - 2026-07-24
 
 - Rewrite the shipping XDocs CLI from Bun and TypeScript to native Go with one
