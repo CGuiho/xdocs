@@ -1,7 +1,7 @@
 ---
 name: xdocs-repository-agent-instructions
 purpose: Define mandatory engineering, documentation, validation, and release behavior for agents working in the xdocs repository.
-description: Repository-local instructions for the GUIHO SWE agent, CLI Engineer skill, Bun tooling, XDocs metadata, and Mirror releases.
+description: Repository-local instructions for the GUIHO SWE agent, Go CLI Engineer skill, XDocs metadata, and Git-native Mirror releases.
 created: 2026-06-01
 owner: xdocs-package
 flags: []
@@ -27,44 +27,44 @@ Stop if you can not find it.
 - Use `guiho-a-0001-swe` as the coordinating GUIHO Software Engineer/SWE agent
   for xdocs CLI architecture, planning, execution, review, validation, and
   release work.
-- Load and follow the `guiho-s-0034-cli-engineer` agent skill whenever creating,
+- Load and follow the `guiho-s-0035-cli-engineer-go` agent skill whenever creating,
   upgrading, refactoring, reviewing, testing, packaging, installing, or
   releasing the xdocs CLI.
-- `guiho-s-0034-cli-engineer` is a skill, not an agent. It supplements the SWE
+- `guiho-s-0035-cli-engineer-go` is a skill, not an agent. It supplements the SWE
   agent and does not replace its lifecycle controller.
-- During RFC 0034 implementation, also use the Bun, TypeScript, TypeBox, xdocs,
-  Mirror, documentation, TODO, plan execution, implementation review, cloud,
-  and validation skills named in the approved plan.
-- The approved RFC 0034 migration may make breaking changes. xdocs is pre-1.0;
-  do not keep TOML configuration, Node-based core compatibility, plural agent
-  commands, root prompt syntax, configuration-driven agent mutations, or legacy
-  release names when they conflict with the plan. `xdocs init` is the explicit
-  setup exception: it installs the skill globally by default and accepts
-  `--local` for project scope.
+- Use Go 1.26.5, Cobra, `go.yaml.in/yaml/v3`, typed structs, explicit semantic
+  validation, standard-library runtime services, `go:embed`, and
+  `CGO_ENABLED=0`.
+- The approved Go rewrite is breaking. The historical TypeScript tree remains
+  only as migration reference; it is not the shipping runtime, CI path,
+  release path, installer path, or version source.
 
 
 - `xdocs` is almost always written lowercase (CLI, code, text). Only capitalize as `XDocs` when used in a title or heading.
 - The real package lives at the repository root; run package commands from `C:\GUIHO\xdocs`.
-- `@guiho/xdocs` is a Bun/TypeScript ESM CLI/library. The library entrypoint is `source/guiho-xdocs.ts` and the CLI entrypoint is `source/guiho-xdocs-bin.ts`; `tsc` emits `library/` for `main`/`types`, and Bun compiles `bin/` for the CLI binary.
-- New library entrypoints must use the full library name instead of generic `index.ts` files. For XDocs v3, use `guiho-xdocs.ts`.
-- Use Bun, not npm/pnpm/yarn. Install from the repository root with `bun install`. Private `@guiho40` packages use Google Artifact Registry from `.npmrc`; auth helper is `bun _gaa` or `bunx google-artifactregistry-auth`.
+- XDocs ships as a native Go CLI from `main.go` and `cmd/`; domain packages
+  live under `internal/`.
+- Use Go commands for active implementation and validation. Do not add Bun,
+  Node, npm, pnpm, yarn, or TypeScript dependencies to the Go runtime.
 
 ## Commands
 
-- Typecheck: `bun run typecheck`
-- Test all: `bun test`
-- Test one file: `bun test source/guiho-xdocs.spec.ts`
-- Build library: `bun run build` (writes ignored `library/`)
-- Compile CLI binary: `bun run binary` (writes ignored `bin/`)
-- Compile release binary matrix: `bun run binaries` (writes ignored `bin/xdocs-*`)
-- Dev mode: `bun run dev` (watches and re-runs the CLI entrypoint)
-- Avoid `bun _ci` and `bun clean-installation` unless intentionally resetting dependencies; they remove `node_modules` and `bun.lock`.
+- Format: `gofmt -w main.go cmd internal devops`
+- Test all: `go test ./...`
+- Vet: `go vet ./...`
+- Build native: `go build -trimpath -o bin/xdocs.exe .`
+- Build release matrix:
+  `go run ./devops/build-binaries.go --version <version> --commit <sha> --build-date <RFC3339>`
 
 ## CLI Behavior
 
-- The xdocs CLI is a structured documentation tool, not a versioning tool. It does not bump versions or mutate `package.json` versions.
+- The xdocs CLI is a structured documentation tool, not a versioning tool. It
+  does not bump versions or mutate package manifests.
 - Supported commands: `init`, `scan`, `generate`, `merge`, `tree`, `list`, `meta`, `context`, `doctor`, `agent`, `upgrade`, `uninstall`.
-- `xdocs init` creates `XDOCS.md` and `xdocs.yaml`. Agent resources change only through explicit `xdocs agent` actions.
+- `xdocs init` creates `XDOCS.md` and `xdocs.yaml` and, as an explicit
+  first-run setup action, installs the bundled skill for both supported agent
+  tools. After initialization, agent resources change only through explicit
+  `xdocs agent` actions.
 - `xdocs scan` walks the project tree (respecting `[scan].exclude`) and reports named `*.xdocs.md` descriptor coverage plus same-directory Markdown companion-document coverage.
 - `xdocs generate [path]` generates documentation for a specific directory or the entire project.
 - `xdocs merge [path]` merges xdocs descriptors from a directory into a single consolidated document.
@@ -76,37 +76,30 @@ Stop if you can not find it.
 - `xdocs agent skill install|uninstall|update|list|show`, `agent instruction apply|remove|update|show`, and `agent prompt list|show` implement explicit RFC 0034 agent integration.
 - Skill mutations default global, use `--local` for project scope, and always target both `.agents/skills` and `.claude/skills`.
 - A bare xdocs invocation prints the exact startup banner and data commands never mutate agent files.
-- Citty owns the single command catalog and routing. TypeBox validates configuration, metadata, cache, release responses, and structured values.
+- Cobra owns the single command catalog and routing. Typed Go structs, strict
+  YAML/JSON decoding, and explicit validation protect structured boundaries.
 - Every scope supports `-h`/`--help`, `--help-tree`, `--help-tree-depth`, and `--help-docs`. Only root version uses `-v`/`--version`.
 - Configuration uses `xdocs.yaml`; global state uses `~/.guiho/xdocs/`.
 
 ## Source Structure
 
-- `source/guiho-xdocs.ts` -- library entrypoint, re-exports all public API
-- `source/guiho-xdocs-bin.ts` -- CLI entrypoint
-- `source/guiho-xdocs-native-bin.ts` -- Bun-compiled native binary entrypoint; registers embedded prompt/skill/package resources before importing the CLI
-- `source/embedded-resources.ts` -- Bun text imports used only for native binary embedding
-- `scripts/xdocs-bin.mjs` -- thin Node-compatible npm bootstrap that downloads, caches, and delegates to the native binary
-- `source/cli.ts` -- single declarative Citty command tree, Developer Context routing, startup lifecycle, and process-facing error handling
-- `source/config.ts` -- YAML discovery, TypeBox validation, and defaults
-- `source/schemas.ts` -- TypeBox contracts for configuration, metadata, cache, GitHub releases, skills, prompts, and numeric values
-- `source/runtime/` -- Bun-only filesystem, path, and home helpers
-- `source/context.ts` -- deterministic reading-set recommendation from xdocs metadata for `xdocs context`
-- `source/doctor.ts` -- CI-friendly xdocs health checks for descriptors, companion metadata, tree links, and documented files
-- `source/discovery.ts` -- filesystem scanning, xdocs descriptor matching, companion Markdown discovery, and descriptor/document validation
-- `source/meta.ts` -- metadata-only top-down scanner for descriptor and companion-document frontmatter, with strict validation and owner/tag/keyword filters
-- `source/metadata.ts` -- YAML frontmatter parsing and validation
-- `source/tree.ts` -- tree assembly, integrity checks, and rendering
-- `source/prompts.ts` -- TypeBox-decoded embedded prompt catalog
-- `source/help.ts` -- help tree and Markdown generated from the live Citty definitions
-- `source/errors.ts` -- XDocsError class and invariant helper
-- `source/types.ts` -- all TypeScript type definitions
-- `source/agents.ts` -- explicit both-target skill operations and exact idempotent AGENTS/CLAUDE instruction actions
-- `source/release-assets.ts` -- exact twelve binary plus two agent asset contract
-- `source/commands/` -- focused adapters for domain, agent, upgrade, and uninstall commands
-- `skills/guiho-s-xdocs/SKILL.md` -- the bundled versioned agent skill; shipped via `package.json` `files` and `jsr.json` include, read from disk at runtime
-- `devops/install.sh` / `devops/install.ps1` -- direct native binary installers for users who do not want Node.js or Bun at runtime
-- `DOCS.md` -- canonical full user-facing documentation for `@guiho/xdocs`; update it before every release with the same discipline as the changelog (ships via `package.json` `files`)
+- `main.go` -- thin entrypoint, embedded resources, and linker metadata.
+- `cmd/` -- one Cobra tree, help, domain adapters, agents, upgrades, and
+  uninstall.
+- `internal/config/` -- strict YAML configuration and precedence.
+- `internal/xdocs/` -- metadata, discovery, tree, context, doctor, generation,
+  merge, and list services.
+- `internal/agent/` -- embedded resources and idempotent local/global mutations.
+- `internal/update/` -- cached notices, detached worker, SemVer, and release
+  catalog.
+- `internal/upgrade/` -- checksums and platform-safe executable replacement.
+- `internal/release/` -- exact eight-binary and eleven-asset release matrix.
+- `source/` -- historical TypeScript migration reference; not active runtime.
+- `skills/guiho-s-xdocs/SKILL.md` -- canonical embedded skill source.
+- `devops/build-binaries.go` -- reproducible pure-Go release matrix.
+- `devops/install.sh` / `devops/install.ps1` -- checksum-verifying native Go
+  installers.
+- `DOCS.md` -- canonical full user-facing documentation; update before release.
 
 ## Key Concepts
 
@@ -116,19 +109,19 @@ Stop if you can not find it.
 - Configuration lives in `xdocs.yaml`. Sections: `extensions`, `ai`, `scan`, and `project`.
 - Agent resource operations are always explicit and are not configuration-driven.
 - AI mode (`ai.mode`): `"prompt"` (default, AI announces updates and waits) or `"auto"` (AI updates docs automatically).
-- Runtime CLI dependencies: `citty` and `@sinclair/typebox`. YAML parsing uses `Bun.YAML.parse`.
+- Runtime CLI dependencies: Cobra and `go.yaml.in/yaml/v3`.
 
 ## Gotchas
 
-- There is no lint or formatter config. Existing TS uses strict `tsconfig.json`, single quotes, and no semicolons; match nearby style.
-- Generated outputs (`library/`, `bundle/`, `bin/`, `vendor/`, `*.tgz`) are ignored; do not hand-edit them.
+- Run `gofmt`, `go test ./...`, and `go vet ./...` for every Go change.
+- Generated outputs (`dist/`, `bin/`) are ignored; do not hand-edit them.
 - Prompt files and the agent skill are embedded into native binaries and packaged
-  as the Markdown release assets `guiho-i-xdocs.md` and
-  `guiho-s-xdocs.md`. Skill mutation always addresses both supported tool
-  paths. This repository explicitly overrides the extensionless RFC 0034
-  filenames while retaining exactly fourteen release assets.
-- The skill frontmatter top-level `version` and `metadata.version` must match the package version for a release.
-- Versioning is handled by `@guiho/mirror` via `mirror.yaml`, not by xdocs itself. Do not confuse xdocs (documentation) with mirror (versioning).
+  as `guiho-i-xdocs.md` and `guiho-s-xdocs.zip`. Skill mutation always
+  addresses both supported tool paths. Releases contain exactly eleven assets.
+- The skill `metadata.version` must match the Git release version.
+- Versioning is handled by Mirror through Git only. The canonical tag format
+  is `xdocs/vX.Y.Z`; `package.json` and `jsr.json` are not version sources or
+  outputs.
 
 ## Semantic Project Versioning -- GUIHO Mirror
 
@@ -138,7 +131,12 @@ Before editing release docs or changelogs, inspect `mirror.yaml`. If `agents.wri
 
 Use [agents].changelog_path as the changelog file path. If it is missing, use CHANGELOG.md in the project root.
 
-Before publishing a new version, update `DOCS.md` -- the canonical full documentation for `@guiho/xdocs` -- to capture every behavior change in the release, written the same way as the changelog. Treat `DOCS.md` as a required release artifact: keep it current with CLI commands and flags, configuration fields, the metadata schema, the TypeScript API, and agent skill behavior. Do not publish when `DOCS.md` is stale relative to the shipping code.
+Before publishing a new version, update `DOCS.md` -- the canonical full
+documentation for the native xdocs CLI -- to capture every behavior change in
+the release, written the same way as the changelog. Treat `DOCS.md` as a
+required release artifact: keep it current with CLI commands and flags,
+configuration fields, the metadata schema, Go runtime behavior, and agent skill
+behavior. Do not publish when `DOCS.md` is stale relative to the shipping code.
 
 GitHub Release descriptions contain only the exact version section extracted
 from `CHANGELOG.md`; never pass the full changelog to release creation.
@@ -160,7 +158,7 @@ from `CHANGELOG.md`; never pass the full changelog to release creation.
 
 ### Component Purpose
 
-Structured documentation package and CLI for @guiho/xdocs.
+Native Go structured-documentation CLI for XDocs.
 
 ### Parent Context
 
@@ -176,8 +174,8 @@ repository's AGENTS.md GUIHO Project section.
 
 - Kind: shared package
 - Work directory: .
-- Primary skills: guiho-s-xdocs, guiho-s-0015-bun
-- Baseline checks: package-local typecheck/test scripts when present
+- Primary skills: guiho-s-0035-cli-engineer-go, guiho-s-xdocs
+- Baseline checks: `gofmt`, `go test ./...`, `go vet ./...`
 
 ### Coordination Rules
 
