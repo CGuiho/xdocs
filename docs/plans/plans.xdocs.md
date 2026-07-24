@@ -9,6 +9,7 @@ documents:
   rfc-0034-cli-compliance-migration.md: Approved breaking migration plan for Bun-only source, TypeBox, YAML, startup, help, agents, prompts, upgrades, distribution, twelve native binaries plus two named .md agent assets, docs, and validation.
   upgrade-reliability-implementation.md: Executable plan for complete release discovery, immediate verified self-upgrade, recovery guidance, installer hardening, and validation.
   xdocs-0.7.0-welcome-update-pagination.md: Approved execution plan for issues 15 and 16, Mirror YAML migration, release validation, and public acceptance.
+  xdocs-go-rewrite.md: Step-by-step native Go rewrite plan covering architecture, Cobra, YAML, domain parity, agents, updates, upgrades, installers, CI, documentation, validation, and release.
 tags:
   - plans
   - implementation
@@ -22,6 +23,8 @@ keywords:
   - fourteen release assets
   - execution plan
   - upgrade reliability
+  - Go rewrite
+  - Git-only versioning
 flags: []
 status: stable
 ---
