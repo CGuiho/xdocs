@@ -3,6 +3,7 @@ subject: xdocs-docs
 description: Durable project documentation for xdocs behavior, design notes, and implementation context.
 parent: xdocs-package
 children:
+  - xdocs-architecture-docs
   - xdocs-decisions
   - xdocs-migrations
   - xdocs-plans
