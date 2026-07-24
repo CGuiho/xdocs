@@ -1,7 +1,7 @@
 ---
 name: xdocs-documentation
 purpose: Provide the complete user and contributor reference for xdocs.
-description: Canonical documentation for descriptors, YAML configuration, CLI commands, agent resources, upgrades, and release assets.
+description: Canonical documentation for the Go CLI, descriptors, YAML configuration, command catalog, agents, updates, upgrades, CI, and releases.
 created: 2026-06-07
 owner: xdocs-package
 flags: []
@@ -11,8 +11,8 @@ tags:
   - api
 keywords:
   - xdocs
-  - RFC 0034
-  - TypeBox
+  - Go
+  - Cobra
   - agent resources
 ---
 
@@ -20,359 +20,223 @@ keywords:
 
 ## Purpose
 
-xdocs describes a repository through one root `XDOCS.md`, named
-`*.xdocs.md` descriptors, and companion Markdown metadata. The CLI provides
-coverage scans, generated documentation, merged views, containment trees,
-metadata-only reads, context recommendations, and CI-friendly health checks.
+xdocs gives humans and agents a deterministic map of a repository through one
+root `XDOCS.md`, one named `*.xdocs.md` descriptor per documented module, and
+declared companion Markdown documents.
 
-## Descriptor model
+The active implementation is a native Go CLI. The historical TypeScript tree
+is retained as migration reference only and is not used by the executable,
+installers, CI, versioning, or releases.
 
-A descriptor uses YAML frontmatter:
+## Runtime architecture
 
-```yaml
----
-subject: source-auth
-description: Authentication implementation and contracts.
-parent: source
-children: []
-files:
-  service.ts: Authentication service.
-documents:
-  decisions.md: Authentication decisions.
-tags:
-  - backend
-keywords:
-  - authentication
-flags: []
-status: stable
----
-```
+- Go module: `github.com/CGuiho/xdocs`
+- Toolchain: Go 1.26.5, language floor Go 1.23
+- Command router: Cobra
+- YAML: `go.yaml.in/yaml/v3`
+- External contracts: typed structs plus semantic validation
+- Runtime services: Go standard library
+- Release mode: `CGO_ENABLED=0`
 
-Required fields are `subject`, `description`, `parent`, `children`, `files`,
-`documents`, `tags`, `keywords`, and `flags`. TypeBox validates the decoded
-YAML before metadata enters discovery, tree, context, or doctor logic.
-
-Companion documents should contain `owner`, `tags`, and `keywords` frontmatter
-and must be listed by their same-directory descriptor.
+`main.go` embeds resources and build metadata. `cmd/` owns the one public
+command tree. `internal/config`, `internal/xdocs`, `internal/agent`,
+`internal/update`, `internal/upgrade`, and `internal/release` own focused
+runtime services.
 
 ## Configuration
 
-Only `xdocs.yaml` is supported. Resolution precedence:
+Resolution is explicit, project, then global:
 
-1. explicit `--config <path>`
-2. `<effective-cwd>/xdocs.yaml`
-3. `~/.guiho/xdocs/xdocs.yaml`
+1. `--config <path>`;
+2. `./xdocs.yaml`;
+3. `~/.guiho/xdocs/xdocs.yaml`.
+
+No implicit merge occurs. The decoder uses `KnownFields(true)`, rejects
+multiple YAML documents, and then validates:
+
+- `schema` is `1`;
+- the only descriptor extension is `.xdocs.md`;
+- `ai.mode` is `prompt` or `auto`;
+- exclusions are non-empty directory names;
+- project name is a string.
+
+Global state and update cache live under `~/.guiho/xdocs/`.
+
+## Descriptor contract
+
+Descriptors require:
+
+- `subject`: non-empty stable identifier;
+- `description`: non-empty module summary;
+- `parent`: parent subject or `null`;
+- `children`: subject list;
+- `files`: sibling filename-to-description map;
+- `documents`: sibling Markdown filename-to-description map;
+- `tags`, `keywords`, and `flags`: string arrays;
+- optional `status`.
+
+The root `XDOCS.md` has no frontmatter. A bare `.xdocs.md` filename is invalid.
+Multiple descriptors in one directory are invalid. Every plain sibling
+Markdown document must be declared, and every declared document must exist.
+
+Companion documents require `name`, `purpose`, `description`, `created`
+(`YYYY-MM-DD`), `owner`, `flags`, `tags`, and `keywords`. `owner` must equal
+the owning descriptor subject.
+
+## Command catalog
+
+### Project setup and coverage
+
+- `init [--local]` creates missing root files and installs the embedded skill.
+- `scan` reports descriptor and companion-document coverage.
+- `doctor [path]` validates descriptors, companion metadata, tree links, and
+  documented files. `--warnings-as-errors` promotes warnings.
+
+### Documentation views
+
+- `generate [path]` renders a project or module document.
+- `merge [path]` combines descriptors with source markers.
+- `tree` renders containment hierarchy as text, Markdown, or JSON.
+- `list [path]` lists documented files and companion documents.
+
+### Agent context
+
+- `meta [path]` reads frontmatter only. `--documents` includes companion
+  frontmatter; `--owner`, `--tag`, and `--keyword` filter before full reads.
+- `context <query> [path]` tokenizes a query, applies stable weighted ranking,
+  and returns the smallest useful descriptor/file/document reading set.
+  `--explain` includes match reasons.
+
+### Agent resources
+
+- `agent skill install|uninstall|update|list|show`
+- `agent instruction apply|remove|update|show`
+- `agent prompt list|show`
+
+Skill mutations default global and write atomically to both supported tool
+paths. `--local` chooses project scope. Instruction apply/update/remove is
+idempotent and preserves unmanaged content.
+
+### Upgrade and uninstall
+
+- `upgrade [--version X.Y.Z] [--dry-run]`
+- `upgrade check`
+- `upgrade list [--page N] [--size N]`
+- `uninstall [--dry-run]`
+
+Release discovery accepts only `xdocs/vX.Y.Z`. The list is SemVer-sorted before
+pagination, defaults to eight entries, and retains full machine-readable
+metadata in JSON. Direct upgrade uses the linker-embedded build target so ARMv6
+and ARMv7 remain distinct.
+
+## Help and output
+
+Every command supports:
+
+- `-h`, `--help`;
+- `--help-tree`;
+- `--help-tree-depth <positive-integer>`;
+- `--help-docs`.
+
+Only root defines `-v`/`--version`; no other short aliases exist. Tree and
+Markdown help traverse the live Cobra tree.
+
+Text results use stdout and diagnostics use stderr. JSON mode emits exactly one
+JSON document and excludes notices, progress, and ANSI decoration.
+
+Exit categories are:
+
+- `0`: success;
+- `1`: unexpected or operational failure;
+- `2`: usage or validation;
+- `3`: configuration;
+- `4`: remote release or network;
+- `5`: installation, upgrade, or filesystem mutation;
+- `130`: interruption.
+
+## Update cache
+
+Startup reads only local cache state. A newer-version notice is printed only
+when the cache is valid and contains a genuinely newer version. A hidden,
+detached, recursion-protected worker performs a finite-time release request and
+atomically replaces the cache. Leases coalesce concurrent starts and stale
+leases are recoverable. Each lease has an ownership token, and stale takeover
+is serialized by a crash-released operating-system file lock so an old worker
+cannot remove a newer worker's lease.
+
+## Installation and upgrade safety
+
+The Bash and PowerShell installers:
+
+1. resolve a stable `xdocs/vX.Y.Z` release;
+2. distinguish supported OS and CPU targets;
+3. display target metadata and download URLs;
+4. download the binary, checksum manifest, skill ZIP, and instruction asset;
+5. verify SHA-256 for every installed or reconciled payload;
+6. preflight the exact candidate version and both skill metadata versions;
+7. stage the executable and both skill destinations transactionally;
+8. reconcile instructions, creating `AGENTS.md` when needed;
+9. execute an exact final `xdocs --version` check and roll back on failure.
+
+Unix upgrades write beside the destination, verify, rename, smoke-test, and
+roll back on failure. Windows upgrades copy a helper, wait for the current
+process to exit, replace, verify, restore on failure, and clean up.
+Concurrent upgrades are rejected by a token-owned lock. A detached Windows
+helper writes an atomic result journal containing verification, rollback, and
+recovery information; the next ordinary command reports and clears it.
+
+## Build and release
+
+`devops/build-binaries.go` produces exactly:
+
+- `xdocs-linux-amd64` (`GOAMD64=v1`);
+- `xdocs-linux-arm64` (`GOARM64=v8.0`);
+- `xdocs-linux-armv7` (`GOARM=7`);
+- `xdocs-linux-armv6` (`GOARM=6`);
+- `xdocs-darwin-amd64` (`GOAMD64=v1`);
+- `xdocs-darwin-arm64` (`GOARM64=v8.0`);
+- `xdocs-windows-amd64.exe` (`GOAMD64=v1`);
+- `xdocs-windows-arm64.exe` (`GOARM64=v8.0`);
+- `guiho-s-xdocs.zip`;
+- `guiho-i-xdocs.md`;
+- `checksums.txt`.
+
+All executable builds use `CGO_ENABLED=0`, `-trimpath`, and linker metadata for
+version, commit, build date, and target. AMD64 V2/V3/V4 and unsupported
+platforms are not published by default.
+
+## Versioning and GitHub publishing
+
+Mirror configuration is Git-native:
 
 ```yaml
-schema: 1
-extensions:
-  supported: [.xdocs.md]
-ai:
-  mode: prompt
-scan:
-  exclude: [node_modules, .git, dist, build, library, bin, bundle]
 project:
-  name: example
+  name: xdocs
+version:
+  source: git
+  output:
+    - git
+git:
+  tag_template: "{name}/v{version}"
 ```
 
-`ai.mode` is `prompt` or `auto`. Agent mutation settings do not exist; agent
-files change only through explicit `xdocs agent` commands.
+`package.json` and `jsr.json` are not version sources or outputs. Publish CI
+triggers only on `xdocs/v*`, contains no manual approval environment, extracts
+only the exact version section from `CHANGELOG.md`, publishes exactly eleven
+assets, verifies exact equality, and runs the tag-pinned public installer.
 
-## Global flags
-
-- `-h`, `--help`: Citty usage for the selected scope.
-- `--help-tree`: full Unicode command subtree.
-- `--help-tree-depth <positive-integer>`: bounded subtree.
-- `--help-docs`: redirect-safe Markdown from the live Citty tree.
-- root only: `-v`, `--version`.
-- `--cwd <path>`: effective project directory.
-- `--config <path>`: explicit YAML configuration.
-- `--format <text|json|markdown>`: supported output.
-- `--verbose`: detailed diagnostics.
-
-Every help form is generated from the same live Citty definition, includes
-practical examples, and exposes the approved public catalog. The internal
-update worker is hidden and there is no public `home` command. No other short
-aliases exist.
-
-## Domain commands
-
-### `xdocs init`
-
-Creates `xdocs.yaml` and `XDOCS.md` when absent, then installs or refreshes the
-bundled skill in both global tool locations. `xdocs init --local` installs the
-same skill beneath the effective project root. Initialization does not modify
-`AGENTS.md` or `CLAUDE.md`; instruction changes remain explicit.
-
-### `xdocs scan`
-
-Reports directory, descriptor, and companion-document coverage.
-
-### `xdocs generate [path]`
-
-Generates documentation for a scope. `--output <path>` writes a file.
-
-### `xdocs merge [path]`
-
-Merges scoped descriptors with source markers. `--output` writes a file.
-
-### `xdocs tree`
-
-Builds the parent/children containment hierarchy. Supports text, Markdown, and
-JSON plus `--output`.
-
-### `xdocs list [path]`
-
-Lists implementation files and companion documents from descriptor maps.
-
-### `xdocs meta [path]`
-
-Reads descriptor frontmatter top-down. Options:
-
-- `--documents`
-- `--strict`
-- `--owner <subject>`
-- `--tag <tag>`
-- `--keyword <keyword>`
-
-### `xdocs context <query> [path]`
-
-Returns a minimal deterministic reading set. Options:
-
-- `--documents`
-- `--files`
-- `--limit <positive-integer>`
-- `--owner`, `--tag`, `--keyword`
-- `--explain`
-
-### `xdocs doctor [path]`
-
-Validates descriptors, companion metadata, tree links, and documented files.
-Use `--no-documents` or `--warnings-as-errors` where appropriate.
-
-## Agent commands
-
-### Skills
+## Contributor validation
 
 ```bash
-xdocs agent skill install [--local]
-xdocs agent skill uninstall [--local]
-xdocs agent skill update [--local]
-xdocs agent skill list [--filter <keyword>]
-xdocs agent skill show <id>
+gofmt -w main.go cmd internal devops
+go mod tidy
+go test ./...
+go vet ./...
+go run ./devops/build-binaries.go \
+  --version 0.8.0 \
+  --commit "$(git rev-parse HEAD)" \
+  --build-date "2026-07-24T00:00:00Z"
 ```
 
-Mutation defaults to global scope and always targets:
-
-```text
-~/.agents/skills/guiho-s-xdocs
-~/.claude/skills/guiho-s-xdocs
-```
-
-`--local` substitutes the effective project root. Update and uninstall also
-remove the legacy `guiho-as-xdocs` directories.
-
-### Instructions
-
-```bash
-xdocs agent instruction apply
-xdocs agent instruction remove
-xdocs agent instruction update
-xdocs agent instruction show
-```
-
-If only one of `AGENTS.md` or `CLAUDE.md` exists, it is used. If both exist,
-both are used. If neither exists, `AGENTS.md` is created. Actions manage:
-
-```text
-<!-- BEGIN XDOCS — DO NOT EDIT THIS SECTION -->
-...
-<!-- END XDOCS -->
-```
-
-Apply and update are idempotent; show emits the raw canonical body.
-
-### Prompts
-
-```bash
-xdocs agent prompt list
-xdocs agent prompt list --names
-xdocs agent prompt show write
-```
-
-IDs are `write`, `update`, `agents`, and `generate`. `show` prints only the raw
-body. Native binaries embed the manifest and all bodies. The release contains
-one `guiho-i-xdocs.md` catalog artifact, not four separate prompt assets.
-
-## Startup and update cache
-
-Bare startup prints the deterministic GUIHO welcome:
-
-```text
-╔════════════════════════════════════════════════════════════╗
-║  XDOCS                                                     ║
-║  Structured documentation for codebases and AI agents     ║
-╚════════════════════════════════════════════════════════════╝
-
-  organization  GUIHO
-  platform      Windows x64
-  version       v<version>
-
-  Run `xdocs --help` to see available commands.
-```
-
-The foreground reads only `~/.guiho/xdocs/cache.json`. When
-`newVersionAvailable` is true and `latestVersion` is newer than the running
-SemVer, it prints:
-
-```text
-  ⚠ New version available: v<latest>
-    Run `xdocs upgrade` to update.
-```
-
-The foreground awaits only the local lease-and-detached-spawn handoff, never
-the remote request. Its exact internal flag is handled before Citty, so it cannot enter
-the normal root lifecycle or launch another worker. An exclusive lease permits
-at most one check per cache directory, a 15-second deadline bounds the entire
-remote check, and every outcome releases its ownership token. Valid stale,
-corrupt, and orphaned leases are recoverable after 30 seconds without allowing
-an old worker to remove a newer lease. Cache and lease data are TypeBox-
-validated. Corrupt cache never blocks normal commands, and scheduler failures
-never reject into foreground command execution.
-
-## Upgrade and uninstall
-
-```bash
-xdocs upgrade [--version <version>] [--arch <x64|arm64>]
-              [--variant <baseline|default|modern>] [--dry-run]
-              [--format <text|json>]
-xdocs upgrade check
-xdocs upgrade list [--page <page>] [--size <size>]
-xdocs uninstall [--dry-run]
-```
-
-The complete stable and prerelease catalog is fetched, decoded, deduplicated,
-and sorted newest SemVer first before local pagination. Page defaults to 1 and
-size defaults to 8, with a maximum size of 100. Human text uses only
-`VERSION`, `CHANNEL`, `PUBLISHED`, `CURRENT`, `LATEST`, and `ASSET`; dates use
-`YYYY-MM-DD`, marker cells use `yes` or remain blank, and asset compatibility
-uses `yes`/`no`. Text intentionally omits full tags, release URLs, and asset
-names. Markdown preserves its complete release table, and JSON schema version 2
-preserves complete release objects plus pagination totals and navigation. Text
-and Markdown print copyable previous/next commands. GitHub pagination is
-exhausted internally; later-page failure aborts
-instead of returning a partial catalog. The x64 default variant is baseline.
-GitHub release responses are TypeBox-validated.
-
-Upgrade phases are plan, download, validate, replace, verify, cache, and
-cleanup. A journal and backup support interruption recovery and rollback.
-Text output flushes the complete immutable plan before `Downloading...`, then
-streams a progress bar and percentage when `Content-Length` is known or received
-bytes when it is not, and
-prints `Replacing...` and `Verifying...` only when those phases begin.
-After successful replacement xdocs refreshes both global skill copies and
-updates instructions in the current project.
-
-After every upgraded, failed, rolled-back, or already-current result, text and
-Markdown print a copy-paste native installer command pinned to the resolved
-full version, followed by a separate platform-specific process-stop command.
-Pre-plan discovery failure falls back to a visibly labeled reinstall of the
-current version. JSON exposes the equivalent `recovery.targetVersion`,
-`installCommand`, and `stopProcessCommand` fields without mixing human output
-into stdout.
-
-## Installers
-
-Use the public copy-paste installers directly:
-
-```powershell
-irm https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.ps1 | iex
-```
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.sh | bash
-```
-
-`devops/install.ps1` and `devops/install.sh` print target version,
-architecture, variant, source URL, live download progress, binary destination,
-skill destinations, discovered instruction files, reconciliation, and final
-verification.
-
-They install the matching native binary and download `guiho-s-xdocs.md` plus
-`guiho-i-xdocs.md`. Both files must be valid named Markdown; PE executables,
-NUL-containing content, empty responses, and invalid metadata are rejected
-before either installed `SKILL.md` is changed. Failures preserve or restore the
-previous executable.
-POSIX downloads use curl's progress bar. PowerShell downloads stream through a
-bounded buffer and print deterministic percentage/byte updates for the binary,
-skill, and prompt assets.
-Both installers accept an explicit full stable or prerelease version, resolve
-that release's matching platform/architecture asset, and exit nonzero unless
-the canonical installed executable reports exactly that version.
-
-## npm bootstrap
-
-`scripts/xdocs-bin.mjs` is Node-compatible and isolated from Bun core source.
-It detects platform, architecture, and x64 variant; caches by package version
-under `~/.guiho/xdocs/npm`; downloads missing binaries; applies Unix executable
-permissions; forwards args, stdio, and environment; and exits with the native
-process result.
-
-## Release assets
-
-Exactly fourteen assets:
-
-```text
-xdocs-linux-arm64
-xdocs-linux-x64
-xdocs-linux-x64-baseline
-xdocs-linux-x64-modern
-xdocs-darwin-arm64
-xdocs-darwin-x64
-xdocs-darwin-x64-baseline
-xdocs-darwin-x64-modern
-xdocs-windows-arm64.exe
-xdocs-windows-x64.exe
-xdocs-windows-x64-baseline.exe
-xdocs-windows-x64-modern.exe
-guiho-s-xdocs.md
-guiho-i-xdocs.md
-```
-
-The build and GitHub workflow reject missing, duplicate, extra, legacy, or
-wrongly suffixed assets.
-
-The tag workflow extracts only the exact version's `## <version>` section from
-`CHANGELOG.md` for the GitHub Release description. Extraction stops at the next
-level-two heading and fails on missing, duplicate, or empty matching sections.
-Stable releases are explicitly marked latest and prereleases are explicitly
-marked prerelease. After the exact fourteen assets are public, the workflow
-downloads the installer from the immutable tag, requests that exact version,
-and accepts the release only when the installed binary reports exactly
-`xdocs <version>`, both global skill copies exist, and the project instruction
-block was reconciled. Main-branch CI's unpinned installer check remains a
-generic latest-stable smoke and is not release evidence.
-
-## TypeScript API
-
-The public entrypoint exports configuration, discovery, metadata, meta,
-context, doctor, tree, prompts, help, agent resources, update cache, release
-catalog, upgrade transaction, release assets, and CLI runners.
-
-The library is Bun-first. Node compatibility is deliberately limited to the
-npm bootstrap.
-
-## Validation
-
-```bash
-bun run typecheck
-bun test
-bun run build
-bun run bundle
-bun run binary
-bun run binaries
-```
-
-Validation also covers compiled smoke behavior, Node-only bootstrap execution,
-installer syntax, prohibited imports, exact assets, and xdocs metadata/tree/
-doctor checks.
+Cross-compilation proves buildability, not foreign runtime behavior. Native CI
+smoke tests are required where matching runners exist.
