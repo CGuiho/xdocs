@@ -12,9 +12,9 @@ keywords:
   - guiho-s-xdocs
   - xdocs metadata
   - documentation workflow
-version: "0.7.2"
+version: "0.8.0"
 metadata:
-  version: "0.7.2"
+  version: "0.8.0"
 ---
 
 # xdocs Structured Documentation
@@ -144,8 +144,11 @@ xdocs uninstall
 Foreground commands read only `~/.guiho/xdocs/cache.json`. An expired cache may
 start one short-lived detached update worker. The cache-scoped lease coalesces
 simultaneous invocations, the entire remote check is bounded to 15 seconds, and
-stale or orphaned leases recover after 30 seconds. The internal worker route is
-handled before Citty and never enters the ordinary startup lifecycle.
+stale or orphaned leases recover after 30 seconds. Ownership tokens and a
+crash-released operating-system acquisition lock ensure an old worker cannot
+remove a newer lease and simultaneous stale takers elect exactly one owner. The
+internal worker is a hidden Cobra command that bypasses ordinary startup notice
+and scheduling behavior, so it cannot recursively launch another worker.
 
 `xdocs upgrade list` always exhausts GitHub pagination before applying its
 user-visible page. It defaults to `--page 1 --size 8`; size accepts positive
@@ -168,6 +171,10 @@ installer command is pinned to the resolved full version; its process-stop
 command is separate. JSON callers must read the equivalent `recovery` object.
 Download events include known-length percentage progress or unknown-length byte
 progress; human output renders them and JSON retains the structured values.
+Upgrade transactions are exclusive and use unique candidate/backup paths. On
+Windows, `scheduled` means replacement is pending; the helper records exact
+verification and rollback in a completion journal that the next ordinary
+invocation reports and clears.
 
 Every scope supports `-h`/`--help`, `--help-tree`,
 `--help-tree-depth <positive-integer>`, and `--help-docs`. Root version uses
