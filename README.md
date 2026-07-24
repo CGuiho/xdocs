@@ -1,7 +1,7 @@
 ---
 name: xdocs-readme
 purpose: Introduce xdocs and provide its primary installation and usage guide.
-description: Public overview of the RFC 0034 xdocs library, native CLI, configuration, commands, and distribution model.
+description: Public overview of the native Go XDocs CLI, structured-documentation model, commands, configuration, agents, upgrades, and releases.
 created: 2026-06-01
 owner: xdocs-package
 flags: []
@@ -11,78 +11,63 @@ tags:
   - documentation
 keywords:
   - xdocs install
-  - xdocs usage
-  - RFC 0034
+  - xdocs Go
+  - Cobra
 ---
 
 # xdocs
 
-`@guiho/xdocs` is a Bun-first structured-documentation library and native CLI
-for codebases and AI agents. It discovers named `*.xdocs.md` descriptors,
-companion Markdown metadata, containment trees, minimal reading sets, and
-documentation health issues.
+xdocs is a native Go CLI for structured repository documentation. It discovers
+named `*.xdocs.md` descriptors, validates companion Markdown metadata, renders
+containment trees, recommends minimal reading sets, and reports documentation
+health issues.
 
-The CLI follows GUIHO RFC 0034: strict ESM TypeScript, raw Citty, TypeBox
-runtime validation, YAML configuration, native binaries, Developer Context
-help, explicit agent resources, background update caching, transactional
-upgrades, and fourteen release assets.
+The shipping runtime uses Go 1.26.5, Cobra, strict YAML structs, embedded agent
+resources, local cached update notices, safe self-upgrades, and exactly eleven
+release assets. Bun and Node are not required.
 
 ## Install
 
-### Native installer
+PowerShell:
 
 ```powershell
 irm https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.ps1 | iex
 ```
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.sh | bash
-```
-
-Both installers select the native binary, show download progress, configure
-the global binary directory in `PATH`, download and validate
-`guiho-s-xdocs.md` and `guiho-i-xdocs.md`, install the skill into both
-`~/.agents/skills` and `~/.claude/skills`, and reconcile project instructions.
-Executable or otherwise invalid Markdown agent payloads are rejected before
-either `SKILL.md` is written.
-
-### npm bootstrap
+Linux and macOS:
 
 ```bash
-npm install --global @guiho/xdocs
+curl -fsSL https://raw.githubusercontent.com/CGuiho/xdocs/main/devops/install.sh | sh
 ```
 
-The npm package ships a small Node-compatible bootstrap. It downloads, caches,
-and delegates to the matching native binary. It contains no xdocs domain logic
-and does not require Bun to be preinstalled.
+The installers select the exact Windows, Linux, macOS, AMD64, ARM64, ARMv7, or
+ARMv6 asset, verify it against `checksums.txt`, install `xdocs`, install the
+bundled skill into both global agent locations, and verify the executable.
 
 ## Start
 
-```bash
+```text
 xdocs
-# ╔════════════════════════════════════════════════════════════╗
-# ║  XDOCS                                                     ║
-# ║  Structured documentation for codebases and AI agents     ║
-# ╚════════════════════════════════════════════════════════════╝
+Hello Windows - xdocs v0.8.0
+```
 
+```bash
 xdocs init
 xdocs scan
 xdocs tree
 xdocs doctor
 ```
 
-`xdocs init` creates `XDOCS.md` and `xdocs.yaml`, then idempotently installs the
-bundled skill in both global agent locations. Use `xdocs init --local` when the
-skill must remain inside the initialized project. Instructions remain explicit
-through `xdocs agent instruction`.
+`xdocs init` creates `xdocs.yaml` and `XDOCS.md`, then installs the skill
+globally by default. Use `xdocs init --local` for project-local skill targets.
 
 ## Configuration
 
-Configuration is YAML only and resolves in this exact order:
+xdocs resolves one configuration file:
 
-1. `--config <path>`
-2. `./xdocs.yaml` under the effective `--cwd`
-3. `~/.guiho/xdocs/xdocs.yaml`
+1. `--config <path>`;
+2. `./xdocs.yaml`;
+3. `~/.guiho/xdocs/xdocs.yaml`.
 
 ```yaml
 schema: 1
@@ -100,143 +85,95 @@ scan:
     - library
     - bin
     - bundle
+    - vendor
 project:
   name: example
 ```
 
-When loaded, xdocs reports:
+Unknown configuration fields, multiple YAML documents, unsupported descriptor
+extensions, invalid AI modes, and invalid exclusion entries fail explicitly.
 
-```text
-configuration file loaded: /absolute/path/xdocs.yaml
+## Descriptor model
+
+Each documented module directory has exactly one named descriptor:
+
+```yaml
+---
+subject: example-auth
+description: Authentication implementation and contracts.
+parent: example
+children: []
+files:
+  service.go: Authentication service.
+documents:
+  design.md: Authentication design.
+tags:
+  - authentication
+keywords:
+  - session
+flags: []
+---
 ```
 
-Global configuration and update state live only under `~/.guiho/xdocs/`.
+Plain sibling Markdown files must be declared in `documents` and have
+frontmatter containing `name`, `purpose`, `description`, `created`, `owner`,
+`flags`, `tags`, and `keywords`.
 
 ## Commands
 
-```text
-xdocs
-├── init
-├── scan
-├── generate [path]
-├── merge [path]
-├── tree
-├── list [path]
-├── meta [path]
-├── context <query> [path]
-├── doctor [path]
-├── agent
-│   ├── skill install|uninstall|update|list|show
-│   ├── instruction apply|remove|update|show
-│   └── prompt list|show
-├── upgrade
-│   ├── check
-│   └── list
-└── uninstall
-```
+- `xdocs init [--local]`
+- `xdocs scan`
+- `xdocs generate [path] [--output <path>]`
+- `xdocs merge [path] [--output <path>]`
+- `xdocs tree [--output <path>]`
+- `xdocs list [path]`
+- `xdocs meta [path] [--documents] [--strict]`
+- `xdocs context <query> [path] [--documents] [--files]`
+- `xdocs doctor [path] [--no-documents] [--warnings-as-errors]`
+- `xdocs agent skill install|uninstall|update|list|show`
+- `xdocs agent instruction apply|remove|update|show`
+- `xdocs agent prompt list|show`
+- `xdocs upgrade [--version <version>] [--dry-run]`
+- `xdocs upgrade check`
+- `xdocs upgrade list [--page <n>] [--size <n>]`
+- `xdocs uninstall [--dry-run]`
 
-Prompt IDs are `write`, `update`, `agents`, and `generate`:
+Every scope supports `-h`/`--help`, `--help-tree`,
+`--help-tree-depth <positive-integer>`, and `--help-docs`. Only the root
+supports `-v`/`--version`. Use `--format text|json|markdown` for stable output.
 
-```bash
-xdocs agent prompt list
-xdocs agent prompt list --names
-xdocs agent prompt show write
-```
+## Agents
 
-Agent skill mutations default to global scope and always target both supported
-tool directories. Add `--local` for project-local scope:
+The binary embeds:
 
-```bash
-xdocs agent skill install
-xdocs agent skill update --local
-xdocs agent skill uninstall --local
-```
+- `skills/guiho-s-xdocs/SKILL.md`;
+- `prompts/write.md`;
+- `prompts/update.md`;
+- `prompts/agents.md`;
+- `prompts/generate.md`.
 
-Instruction actions operate idempotently on `AGENTS.md`, `CLAUDE.md`, both, or
-create `AGENTS.md` when neither exists:
+Skill operations target both `.agents/skills/guiho-s-xdocs` and
+`.claude/skills/guiho-s-xdocs`. Instruction operations use bounded managed
+blocks and preserve every byte outside the block.
 
-```bash
-xdocs agent instruction apply
-xdocs agent instruction update
-xdocs agent instruction show
-xdocs agent instruction remove
-```
+## Updates and upgrades
 
-## Developer Context help
+Ordinary commands perform no foreground network request. They read a validated
+local cache and start a bounded detached worker. Explicit `upgrade` commands
+resolve `xdocs/vX.Y.Z` releases, verify SHA-256, replace atomically on Unix, and
+stage replacement after process exit on Windows. Ownership-safe leases prevent
+duplicate background workers, upgrade locks prevent concurrent replacements,
+and the next invocation reports the final result of a detached Windows
+replacement.
 
-Every command scope supports:
+## Release
 
-```bash
-xdocs <scope> --help
-xdocs <scope> -h
-xdocs <scope> --help-tree
-xdocs <scope> --help-tree-depth 2
-xdocs <scope> --help-docs
-```
+Mirror uses Git as its only version source and output. Tags are
+`xdocs/vX.Y.Z`. A release contains exactly:
 
-Root help renders the complete public command catalog; nested help renders the
-selected subtree. Usage and Markdown help include examples from the same live
-Citty definitions. The internal update-worker flag is routed before Citty and
-is absent from the public command tree; `xdocs home` is not a public command.
-Only `-h` and the root `-v` are short aliases.
+- eight native executables;
+- `guiho-s-xdocs.zip`;
+- `guiho-i-xdocs.md`;
+- `checksums.txt`.
 
-## Background update check
-
-Foreground commands read only `~/.guiho/xdocs/cache.json`. When that cache is
-expired, XDocs may launch one detached, short-lived update worker. A cache-
-scoped ownership lease coalesces simultaneous commands, the complete remote
-check has a 15-second deadline, and all outcomes release the lease. Stale,
-corrupt, or orphaned leases become recoverable after 30 seconds. The worker
-cannot route through the ordinary root lifecycle or recursively launch another
-worker, and scheduler failures never block the requested command.
-
-## Upgrade
-
-```bash
-xdocs upgrade
-xdocs upgrade --version 0.7.0 --arch x64 --variant baseline --dry-run
-xdocs upgrade check
-xdocs upgrade list
-xdocs upgrade list --page 2 --size 8
-```
-
-The default x64 variant is `baseline`. Upgrades validate release metadata,
-stream known-length percentage/bar progress or unknown-length byte progress,
-verify a native candidate, replace transactionally, roll back on failure,
-update `~/.guiho/xdocs/cache.json`, refresh both global skill copies, and
-reconcile project instructions. `upgrade list` exhausts the GitHub Releases
-catalog before returning one user-visible page of stable and prerelease
-versions, newest SemVer first. It defaults to page 1 with eight versions;
-use `--page` and `--size` (maximum 100) to navigate. Human text uses the concise
-`VERSION CHANNEL PUBLISHED CURRENT LATEST ASSET` table shared with RunX.
-Markdown and JSON retain full tags, publication timestamps, asset names,
-release metadata, and pagination.
-
-Every upgrade outcome prints a recovery block after its final result. The
-direct-install command is pinned to the fully resolved stable or prerelease
-version and uses the supported native installer; a separate platform-specific
-command stops a blocking XDocs process. JSON returns the same values in its
-`recovery` object.
-
-The Bash installer uses curl's progress bar. The PowerShell installer streams
-all binary and agent downloads and prints deterministic percentage/byte
-progress even when host-native web-request progress UI is unavailable.
-
-## Development
-
-```bash
-bun install
-bun run typecheck
-bun test
-bun run build
-bun run bundle
-bun run binary
-bun run binaries
-```
-
-`bun run binaries` produces exactly twelve native assets plus
-`guiho-s-xdocs.md` and `guiho-i-xdocs.md`. Darwin assets use `darwin`; only
-Windows binaries use `.exe`.
-
-See [DOCS.md](DOCS.md) for the complete command and library contract and
-[ARCHITECTURE.md](ARCHITECTURE.md) for implementation boundaries.
+See [DOCS.md](DOCS.md) for the full contract.
