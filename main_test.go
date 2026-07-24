@@ -8,7 +8,7 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-func TestEmbeddedSkillMatchesFirstGoReleaseVersion(t *testing.T) {
+func TestEmbeddedSkillMatchesCurrentReleaseVersion(t *testing.T) {
 	content, err := fs.ReadFile(agentResources, "skills/guiho-s-xdocs/SKILL.md")
 	if err != nil {
 		t.Fatal(err)
@@ -26,7 +26,7 @@ func TestEmbeddedSkillMatchesFirstGoReleaseVersion(t *testing.T) {
 	if err := yaml.Unmarshal([]byte(strings.TrimPrefix(parts[0], "---\n")), &metadata); err != nil {
 		t.Fatal(err)
 	}
-	if metadata.Version != "0.8.0" || metadata.Metadata.Version != "0.8.0" {
+	if metadata.Version != "0.8.1" || metadata.Metadata.Version != "0.8.1" {
 		t.Fatalf("embedded skill version mismatch: %#v", metadata)
 	}
 }
