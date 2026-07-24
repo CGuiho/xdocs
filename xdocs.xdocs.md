@@ -13,7 +13,7 @@ children:
   - xdocs-docs
 files:
   main.go: Thin native entrypoint with embedded skill and prompt resources plus linker-injected build metadata.
-  main_test.go: Verifies that the embedded skill source matches the first native Go release version.
+  main_test.go: Verifies that both embedded skill version fields match the current native Go release.
   go.mod: Authoritative Go module definition for Cobra and strict YAML dependencies.
   go.sum: Reproducible Go dependency checksums.
   mirror.yaml: Git-only Mirror configuration using canonical xdocs/vX.Y.Z tags.
