@@ -32,7 +32,7 @@ All Rights Reserved.
 | --- | ---: |
 | todo | 1 |
 | in progress | 0 |
-| testing | 0 |
+| testing | 1 |
 | stopped | 0 |
 | completed | 7 |
 
@@ -133,3 +133,22 @@ All Rights Reserved.
 - External: [CGuiho/mirror#16](https://github.com/CGuiho/mirror/issues/16)
 - Release: [@guiho/xdocs@0.7.1](https://github.com/CGuiho/xdocs/releases/tag/%40guiho%2Fxdocs%400.7.1)
 - Evidence: [XDocs acceptance](https://github.com/CGuiho/mirror/issues/16#issuecomment-5061756753)
+
+### 9. Rewrite XDocs CLI In Go
+
+- Status: testing
+- Created: `2026-07-24`
+- Updated: `2026-07-24`
+- Outcome: Replace the shipping Bun runtime with a complete native Go and
+  Cobra CLI, Git-only versioning, safe installers/upgrades, and the exact
+  11-artifact GUIHO Go release.
+- Spec: [docs/todo/xdocs-go-rewrite.md](docs/todo/xdocs-go-rewrite.md)
+- Related files:
+  - [docs/architecture/xdocs-go-rewrite.md](docs/architecture/xdocs-go-rewrite.md) - Accepted Go runtime and release architecture.
+  - [docs/decisions/go-native-cli-and-git-version-tags.md](docs/decisions/go-native-cli-and-git-version-tags.md) - Accepted Git-only version and tag decision.
+  - [docs/plans/xdocs-go-rewrite.md](docs/plans/xdocs-go-rewrite.md) - Approved executable rewrite plan.
+  - [docs/reviews/plans/xdocs-go-rewrite-review.md](docs/reviews/plans/xdocs-go-rewrite-review.md) - Ready-for-execution plan review.
+  - [docs/todo/xdocs-go-rewrite-implementation.md](docs/todo/xdocs-go-rewrite-implementation.md) - Execution and validation record.
+- Implementation: [docs/todo/xdocs-go-rewrite-implementation.md](docs/todo/xdocs-go-rewrite-implementation.md)
+- Review: [docs/reviews/implementation/xdocs-go-rewrite-review.md](docs/reviews/implementation/xdocs-go-rewrite-review.md)
+- Validation: [docs/validation/xdocs-go-rewrite.md](docs/validation/xdocs-go-rewrite.md)
