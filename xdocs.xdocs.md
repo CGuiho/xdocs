@@ -1,8 +1,10 @@
 ---
 subject: xdocs-package
-description: Package root for the @guiho/xdocs CLI, native binary builders, prompts, skills, and TypeScript source.
+description: Native Go XDocs CLI root, release tooling, embedded agent resources, documentation, and historical migration sources.
 parent: null
 children:
+  - xdocs-cmd
+  - xdocs-internal
   - xdocs-source
   - xdocs-devops
   - xdocs-scripts
@@ -10,45 +12,44 @@ children:
   - xdocs-prompts
   - xdocs-docs
 files:
-  package.json: npm package metadata, Citty and TypeBox dependencies, Node bootstrap bin mapping, build/test scripts, and publish file list.
-  jsr.json: JSR package metadata and publish include list.
-  tsconfig.json: Strict TypeScript settings for source development.
-  tsconfig.build.json: Build-specific TypeScript settings for library output, including Bun and Node types.
-  mirror.yaml: GUIHO Mirror YAML release/versioning configuration for package.json, jsr.json, and Git tag outputs.
+  main.go: Thin native entrypoint with embedded skill and prompt resources plus linker-injected build metadata.
+  main_test.go: Verifies that the embedded skill source matches the first native Go release version.
+  go.mod: Authoritative Go module definition for Cobra and strict YAML dependencies.
+  go.sum: Reproducible Go dependency checksums.
+  mirror.yaml: Git-only Mirror configuration using canonical xdocs/vX.Y.Z tags.
   xdocs.yaml: YAML configuration for xdocs documentation workflows in this repository.
+  package.json: Legacy package metadata retained only as TypeScript migration history; it is not a version source or runtime input.
+  jsr.json: Legacy JSR metadata retained only as migration history; it is not a version source or release output.
+  tsconfig.json: Historical TypeScript source settings.
+  tsconfig.build.json: Historical TypeScript library-build settings.
 documents:
-  AGENTS.md: Repository instructions requiring the GUIHO SWE agent and CLI engineer skill for xdocs CLI work, including commands, metadata workflows, release rules, and the approved breaking RFC 0034 migration.
-  ARCHITECTURE.md: Architecture and technical design notes for xdocs file conventions, metadata, deterministic welcome, bounded cache-leased update workers, concise text and complete structured release catalogs, distribution, and agent workflows.
+  AGENTS.md: Repository rules requiring the GUIHO SWE agent, Go CLI Engineer skill, Go checks, XDocs metadata, and Git-only releases.
+  ARCHITECTURE.md: Canonical native Go runtime, command, update, upgrade, version, and distribution architecture.
   BRAINSTORM.md: Product and design brainstorming notes for the xdocs structured documentation model and future directions.
-  CHANGELOG.md: Release changelog including concise RunX-style upgrade-list text while preserving complete structured metadata and pagination.
-  DOCS.md: Canonical full documentation including the deterministic welcome, stable-only cached update notice, bounded worker handoff, concise text and complete structured release catalogs, native installers, upgrades, and agent-skill behavior.
-  LICENSE.md: Package license document shipped with @guiho/xdocs.
-  README.md: Public package overview with one-line installers, deterministic welcome, bounded update checks, concise paginated release listing, structured metadata, agent setup, self-upgrade, CLI reference, and API examples.
-  TECHNICAL.md: Short technical notes placeholder for xdocs implementation context.
-  TODO.md: Local task list for pending xdocs repository work.
+  CHANGELOG.md: Exact version-scoped release history.
+  DOCS.md: Canonical full documentation for commands, configuration, metadata, agents, upgrades, installers, and releases.
+  LICENSE.md: XDocs license.
+  README.md: Public native installation, workflow, and command overview.
+  TECHNICAL.md: Concise implementation and validation notes for the Go generation.
+  TODO.md: Local work ledger.
 tags:
-  - package
+  - go
   - cli
   - documentation
 keywords:
   - xdocs
   - cli
   - structured documentation
-  - metadata-only scan
-  - context recommendations
-  - doctor checks
+  - Cobra
+  - strict YAML
+  - Git version
   - native binary
-  - self management
-  - verified upgrade
-  - exact recovery
-  - RFC 0034
-  - cli engineer
-  - background update worker
-  - CPU safety
+  - self-upgrade
+  - agent resources
 flags: []
 status: stable
 ---
 
-The repository root is the actual `@guiho/xdocs` package. Core implementation
-uses Bun, strict ESM TypeScript, raw Citty, and TypeBox. A thin Node bootstrap
-supports npm users. Mirror owns versioning through `mirror.yaml`.
+The repository root ships the native Go XDocs CLI. Git tags in the
+`xdocs/vX.Y.Z` namespace are the only version authority. Package manifests and
+the TypeScript tree are historical migration references only.
