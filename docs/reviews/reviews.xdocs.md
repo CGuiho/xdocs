@@ -3,6 +3,7 @@ subject: xdocs-reviews
 description: Structured reviews of xdocs architecture, plans, and implementation evidence.
 parent: xdocs-docs
 children:
+  - xdocs-architecture-reviews
   - xdocs-plan-reviews
   - xdocs-implementation-reviews
 files: {}
