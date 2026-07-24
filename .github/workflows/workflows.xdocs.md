@@ -1,11 +1,11 @@
 ---
 subject: xdocs-github-workflows
-description: Continuous integration, classified release publication, and post-publication exact-version installer acceptance workflows.
+description: Go CI, tag-triggered release publication, exact-asset verification, and installer acceptance workflows.
 parent: xdocs-github
 children: []
 files:
-  ci.yml: Cross-platform Bun, TypeScript, test, build, binary-matrix, installer-syntax, and isolated latest-stable public Bash installation validation.
-  publish.yml: Stable/prerelease-aware publication followed by exact fourteen-asset verification and tag-pinned exact-version public Bash installer acceptance.
+  ci.yml: Cross-platform Go formatting, module, test, vet, native build, exact eleven-asset, installer syntax, and public installer validation.
+  publish.yml: Approval-free xdocs/v* publication with Git-derived versions, exact-version notes, exactly eleven assets, and immutable installer acceptance.
 documents: {}
 tags:
   - github-actions
@@ -13,15 +13,15 @@ tags:
   - release
 keywords:
   - publish workflow
-  - fourteen assets
-  - curl
+  - xdocs/vX.Y.Z
+  - eleven assets
+  - no approval gate
   - installer verification
 flags: []
 status: stable
 ---
 
-Main CI keeps the unpinned latest-stable installer as a generic public smoke.
-The tag workflow is the release acceptance owner: it classifies stable and
-prerelease releases explicitly, verifies the exact asset set, then installs the
-tagged version through the tag-pinned installer and checks the binary, both
-skill destinations, and managed project instructions.
+CI validates the native Go CLI on Linux and Windows. Tag publication has no
+protected-environment approval gate, derives the version only from
+`xdocs/vX.Y.Z`, publishes exactly eleven assets, and uses only the matching
+changelog section as release notes.
