@@ -10,6 +10,7 @@ documents:
   rfc-0034-cli-compliance-migration.md: Full local validation evidence for the 50-test corrective RFC 0034 gate and 0.6.1 readiness verdict.
   simple-upgrade-list-output.md: Records implementation, structured-output, pagination, build, release, installer, and public issue evidence for the XDocs half of Mirror issue 16.
   xdocs-0.7.0-welcome-update-pagination.md: Records local, native, workflow, Mirror, release, installer, and issue-closure evidence for XDocs 0.7.0.
+  xdocs-go-rewrite.md: Records Go tests, strict XDocs checks, cross-builds, installers, Git-only Mirror planning, exact eleven assets, and remote release gates.
 tags:
   - validation
 keywords:
@@ -19,6 +20,8 @@ keywords:
   - fourteen assets
   - background worker
   - CPU safety
+  - Go rewrite
+  - eleven assets
 flags: []
 status: stable
 ---
