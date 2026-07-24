@@ -1,6 +1,6 @@
 ---
 subject: xdocs-source
-description: Bun-first TypeScript implementation of the RFC 0034 CLI and structured-documentation library.
+description: Historical Bun and TypeScript XDocs implementation retained only as Go migration reference.
 parent: xdocs-package
 children:
   - xdocs-commands
@@ -51,7 +51,9 @@ keywords:
   - RFC 0034
   - structured documentation
 flags: []
-status: stable
+status: historical
 ---
 
-Core source is Bun-only. The npm bootstrap is isolated under `scripts/`.
+This directory is not the shipping runtime, CI path, installer path, release
+path, or version source. The native Go implementation at the repository root is
+authoritative.
