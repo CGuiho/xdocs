@@ -16,6 +16,27 @@ keywords:
 
 # GUIHO XDocs Changelog
 
+## 0.8.0 - 2026-07-24
+
+- Rewrite the shipping XDocs CLI from Bun and TypeScript to native Go with one
+  Cobra command tree, strict YAML decoding, typed domain packages, embedded
+  agent resources, safe background update checks, and transactional
+  self-upgrades.
+- Make Git the only version source and output under canonical
+  `xdocs/vX.Y.Z` tags; package manifests no longer participate in versioning.
+- Replace the legacy release matrix with eight compatibility-first native
+  binaries, `guiho-s-xdocs.zip`, `guiho-i-xdocs.md`, and `checksums.txt` for
+  exactly eleven GitHub release assets.
+- Replace the public Bash and PowerShell installers with checksum-verifying
+  native Go installers that validate every installed payload, stage both agent
+  skills and the executable transactionally, reconcile instructions, restore
+  prior state on failure, and publish without a protected-environment approval
+  gate.
+- Make background update leases and self-upgrade transactions single-owner
+  under concurrency, preserve exact recovery commands for failures, and report
+  detached Windows verification and rollback outcomes on the next invocation.
+- Generate GitHub Release notes from only this exact changelog section.
+
 ## 0.7.2 - 2026-07-23
 
 - Classify stable and prerelease GitHub Releases explicitly, then verify the
