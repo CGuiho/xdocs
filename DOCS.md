@@ -233,7 +233,7 @@ go mod tidy
 go test ./...
 go vet ./...
 go run ./devops/build-binaries.go \
-  --version 0.8.0 \
+  --version 0.8.1 \
   --commit "$(git rev-parse HEAD)" \
   --build-date "2026-07-24T00:00:00Z"
 ```
