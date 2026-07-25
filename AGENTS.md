@@ -108,7 +108,7 @@ Stop if you can not find it.
 - The tree is a parent-child containment hierarchy, not a dependency graph. Built from `subject`/`parent`/`children` fields.
 - Configuration lives in `xdocs.yaml`. Sections: `extensions`, `ai`, `scan`, and `project`.
 - Agent resource operations are always explicit and are not configuration-driven.
-- AI mode (`ai.mode`): `"prompt"` (default, AI announces updates and waits) or `"auto"` (AI updates docs automatically).
+- AI mode (`ai.mode`): `"auto"` (default, AI updates docs automatically) or `"prompt"` (AI announces updates and waits).
 - Runtime CLI dependencies: Cobra and `go.yaml.in/yaml/v3`.
 
 ## Gotchas
