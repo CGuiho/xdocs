@@ -56,11 +56,15 @@ multiple YAML documents, and then validates:
 
 - `schema` is `1`;
 - the only descriptor extension is `.xdocs.md`;
-- `ai.mode` is `prompt` or `auto`;
+- `ai.mode` defaults to `auto` and accepts only `auto` or `prompt`;
 - exclusions are non-empty directory names;
 - project name is a string.
 
 Global state and update cache live under `~/.guiho/xdocs/`.
+
+In `auto` mode, agents make relevant documentation changes in the same work
+unit. In `prompt` mode, agents announce the needed documentation changes and
+wait for confirmation.
 
 ## Descriptor contract
 
