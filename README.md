@@ -48,7 +48,7 @@ bundled skill into both global agent locations, and verify the executable.
 
 ```text
 xdocs
-Hello Windows - xdocs v0.8.1
+Hello Windows - xdocs v0.9.0
 ```
 
 ```bash
