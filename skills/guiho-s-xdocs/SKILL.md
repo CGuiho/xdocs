@@ -12,9 +12,9 @@ keywords:
   - guiho-s-xdocs
   - xdocs metadata
   - documentation workflow
-version: "0.8.1"
+version: "0.9.0"
 metadata:
-  version: "0.8.1"
+  version: "0.9.0"
 ---
 
 # xdocs Structured Documentation
