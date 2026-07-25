@@ -16,6 +16,12 @@ keywords:
 
 # GUIHO XDocs Changelog
 
+## 0.9.0 - 2026-07-26
+
+- Make `auto` the default `ai.mode` for omitted configuration, in-memory
+  defaults, and newly generated `xdocs.yaml` files while retaining `prompt` as
+  the confirmation-gated alternative.
+
 ## 0.8.1 - 2026-07-24
 
 - Normalize checked-in GitHub workflow text before contract assertions so the
