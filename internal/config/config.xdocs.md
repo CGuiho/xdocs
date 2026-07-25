@@ -19,4 +19,5 @@ status: stable
 ---
 
 Configuration accepts only the documented schema and never silently retains an
-unknown field.
+unknown field. `ai.mode` defaults to `auto`; the only supported values are
+`auto` and `prompt`.
