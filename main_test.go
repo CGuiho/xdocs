@@ -26,7 +26,7 @@ func TestEmbeddedSkillMatchesCurrentReleaseVersion(t *testing.T) {
 	if err := yaml.Unmarshal([]byte(strings.TrimPrefix(parts[0], "---\n")), &metadata); err != nil {
 		t.Fatal(err)
 	}
-	if metadata.Version != "0.8.1" || metadata.Metadata.Version != "0.8.1" {
+	if metadata.Version != "0.9.0" || metadata.Metadata.Version != "0.9.0" {
 		t.Fatalf("embedded skill version mismatch: %#v", metadata)
 	}
 }
