@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 	"testing/fstest"
+	"time"
 )
 
 func testResources() fs.FS {
@@ -61,6 +62,40 @@ func TestInstallTransactionallyReplacesExistingDirectoryWithoutSkillFile(t *test
 	}
 	if _, err := os.Stat(filepath.Join(destination, "orphan.txt")); !os.IsNotExist(err) {
 		t.Fatalf("orphaned prior content survived replacement: %v", err)
+	}
+}
+
+func TestInstallDoesNotRewriteCurrentSkillTargets(t *testing.T) {
+	root := t.TempDir()
+	service := New(testResources())
+	if _, err := service.Install("local", root); err != nil {
+		t.Fatal(err)
+	}
+	oldTime := time.Unix(946684800, 0)
+	paths := []string{
+		filepath.Join(root, ".agents", "skills", SkillName, "SKILL.md"),
+		filepath.Join(root, ".claude", "skills", SkillName, "SKILL.md"),
+	}
+	for _, path := range paths {
+		if err := os.Chtimes(path, oldTime, oldTime); err != nil {
+			t.Fatal(err)
+		}
+	}
+	results, err := service.Install("local", root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for index, result := range results {
+		if result.Installed || result.Updated || len(result.RemovedLegacyPaths) != 0 {
+			t.Fatalf("current target reported a change: %#v", result)
+		}
+		info, err := os.Stat(paths[index])
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !info.ModTime().Equal(oldTime) {
+			t.Fatalf("current target was rewritten: %s", paths[index])
+		}
 	}
 }
 
@@ -145,6 +180,43 @@ func TestInstructionReconciliationPreservesUnmanagedBytesAndCRLF(t *testing.T) {
 	}
 	if strings.Count(text, instructionBegin) != 1 || strings.Contains(text, "\nold\n") {
 		t.Fatalf("instruction block was not replaced exactly once:\n%s", text)
+	}
+}
+
+func TestInstructionPreflightRejectsMalformedTargetBeforeAnyWrite(t *testing.T) {
+	root := t.TempDir()
+	agentsPath := filepath.Join(root, "AGENTS.md")
+	claudePath := filepath.Join(root, "CLAUDE.md")
+	agentsOriginal := "# Existing agents\n"
+	claudeOriginal := instructionBegin + "\nmissing end\n"
+	if err := os.WriteFile(agentsPath, []byte(agentsOriginal), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(claudePath, []byte(claudeOriginal), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ApplyInstructions(root); err == nil {
+		t.Fatal("expected malformed marker failure")
+	}
+	current, err := os.ReadFile(agentsPath)
+	if err != nil || string(current) != agentsOriginal {
+		t.Fatalf("valid first target changed before malformed second target was refused: %q %v", current, err)
+	}
+}
+
+func TestInstructionReconciliationRejectsAmbiguousMarkers(t *testing.T) {
+	for name, content := range map[string]string{
+		"end without begin":  instructionEnd,
+		"noncanonical begin": "<!-- BEGIN XDOCS custom -->\n" + instructionEnd,
+		"noncanonical end":   instructionBegin + "\n<!-- END XDOCS custom -->",
+		"duplicate blocks":   instructionBegin + "\n" + instructionEnd + "\n" + instructionBegin + "\n" + instructionEnd,
+		"reversed markers":   instructionEnd + "\n" + instructionBegin,
+	} {
+		t.Run(name, func(t *testing.T) {
+			if _, err := reconcileInstruction(content, false); err == nil {
+				t.Fatalf("expected malformed marker failure for %q", content)
+			}
+		})
 	}
 }
 
