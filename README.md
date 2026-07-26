@@ -51,6 +51,13 @@ xdocs
 Hello Windows - xdocs v0.8.1
 ```
 
+A plain argument-free invocation first ensures the embedded
+`guiho-s-xdocs` skill is current in both global agent locations and reconciles
+the bounded XDocs instruction block in the current repository. It updates both
+`AGENTS.md` and `CLAUDE.md` when both exist, the one that exists otherwise, or
+creates `AGENTS.md`. Repeating the invocation leaves already-current files
+untouched. Malformed managed markers are refused instead of guessed at.
+
 ```bash
 xdocs init
 xdocs scan
@@ -154,7 +161,11 @@ The binary embeds:
 
 Skill operations target both `.agents/skills/guiho-s-xdocs` and
 `.claude/skills/guiho-s-xdocs`. Instruction operations use bounded managed
-blocks and preserve every byte outside the block.
+blocks, preserve every byte outside the block and its LF/CRLF convention, and
+write replacements atomically. The plain root invocation is the shared
+bootstrap boundary; help, version, data commands, explicit agent management,
+upgrade, and uninstall do not run bootstrap. Bootstrap never scans or changes
+`XDOCS.md`, descriptors, or companion documents.
 
 ## Updates and upgrades
 
