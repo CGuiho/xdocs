@@ -34,7 +34,7 @@ All Rights Reserved.
 | in progress | 0 |
 | testing | 1 |
 | stopped | 0 |
-| completed | 7 |
+| completed | 8 |
 
 ## Tasks
 
@@ -152,3 +152,15 @@ All Rights Reserved.
 - Implementation: [docs/todo/xdocs-go-rewrite-implementation.md](docs/todo/xdocs-go-rewrite-implementation.md)
 - Review: [docs/reviews/implementation/xdocs-go-rewrite-review.md](docs/reviews/implementation/xdocs-go-rewrite-review.md)
 - Validation: [docs/validation/xdocs-go-rewrite.md](docs/validation/xdocs-go-rewrite.md)
+
+### 10. Bootstrap Shared Agent Resources On Plain Invocation
+
+- Status: completed
+- Created: `2026-07-26`
+- Updated: `2026-07-26`
+- Outcome: Make a successful argument-free `xdocs` invocation idempotently
+  ensure the global dual-tool XDocs skill and the repository's bounded XDocs
+  agent instructions without scanning or mutating the documentation corpus.
+- Spec: [docs/todo/shared-agent-bootstrap.md](docs/todo/shared-agent-bootstrap.md)
+- Plan: [docs/plans/shared-agent-bootstrap.md](docs/plans/shared-agent-bootstrap.md)
+- Validation: [docs/validation/shared-agent-bootstrap.md](docs/validation/shared-agent-bootstrap.md)
