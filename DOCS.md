@@ -43,6 +43,31 @@ command tree. `internal/config`, `internal/xdocs`, `internal/agent`,
 `internal/update`, `internal/upgrade`, and `internal/release` own focused
 runtime services.
 
+## Plain-invocation bootstrap
+
+A successful invocation with no arguments or flags performs a local,
+filesystem-only agent bootstrap before printing
+`Hello Windows - xdocs v<version>`:
+
+1. preflight the current repository's selected instruction files and reject
+   malformed, duplicated, noncanonical, or out-of-order XDocs markers;
+2. install or refresh the embedded `guiho-s-xdocs` skill atomically in both
+   `~/.agents/skills/guiho-s-xdocs` and
+   `~/.claude/skills/guiho-s-xdocs`;
+3. reconcile the bounded instruction block in both `AGENTS.md` and `CLAUDE.md`
+   when both exist, the existing one when only one exists, or a newly created
+   `AGENTS.md` when neither exists; and
+4. preserve unmanaged bytes, file mode, and the selected file's LF or CRLF
+   convention.
+
+Already-current skill and instruction files are not rewritten. Marker
+preflight occurs before global skill mutation, so malformed repository state
+returns exit category `5` without a partial bootstrap. Help, version,
+developer-help, init, data, explicit agent, upgrade, uninstall, and hidden
+worker commands do not enter this bootstrap path. Bootstrap does not load
+configuration or scan, generate, merge, or otherwise mutate the documentation
+corpus.
+
 ## Configuration
 
 Resolution is explicit, project, then global:
@@ -115,7 +140,10 @@ the owning descriptor subject.
 
 Skill mutations default global and write atomically to both supported tool
 paths. `--local` chooses project scope. Instruction apply/update/remove is
-idempotent and preserves unmanaged content.
+idempotent, preserves unmanaged content and line endings, and refuses malformed
+managed markers. The plain-invocation bootstrap uses the same embedded sources
+and mutation services; explicit agent commands remain available for deliberate
+management.
 
 ### Upgrade and uninstall
 
