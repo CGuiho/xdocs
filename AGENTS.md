@@ -61,10 +61,11 @@ Stop if you can not find it.
 - The xdocs CLI is a structured documentation tool, not a versioning tool. It
   does not bump versions or mutate package manifests.
 - Supported commands: `init`, `scan`, `generate`, `merge`, `tree`, `list`, `meta`, `context`, `doctor`, `agent`, `upgrade`, `uninstall`.
-- `xdocs init` creates `XDOCS.md` and `xdocs.yaml` and, as an explicit
-  first-run setup action, installs the bundled skill for both supported agent
-  tools. After initialization, agent resources change only through explicit
-  `xdocs agent` actions.
+- `xdocs init` creates `XDOCS.md` and `xdocs.yaml` and installs the bundled
+  skill for both supported agent tools. A successful plain invocation also
+  idempotently bootstraps both global skill targets and the current
+  repository's bounded instruction block; other agent-resource changes use
+  explicit `xdocs agent` actions.
 - `xdocs scan` walks the project tree (respecting `[scan].exclude`) and reports named `*.xdocs.md` descriptor coverage plus same-directory Markdown companion-document coverage.
 - `xdocs generate [path]` generates documentation for a specific directory or the entire project.
 - `xdocs merge [path]` merges xdocs descriptors from a directory into a single consolidated document.
@@ -75,7 +76,8 @@ Stop if you can not find it.
 - `xdocs doctor [path]` runs CI-friendly health checks for descriptor validity, companion-document metadata, tree integrity, and documented file existence.
 - `xdocs agent skill install|uninstall|update|list|show`, `agent instruction apply|remove|update|show`, and `agent prompt list|show` implement explicit RFC 0034 agent integration.
 - Skill mutations default global, use `--local` for project scope, and always target both `.agents/skills` and `.claude/skills`.
-- A bare xdocs invocation prints the exact startup banner and data commands never mutate agent files.
+- A bare xdocs invocation bootstraps shared agent resources, then prints the
+  exact startup banner. Data commands never mutate agent files.
 - Cobra owns the single command catalog and routing. Typed Go structs, strict
   YAML/JSON decoding, and explicit validation protect structured boundaries.
 - Every scope supports `-h`/`--help`, `--help-tree`, `--help-tree-depth`, and `--help-docs`. Only root version uses `-v`/`--version`.
@@ -107,7 +109,9 @@ Stop if you can not find it.
 - Metadata fields: `subject`, `description`, `parent`, `children`, `files`, `documents`, `tags`, `keywords`, `flags`, and optional `status`.
 - The tree is a parent-child containment hierarchy, not a dependency graph. Built from `subject`/`parent`/`children` fields.
 - Configuration lives in `xdocs.yaml`. Sections: `extensions`, `ai`, `scan`, and `project`.
-- Agent resource operations are always explicit and are not configuration-driven.
+- Agent resource operations are not configuration-driven. The plain root
+  bootstrap and `init` setup are the only implicit/setup boundaries; other
+  mutations are explicit.
 - AI mode (`ai.mode`): `"prompt"` (default, AI announces updates and waits) or `"auto"` (AI updates docs automatically).
 - Runtime CLI dependencies: Cobra and `go.yaml.in/yaml/v3`.
 
@@ -188,12 +192,14 @@ repository's AGENTS.md GUIHO Project section.
 <!-- BEGIN XDOCS — DO NOT EDIT THIS SECTION -->
 ## XDocs Structured Documentation
 
-This project uses **xdocs** (`@guiho/xdocs`) for structured, machine-readable
-documentation. Load the `guiho-s-xdocs` agent skill before creating,
-updating, scanning, merging, validating, or navigating xdocs descriptors.
+This project uses **xdocs** for structured, machine-readable documentation.
+Load the `guiho-s-xdocs` agent skill when working with structured
+documentation, `XDOCS.md` indexes, named `*.xdocs.md` descriptors,
+companion documents, repository scanning, metadata discovery, or validation.
 
 The project configuration is `xdocs.yaml`. Respect `ai.mode`: `prompt`
 requires confirmation before documentation writes, while `auto` permits
-immediate descriptor maintenance. Use `xdocs meta`, `xdocs context`,
-`xdocs tree`, and `xdocs doctor` to discover and validate documentation.
+immediate descriptor maintenance. Use `xdocs scan`, `xdocs meta`,
+`xdocs context`, `xdocs tree`, and `xdocs doctor` to discover and validate
+documentation.
 <!-- END XDOCS -->
