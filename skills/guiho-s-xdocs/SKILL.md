@@ -161,10 +161,16 @@ Human text intentionally projects the complete catalog into the concise
 Markdown and JSON retain complete tags, timestamps, release/asset metadata, and
 pagination; use a structured format whenever those details are required.
 
-A bare invocation prints the deterministic GUIHO XDocs welcome. The foreground
-reads the cache and awaits only the local lease-and-detached-spawn handoff. The
-remote request remains bounded and detached. A notice is rendered only when a
-stable cached SemVer is newer than the running version.
+A bare invocation first idempotently ensures the embedded skill in both global
+agent locations and the bounded XDocs instruction block in the current
+repository, then prints the deterministic GUIHO XDocs welcome. It updates both
+`AGENTS.md` and `CLAUDE.md` when both exist, whichever exists otherwise, or
+creates `AGENTS.md`. It preserves unmanaged content and line endings, refuses
+malformed managed markers, and does not scan or mutate the documentation
+corpus. The foreground reads the cache and awaits only the local
+lease-and-detached-spawn handoff. The remote request remains bounded and
+detached. A notice is rendered only when a stable cached SemVer is newer than
+the running version.
 
 After any `xdocs upgrade` outcome, preserve the printed recovery block. Its
 installer command is pinned to the resolved full version; its process-stop
@@ -182,7 +188,9 @@ Every scope supports `-h`/`--help`, `--help-tree`,
 
 ## Agent resources
 
-Skill mutations are explicit. They default to global scope and always target:
+The plain argument-free invocation is the shared bootstrap exception. It
+ensures the embedded skill globally at both targets below. Explicit skill
+commands use the same targets by default:
 
 ```text
 ~/.agents/skills/guiho-s-xdocs
@@ -212,7 +220,8 @@ xdocs agent prompt show write
 - Do not edit generated build, bundle, binary, or vendor output manually.
 - Do not invent descriptors for excluded/generated directories.
 - Do not read whole repositories when metadata can select a smaller context.
-- Do not run skill or instruction mutations implicitly.
+- Do not run skill or instruction mutations implicitly outside the documented
+  plain-invocation bootstrap and explicit setup or agent-management actions.
 - Do not treat invalid YAML/frontmatter as a partially usable shape.
 - Do not publish packages, create releases, or apply version bumps unless the
   user explicitly authorizes them.
