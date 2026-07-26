@@ -24,18 +24,25 @@ var promptNames = []string{"write", "update", "agents", "generate"}
 const InstructionTemplate = `## XDocs Structured Documentation
 
 This project uses **xdocs** for structured, machine-readable documentation.
-Load the ` + "`guiho-s-xdocs`" + ` agent skill before creating, updating,
-scanning, merging, validating, or navigating xdocs descriptors.
+Load the ` + "`guiho-s-xdocs`" + ` agent skill when working with structured
+documentation, ` + "`XDOCS.md`" + ` indexes, named ` + "`*.xdocs.md`" + ` descriptors,
+companion documents, repository scanning, metadata discovery, or validation.
 
 The project configuration is ` + "`xdocs.yaml`" + `. Respect ` + "`ai.mode`" + `:
 ` + "`prompt`" + ` requires confirmation before documentation writes, while
-` + "`auto`" + ` permits immediate descriptor maintenance. Use ` + "`xdocs meta`" + `,
-` + "`xdocs context`" + `, ` + "`xdocs tree`" + `, and ` + "`xdocs doctor`" + `
-to discover and validate documentation.
+` + "`auto`" + ` permits immediate descriptor maintenance. Use ` + "`xdocs scan`" + `,
+` + "`xdocs meta`" + `, ` + "`xdocs context`" + `, ` + "`xdocs tree`" + `, and
+` + "`xdocs doctor`" + ` to discover and validate documentation.
 `
 
 type Service struct {
-	resources fs.FS
+	resources     fs.FS
+	homeDirectory string
+}
+
+type BootstrapResult struct {
+	Skills       []InstallResult     `json:"skills"`
+	Instructions []InstructionResult `json:"instructions"`
 }
 
 type SkillRecord struct {
@@ -68,8 +75,12 @@ type Prompt struct {
 	Body        string `json:"-"`
 }
 
-func New(resources fs.FS) *Service {
-	return &Service{resources: resources}
+func New(resources fs.FS, homeDirectory ...string) *Service {
+	service := &Service{resources: resources}
+	if len(homeDirectory) > 0 {
+		service.homeDirectory = homeDirectory[0]
+	}
+	return service
 }
 
 func (s *Service) Skill() ([]byte, error) {
@@ -127,7 +138,7 @@ func (s *Service) Install(scope, cwd string) ([]InstallResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	root, err := scopeRoot(scope, cwd)
+	root, err := s.scopeRoot(scope, cwd)
 	if err != nil {
 		return nil, err
 	}
@@ -184,6 +195,7 @@ type skillStage struct {
 	destinationBackedUp          bool
 	legacyBackedUp               bool
 	installed, committed         bool
+	unchanged                    bool
 }
 
 func prepareSkillStage(tool, scope, destination, legacy string, content []byte) (skillStage, error) {
@@ -191,6 +203,25 @@ func prepareSkillStage(tool, scope, destination, legacy string, content []byte) 
 	parent := filepath.Dir(destination)
 	if err := os.MkdirAll(parent, 0o755); err != nil {
 		return stage, apperror.Wrap(apperror.Mutation, "create skill parent", err)
+	}
+	if _, statErr := os.Stat(destination); statErr == nil {
+		stage.existed = true
+	} else if !os.IsNotExist(statErr) {
+		return stage, apperror.Wrap(apperror.Mutation, "inspect installed skill", statErr)
+	}
+	var err error
+	stage.previous, err = os.ReadFile(filepath.Join(destination, "SKILL.md"))
+	if err != nil && !os.IsNotExist(err) {
+		return stage, apperror.Wrap(apperror.Mutation, "read installed skill", err)
+	}
+	if _, err := os.Stat(legacy); err == nil {
+		stage.legacyExisted = true
+	} else if !os.IsNotExist(err) {
+		return stage, apperror.Wrap(apperror.Mutation, "inspect legacy skill", err)
+	}
+	if stage.existed && string(stage.previous) == string(content) && !stage.legacyExisted {
+		stage.unchanged = true
+		return stage, nil
 	}
 	temp, err := os.MkdirTemp(parent, ".xdocs-skill-new-*")
 	if err != nil {
@@ -200,23 +231,6 @@ func prepareSkillStage(tool, scope, destination, legacy string, content []byte) 
 	if err := os.WriteFile(filepath.Join(temp, "SKILL.md"), content, 0o644); err != nil {
 		os.RemoveAll(temp)
 		return stage, apperror.Wrap(apperror.Mutation, "write staged skill", err)
-	}
-	if _, statErr := os.Stat(destination); statErr == nil {
-		stage.existed = true
-	} else if !os.IsNotExist(statErr) {
-		os.RemoveAll(temp)
-		return stage, apperror.Wrap(apperror.Mutation, "inspect installed skill", statErr)
-	}
-	stage.previous, err = os.ReadFile(filepath.Join(destination, "SKILL.md"))
-	if err != nil && !os.IsNotExist(err) {
-		os.RemoveAll(temp)
-		return stage, apperror.Wrap(apperror.Mutation, "read installed skill", err)
-	}
-	if _, err := os.Stat(legacy); err == nil {
-		stage.legacyExisted = true
-	} else if !os.IsNotExist(err) {
-		os.RemoveAll(temp)
-		return stage, apperror.Wrap(apperror.Mutation, "inspect legacy skill", err)
 	}
 	stage.backup, err = unusedSibling(parent, ".xdocs-skill-backup-*")
 	if err != nil {
@@ -243,6 +257,10 @@ func unusedSibling(parent, pattern string) (string, error) {
 }
 
 func commitSkillStage(stage *skillStage) error {
+	if stage.unchanged {
+		stage.committed = true
+		return nil
+	}
 	if stage.existed {
 		if err := os.Rename(stage.destination, stage.backup); err != nil {
 			return apperror.Wrap(apperror.Mutation, "stage installed skill", err)
@@ -314,7 +332,7 @@ func cleanupSkillStages(stages []skillStage) {
 }
 
 func (s *Service) Uninstall(scope, cwd string) ([]string, error) {
-	root, err := scopeRoot(scope, cwd)
+	root, err := s.scopeRoot(scope, cwd)
 	if err != nil {
 		return nil, err
 	}
@@ -374,14 +392,46 @@ func (s *Service) ShowPrompt(id string) (Prompt, error) {
 }
 
 func ApplyInstructions(cwd string) ([]InstructionResult, error) {
-	return mutateInstructions(cwd, false)
+	stages, err := prepareInstructionStages(cwd, false)
+	if err != nil {
+		return nil, err
+	}
+	return commitInstructionStages(stages)
 }
 
 func RemoveInstructions(cwd string) ([]InstructionResult, error) {
-	return mutateInstructions(cwd, true)
+	stages, err := prepareInstructionStages(cwd, true)
+	if err != nil {
+		return nil, err
+	}
+	return commitInstructionStages(stages)
 }
 
-func mutateInstructions(cwd string, remove bool) ([]InstructionResult, error) {
+func (s *Service) Bootstrap(cwd string) (BootstrapResult, error) {
+	stages, err := prepareInstructionStages(cwd, false)
+	if err != nil {
+		return BootstrapResult{}, err
+	}
+	skills, err := s.Install("global", cwd)
+	if err != nil {
+		return BootstrapResult{}, err
+	}
+	instructions, err := commitInstructionStages(stages)
+	if err != nil {
+		return BootstrapResult{Skills: skills}, err
+	}
+	return BootstrapResult{Skills: skills, Instructions: instructions}, nil
+}
+
+type instructionStage struct {
+	path    string
+	exists  bool
+	changed bool
+	content []byte
+	mode    fs.FileMode
+}
+
+func prepareInstructionStages(cwd string, remove bool) ([]instructionStage, error) {
 	root, err := filepath.Abs(cwd)
 	if err != nil {
 		return nil, apperror.Wrap(apperror.Mutation, "resolve instruction directory", err)
@@ -391,66 +441,75 @@ func mutateInstructions(cwd string, remove bool) ([]InstructionResult, error) {
 	for _, path := range candidates {
 		if _, err := os.Stat(path); err == nil {
 			targets = append(targets, path)
+		} else if !os.IsNotExist(err) {
+			return nil, apperror.Wrap(apperror.Mutation, "inspect instruction file", err)
 		}
 	}
 	if len(targets) == 0 && !remove {
 		targets = []string{candidates[0]}
 	}
-	var results []InstructionResult
+	stages := make([]instructionStage, 0, len(targets))
 	for _, path := range targets {
 		content, err := os.ReadFile(path)
 		exists := err == nil
 		if err != nil && !os.IsNotExist(err) {
 			return nil, apperror.Wrap(apperror.Mutation, "read instruction file", err)
 		}
-		current := string(content)
-		next := reconcileInstruction(current, remove)
-		changed := current != next
-		if changed {
-			if err := atomicWrite(path, []byte(next), 0o644); err != nil {
+		mode := fs.FileMode(0o644)
+		if exists {
+			info, err := os.Stat(path)
+			if err != nil {
+				return nil, apperror.Wrap(apperror.Mutation, "inspect instruction mode", err)
+			}
+			mode = info.Mode().Perm()
+		}
+		next, err := reconcileInstruction(string(content), remove)
+		if err != nil {
+			return nil, apperror.Wrap(apperror.Mutation, fmt.Sprintf("reconcile instruction file %q", path), err)
+		}
+		stages = append(stages, instructionStage{
+			path: path, exists: exists, changed: string(content) != next,
+			content: []byte(next), mode: mode,
+		})
+	}
+	return stages, nil
+}
+
+func commitInstructionStages(stages []instructionStage) ([]InstructionResult, error) {
+	results := make([]InstructionResult, 0, len(stages))
+	for _, stage := range stages {
+		if stage.changed {
+			if err := atomicWrite(stage.path, stage.content, stage.mode); err != nil {
 				return nil, err
 			}
 		}
-		results = append(results, InstructionResult{Path: path, Exists: exists, Changed: changed})
+		results = append(results, InstructionResult{
+			Path: stage.path, Exists: stage.exists, Changed: stage.changed,
+		})
 	}
 	return results, nil
 }
 
-func reconcileInstruction(content string, remove bool) string {
+func reconcileInstruction(content string, remove bool) (string, error) {
 	newline := "\n"
 	if strings.Contains(content, "\r\n") {
 		newline = "\r\n"
 	}
 	template := strings.ReplaceAll(strings.TrimRight(InstructionTemplate, "\r\n"), "\n", newline)
 	canonical := instructionBegin + newline + template + newline + instructionEnd
-	var output strings.Builder
-	cursor := 0
-	inserted := false
-	malformed := false
-	for {
-		relativeStart := strings.Index(content[cursor:], "<!-- BEGIN XDOCS")
-		if relativeStart < 0 {
-			break
-		}
-		start := cursor + relativeStart
-		output.WriteString(content[cursor:start])
-		endRelative := strings.Index(content[start:], instructionEnd)
-		if endRelative < 0 {
-			output.WriteString(content[start:])
-			cursor = len(content)
-			malformed = true
-			break
-		}
-		end := start + endRelative + len(instructionEnd)
-		if !remove && !inserted {
-			output.WriteString(canonical)
-			inserted = true
-		}
-		cursor = end
+	start, end, present, err := instructionBounds(content)
+	if err != nil {
+		return "", err
 	}
-	output.WriteString(content[cursor:])
-	result := output.String()
-	if !remove && !inserted && !malformed {
+	if present {
+		replacement := canonical
+		if remove {
+			replacement = ""
+		}
+		return content[:start] + replacement + content[end:], nil
+	}
+	result := content
+	if !remove {
 		if result != "" && !strings.HasSuffix(result, newline) {
 			result += newline
 		}
@@ -459,12 +518,38 @@ func reconcileInstruction(content string, remove bool) string {
 		}
 		result += canonical + newline
 	}
-	return result
+	return result, nil
 }
 
-func scopeRoot(scope, cwd string) (string, error) {
+func instructionBounds(content string) (int, int, bool, error) {
+	prefixCount := strings.Count(content, "<!-- BEGIN XDOCS")
+	endPrefixCount := strings.Count(content, "<!-- END XDOCS")
+	beginCount := strings.Count(content, instructionBegin)
+	endCount := strings.Count(content, instructionEnd)
+	if prefixCount == 0 && endPrefixCount == 0 {
+		return 0, 0, false, nil
+	}
+	if prefixCount != 1 || endPrefixCount != 1 || beginCount != 1 || endCount != 1 {
+		return 0, 0, false, apperror.New(apperror.Mutation, "malformed XDocs managed instruction markers")
+	}
+	start := strings.Index(content, instructionBegin)
+	endStart := strings.Index(content, instructionEnd)
+	if start < 0 || endStart < start+len(instructionBegin) {
+		return 0, 0, false, apperror.New(apperror.Mutation, "malformed XDocs managed instruction marker order")
+	}
+	return start, endStart + len(instructionEnd), true, nil
+}
+
+func (s *Service) scopeRoot(scope, cwd string) (string, error) {
 	switch scope {
 	case "global":
+		if s.homeDirectory != "" {
+			home, err := filepath.Abs(s.homeDirectory)
+			if err != nil {
+				return "", apperror.Wrap(apperror.Mutation, "resolve configured home directory", err)
+			}
+			return home, nil
+		}
 		home, err := os.UserHomeDir()
 		if err != nil {
 			return "", apperror.Wrap(apperror.Mutation, "resolve home directory", err)
