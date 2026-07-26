@@ -25,10 +25,12 @@ type BuildInfo struct {
 }
 
 type Dependencies struct {
-	In        io.Reader
-	Out       io.Writer
-	Err       io.Writer
-	Resources fs.FS
+	In               io.Reader
+	Out              io.Writer
+	Err              io.Writer
+	Resources        fs.FS
+	WorkingDirectory string
+	HomeDirectory    string
 }
 
 type commonOptions struct {
@@ -63,10 +65,12 @@ func ExitCode(err error) int {
 
 func NewRootCommand(deps Dependencies, info BuildInfo) *cobra.Command {
 	options := &commonOptions{cwd: ".", format: "text"}
-	agents := agent.New(deps.Resources)
+	agents := agent.New(deps.Resources, deps.HomeDirectory)
 	root := &cobra.Command{
-		Use:           "xdocs",
-		Short:         "Structured documentation for codebases and AI agents.",
+		Use:   "xdocs",
+		Short: "Structured documentation for codebases and AI agents.",
+		Long: "Structured documentation for codebases and AI agents. A plain invocation " +
+			"ensures the global XDocs skill and this repository's managed agent instructions before printing the welcome.",
 		Version:       info.Version,
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -90,7 +94,11 @@ func NewRootCommand(deps Dependencies, info BuildInfo) *cobra.Command {
 			if err := validateFormat(options.format); err != nil {
 				return err
 			}
-			absolute, err := filepath.Abs(options.cwd)
+			cwd := options.cwd
+			if cwd == "." && deps.WorkingDirectory != "" {
+				cwd = deps.WorkingDirectory
+			}
+			absolute, err := filepath.Abs(cwd)
 			if err != nil {
 				return apperror.Wrap(apperror.Usage, "resolve --cwd", err)
 			}
@@ -113,6 +121,11 @@ func NewRootCommand(deps Dependencies, info BuildInfo) *cobra.Command {
 			return nil
 		},
 		RunE: func(command *cobra.Command, _ []string) error {
+			if plainRootInvocation(command) {
+				if _, err := agents.Bootstrap(options.cwd); err != nil {
+					return err
+				}
+			}
 			if options.format == "json" {
 				return writeJSON(command, map[string]any{
 					"command": "xdocs", "version": info.Version,
@@ -157,6 +170,10 @@ func NewRootCommand(deps Dependencies, info BuildInfo) *cobra.Command {
 	root.AddCommand(newUpdateWorkerCommand())
 	root.AddCommand(newWindowsReplacementCommand())
 	return root
+}
+
+func plainRootInvocation(command *cobra.Command) bool {
+	return command.Flags().NFlag() == 0 && command.PersistentFlags().NFlag() == 0
 }
 
 func noArgs(_ *cobra.Command, args []string) error {
