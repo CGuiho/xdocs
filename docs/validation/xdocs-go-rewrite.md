@@ -1,16 +1,15 @@
 ---
 name: XDocs Go Rewrite Validation
-purpose: Record reproducible local and remote evidence for the native Go rewrite and xdocs/v0.8.0 release.
+purpose: Record reproducible local and remote evidence for the native Go rewrite, xdocs/v0.9.0 release, and integrated main history.
 description: Validation report for Go tests, cross-builds, metadata, installers, Mirror, exact assets, GitHub publication, and issue closure.
 created: "2026-07-24"
 owner: xdocs-validation
-flags:
-  - release-pending
+flags: []
 tags:
   - validation
   - go
 keywords:
-  - XDocs 0.8.0
+  - XDocs 0.9.0
   - eleven assets
   - Git-only version
 ---
@@ -19,9 +18,10 @@ keywords:
 
 ## Summary
 
-Local implementation and release-candidate validation passed. Remote
-publication, public exact-version installation, and issue closure remain the
-final release gates.
+The native Go implementation and public `xdocs/v0.9.0` release passed. The
+published release line and the later plain-invocation bootstrap line were
+merged non-destructively and the integrated implementation passed refreshed
+local validation on 2026-07-28.
 
 ## Scope
 
@@ -53,9 +53,15 @@ final release gates.
 | Concurrent stale lease and upgrade-lock takeover tests | Passed with exactly one winner |
 | Strict JSON EOF and empty-array compatibility tests | Passed |
 | Agent dual-target rollback/backup preservation tests | Passed |
-| Exact-version changelog extraction | Passed; only `0.8.0` section |
+| Exact-version changelog extraction | Passed for the published release workflow |
 | `mirror config check` | Passed |
-| `mirror version plan 0.8.0 --format json` | Passed with Git-only output and `xdocs/v0.8.0` |
+| Public `xdocs/v0.9.0` release | Passed; stable release with exactly eleven authored assets |
+| Public Windows AMD64 checksum and version | Passed; checksum matched and binary reported `xdocs v0.9.0` |
+| 2026-07-28 integrated `go test -count=1 ./...` | Passed for every package |
+| 2026-07-28 integrated `go vet ./...` | Passed |
+| 2026-07-28 integrated native help/bootstrap smoke | Passed twice without rewriting current resources |
+| 2026-07-28 integrated eight-target build and checksums | Passed; exactly eleven files and ten checksum entries |
+| 2026-07-28 strict metadata/tree/doctor | Passed; 32 valid descriptors, zero errors, zero warnings |
 
 ## Release Candidate
 
@@ -65,7 +71,7 @@ executables plus `guiho-s-xdocs.zip`, `guiho-i-xdocs.md`, and
 
 Exactly eleven files were present. Every payload checksum matched
 `checksums.txt`; the skill ZIP contained `guiho-s-xdocs/SKILL.md`; and the
-Windows AMD64 candidate reported `xdocs v0.8.0`.
+Windows AMD64 candidate reported `xdocs v0.9.0`.
 
 ## Manual Checks
 
@@ -78,17 +84,17 @@ Windows AMD64 candidate reported `xdocs v0.8.0`.
 
 ## Failures Or Blockers
 
-None locally after the independent findings-first review and final hardening
-pass.
+The first integrated Go run was blocked by sandbox access to the default Go
+cache and left upgrade-test lock contention. An isolated rerun with dedicated
+temporary and cache directories passed every package and vet check. A native
+bootstrap smoke accidentally retained the real Windows home because PowerShell
+variables are case-insensitive; the existing resources were current and their
+timestamps remained unchanged across both invocations. No repository or
+production state was changed by that mistake.
 
 ## Pending Remote Checks
 
-- main CI after push;
-- tag publish workflow;
-- exact eleven GitHub Release assets;
-- exact `0.8.0` release description;
-- public Linux and Windows exact-version installation;
-- matching GitHub issue closure.
+- integrated main CI after the normal push.
 
 ## Residual Risks
 
@@ -97,7 +103,8 @@ control. Publication is not complete until the remote checks above pass.
 
 ## Readiness
 
-Ready to commit and publish `xdocs/v0.8.0`.
+Ready to push the integrated main history. Task archival waits for that push,
+CI, and the Mirror patch-plan decision; no new version is authorized here.
 
 ## References
 
