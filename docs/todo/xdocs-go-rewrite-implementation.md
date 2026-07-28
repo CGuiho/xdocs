@@ -52,9 +52,9 @@ Implementation began on 2026-07-24 under the repository-owned
 
 ## Current State
 
-In progress. The published Go release and the completed bootstrap work are on
-separate legitimate histories. Their non-destructive integration, refreshed
-validation, normal push, and remote-main CI remain.
+Testing. Merge commit `a21b02a` preserves the published `xdocs/v0.9.0`
+history and the completed bootstrap history as separate parents. Integrated
+local validation passed; normal push and remote-main CI remain before archival.
 
 ## Verification Evidence
 
@@ -63,7 +63,14 @@ passes and three timing failures in background-worker/download-progress tests;
 the Go suite replaces these timing-sensitive tests with injected clocks,
 launchers, and HTTP clients.
 
+The 2026-07-28 integration reran the complete Go test and vet suites, native
+Windows help and idempotent bootstrap smokes, all eight cross-builds, exact
+eleven-asset and checksum checks, both installer syntax checks, strict XDocs
+metadata, the full tree, and doctor with zero errors and warnings. The public
+0.9.0 Windows binary was independently checksum-verified and reported
+`xdocs v0.9.0`.
+
 ## Handoff
 
-Do not treat this task as complete until implementation review, validation,
-Mirror, push, CI, release assets, and installer acceptance are recorded.
+Do not archive this task until the integrated main push, CI, and Mirror patch
+decision are recorded.
