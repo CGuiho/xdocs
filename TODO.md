@@ -31,8 +31,8 @@ All Rights Reserved.
 | Status | Count |
 | --- | ---: |
 | todo | 1 |
-| in progress | 0 |
-| testing | 1 |
+| in progress | 1 |
+| testing | 0 |
 | stopped | 0 |
 | completed | 8 |
 
@@ -136,9 +136,9 @@ All Rights Reserved.
 
 ### 9. Rewrite XDocs CLI In Go
 
-- Status: testing
+- Status: in progress
 - Created: `2026-07-24`
-- Updated: `2026-07-24`
+- Updated: `2026-07-28`
 - Outcome: Replace the shipping Bun runtime with a complete native Go and
   Cobra CLI, Git-only versioning, safe installers/upgrades, and the exact
   11-artifact GUIHO Go release.

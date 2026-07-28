@@ -45,11 +45,16 @@ Implementation began on 2026-07-24 under the repository-owned
 - Passed all Go tests and vet, strict metadata, warnings-as-errors doctor,
   installer syntax, all eight cross-builds, exact eleven assets, checksums,
   embedded skill ZIP, native version smoke, and the Git-only Mirror plan.
+- Reopened the task on 2026-07-28 to reconcile the published
+  `xdocs/v0.9.0` release line with the independently completed plain-invocation
+  agent-bootstrap commits on local `main`. The integration must preserve both
+  histories and may not rewrite the published tag.
 
 ## Current State
 
-Testing. Local acceptance is complete; remote main CI, tag publication, public
-installer acceptance, GitHub Release equality, and issue closure remain.
+In progress. The published Go release and the completed bootstrap work are on
+separate legitimate histories. Their non-destructive integration, refreshed
+validation, normal push, and remote-main CI remain.
 
 ## Verification Evidence
 
