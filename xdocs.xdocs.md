@@ -23,7 +23,7 @@ files:
   tsconfig.json: Historical TypeScript source settings.
   tsconfig.build.json: Historical TypeScript library-build settings.
 documents:
-  AGENTS.md: Repository rules requiring the GUIHO SWE agent, Go CLI Engineer skill, Go checks, XDocs metadata, and Git-only releases.
+  AGENTS.md: Repository rules requiring the GUIHO SWE agent, Go CLI Engineer skill, Go checks, XDocs metadata, Git-only releases, and bounded XDocs and Mirror instructions.
   ARCHITECTURE.md: Canonical native Go runtime, command, update, upgrade, version, and distribution architecture.
   BRAINSTORM.md: Product and design brainstorming notes for the xdocs structured documentation model and future directions.
   CHANGELOG.md: Exact version-scoped release history.
