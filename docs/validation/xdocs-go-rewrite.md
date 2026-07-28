@@ -110,4 +110,4 @@ CI, and the Mirror patch-plan decision; no new version is authorized here.
 
 - [Implementation review](../reviews/implementation/xdocs-go-rewrite-review.md)
 - [Plan](../plans/xdocs-go-rewrite.md)
-- [Task](../todo/xdocs-go-rewrite.md)
+- [Archived task](../todo/done/xdocs-go-rewrite.md)

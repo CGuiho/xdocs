@@ -3,7 +3,7 @@ name: Rewrite XDocs CLI In Go
 purpose: Define the outcome and completion signals for task 9 in TODO.md.
 description: XDocs ships through a complete Go and Cobra runtime, Git-only versioning, and the standard 11-artifact release.
 created: "2026-07-24"
-owner: xdocs-todo
+owner: xdocs-todo-done
 flags: []
 tags:
   - todo
@@ -57,10 +57,10 @@ agent, update, upgrade, help, configuration, and release behavior.
 
 ## Dependencies And Context
 
-- [Architecture](../architecture/xdocs-go-rewrite.md)
-- [Version decision](../decisions/go-native-cli-and-git-version-tags.md)
-- [Implementation plan](../plans/xdocs-go-rewrite.md)
-- [Plan review](../reviews/plans/xdocs-go-rewrite-review.md)
+- [Architecture](../../architecture/xdocs-go-rewrite.md)
+- [Version decision](../../decisions/go-native-cli-and-git-version-tags.md)
+- [Implementation plan](../../plans/xdocs-go-rewrite.md)
+- [Plan review](../../reviews/plans/xdocs-go-rewrite-review.md)
 - GUIHO Go CLI Engineer `guiho-s-0035-cli-engineer-go`.
 
 ## Watch-outs

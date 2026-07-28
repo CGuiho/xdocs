@@ -3,7 +3,7 @@ name: xdocs-shared-agent-bootstrap-todo
 purpose: Define the shared agent-resource bootstrap performed by a plain xdocs invocation.
 description: Captures the global dual-tool skill, repository instruction, safety, idempotence, testing, documentation, and release boundaries for startup bootstrap.
 created: 2026-07-26
-owner: xdocs-todo
+owner: xdocs-todo-done
 flags:
   - implementation
 tags:
@@ -61,5 +61,5 @@ agent resources needed in any repository before printing the normal welcome.
 - `gofmt`, `go mod tidy`, `go test ./...`, `go vet ./...`, the native build,
   the eight-target release build, checksum verification, and scoped/full XDocs
   checks pass or are reported with exact limitations.
-- [Implementation plan](../plans/shared-agent-bootstrap.md)
-- [Validation](../validation/shared-agent-bootstrap.md)
+- [Implementation plan](../../plans/shared-agent-bootstrap.md)
+- [Validation](../../validation/shared-agent-bootstrap.md)

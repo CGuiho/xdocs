@@ -47,4 +47,4 @@ Cobra construction, and Git-only Mirror configuration.
 
 - [Architecture](../../architecture/xdocs-go-rewrite.md)
 - [Plan](../../plans/xdocs-go-rewrite.md)
-- [Task spec](../../todo/xdocs-go-rewrite.md)
+- [Archived task spec](../../todo/done/xdocs-go-rewrite.md)

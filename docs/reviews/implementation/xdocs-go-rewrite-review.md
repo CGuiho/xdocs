@@ -111,5 +111,5 @@ integrated main CI remains the final archival gate.
 - [Architecture](../../architecture/xdocs-go-rewrite.md)
 - [Decision](../../decisions/go-native-cli-and-git-version-tags.md)
 - [Plan](../../plans/xdocs-go-rewrite.md)
-- [Task](../../todo/xdocs-go-rewrite.md)
+- [Archived task](../../todo/done/xdocs-go-rewrite.md)
 - [Validation](../../validation/xdocs-go-rewrite.md)

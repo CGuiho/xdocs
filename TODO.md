@@ -32,9 +32,9 @@ All Rights Reserved.
 | --- | ---: |
 | todo | 1 |
 | in progress | 0 |
-| testing | 1 |
+| testing | 0 |
 | stopped | 0 |
-| completed | 8 |
+| completed | 7 |
 
 ## Tasks
 
@@ -134,33 +134,9 @@ All Rights Reserved.
 - Release: [@guiho/xdocs@0.7.1](https://github.com/CGuiho/xdocs/releases/tag/%40guiho%2Fxdocs%400.7.1)
 - Evidence: [XDocs acceptance](https://github.com/CGuiho/mirror/issues/16#issuecomment-5061756753)
 
-### 9. Rewrite XDocs CLI In Go
+## Completion Archive
 
-- Status: testing
-- Created: `2026-07-24`
-- Updated: `2026-07-28`
-- Outcome: Replace the shipping Bun runtime with a complete native Go and
-  Cobra CLI, Git-only versioning, safe installers/upgrades, and the exact
-  11-artifact GUIHO Go release.
-- Spec: [docs/todo/xdocs-go-rewrite.md](docs/todo/xdocs-go-rewrite.md)
-- Related files:
-  - [docs/architecture/xdocs-go-rewrite.md](docs/architecture/xdocs-go-rewrite.md) - Accepted Go runtime and release architecture.
-  - [docs/decisions/go-native-cli-and-git-version-tags.md](docs/decisions/go-native-cli-and-git-version-tags.md) - Accepted Git-only version and tag decision.
-  - [docs/plans/xdocs-go-rewrite.md](docs/plans/xdocs-go-rewrite.md) - Approved executable rewrite plan.
-  - [docs/reviews/plans/xdocs-go-rewrite-review.md](docs/reviews/plans/xdocs-go-rewrite-review.md) - Ready-for-execution plan review.
-  - [docs/todo/xdocs-go-rewrite-implementation.md](docs/todo/xdocs-go-rewrite-implementation.md) - Execution and validation record.
-- Implementation: [docs/todo/xdocs-go-rewrite-implementation.md](docs/todo/xdocs-go-rewrite-implementation.md)
-- Review: [docs/reviews/implementation/xdocs-go-rewrite-review.md](docs/reviews/implementation/xdocs-go-rewrite-review.md)
-- Validation: [docs/validation/xdocs-go-rewrite.md](docs/validation/xdocs-go-rewrite.md)
-
-### 10. Bootstrap Shared Agent Resources On Plain Invocation
-
-- Status: completed
-- Created: `2026-07-26`
-- Updated: `2026-07-26`
-- Outcome: Make a successful argument-free `xdocs` invocation idempotently
-  ensure the global dual-tool XDocs skill and the repository's bounded XDocs
-  agent instructions without scanning or mutating the documentation corpus.
-- Spec: [docs/todo/shared-agent-bootstrap.md](docs/todo/shared-agent-bootstrap.md)
-- Plan: [docs/plans/shared-agent-bootstrap.md](docs/plans/shared-agent-bootstrap.md)
-- Validation: [docs/validation/shared-agent-bootstrap.md](docs/validation/shared-agent-bootstrap.md)
+Completed tasks and their task-owned evidence are registered in
+[docs/todo/done/done.md](docs/todo/done/done.md). The Go rewrite and shared
+agent bootstrap were archived there after integrated validation, push, CI, and
+the deferred Mirror patch decision were recorded.

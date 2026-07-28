@@ -3,7 +3,7 @@ name: XDocs Go Rewrite Implementation Notes
 purpose: Preserve execution progress, decisions, deviations, validation, and release handoff for task 9.
 description: Long-running implementation record for the native Go rewrite.
 created: "2026-07-24"
-owner: xdocs-todo
+owner: xdocs-todo-done
 flags: []
 tags:
   - implementation
