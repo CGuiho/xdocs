@@ -48,7 +48,7 @@ bundled skill into both global agent locations, and verify the executable.
 
 ```text
 xdocs
-Hello Windows - xdocs v0.8.1
+Hello Windows - xdocs v0.9.0
 ```
 
 A plain argument-free invocation first ensures the embedded
@@ -82,7 +82,7 @@ extensions:
   supported:
     - .xdocs.md
 ai:
-  mode: prompt
+  mode: auto
 scan:
   exclude:
     - node_modules
@@ -96,6 +96,10 @@ scan:
 project:
   name: example
 ```
+
+`ai.mode` defaults to `auto`. The supported modes are `auto`, which makes
+relevant documentation changes in the same work unit, and `prompt`, which
+announces needed documentation changes and waits for confirmation.
 
 Unknown configuration fields, multiple YAML documents, unsupported descriptor
 extensions, invalid AI modes, and invalid exclusion entries fail explicitly.

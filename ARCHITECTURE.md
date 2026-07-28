@@ -57,7 +57,8 @@ documented catalog.
 
 `go.yaml.in/yaml/v3` decodes exactly one YAML document with unknown fields
 rejected. Typed structs and semantic validation enforce schema 1, named
-`*.xdocs.md` descriptors, `prompt` or `auto` AI mode, and safe exclusion names.
+`*.xdocs.md` descriptors, `auto` AI mode by default with `prompt` as the other
+supported mode, and safe exclusion names.
 
 ## Structured-documentation domain
 

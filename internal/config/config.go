@@ -14,6 +14,8 @@ import (
 
 const Filename = "xdocs.yaml"
 
+const defaultAIMode = "auto"
+
 var (
 	defaultExtensions = []string{".xdocs.md"}
 	defaultExclude    = []string{"node_modules", ".git", "dist", "build", "library", "bin", "bundle", "vendor"}
@@ -62,7 +64,7 @@ func Defaults(cwd string) (Config, error) {
 		Schema:     1,
 		CWD:        absolute,
 		Extensions: append([]string(nil), defaultExtensions...),
-		AIMode:     "prompt",
+		AIMode:     defaultAIMode,
 		Exclude:    append([]string(nil), defaultExclude...),
 		Project:    filepath.Base(absolute),
 	}, nil
@@ -191,7 +193,7 @@ func decode(path string) (Config, error) {
 	if len(supported) != 1 || strings.ToLower(supported[0]) != ".xdocs.md" {
 		return Config{}, apperror.New(apperror.Configuration, `invalid extensions.supported: xdocs supports only named "*.xdocs.md" descriptor files`)
 	}
-	aiMode := "prompt"
+	aiMode := defaultAIMode
 	if raw.AI != nil {
 		aiMode = strings.TrimSpace(raw.AI.Mode)
 	}
@@ -230,7 +232,7 @@ extensions:
   supported:
     - .xdocs.md
 ai:
-  mode: prompt
+  mode: auto
 scan:
   exclude:
     - node_modules

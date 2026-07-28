@@ -112,7 +112,7 @@ Stop if you can not find it.
 - Agent resource operations are not configuration-driven. The plain root
   bootstrap and `init` setup are the only implicit/setup boundaries; other
   mutations are explicit.
-- AI mode (`ai.mode`): `"prompt"` (default, AI announces updates and waits) or `"auto"` (AI updates docs automatically).
+- AI mode (`ai.mode`): `"auto"` (default, AI updates docs automatically) or `"prompt"` (AI announces updates and waits).
 - Runtime CLI dependencies: Cobra and `go.yaml.in/yaml/v3`.
 
 ## Gotchas

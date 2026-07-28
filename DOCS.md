@@ -81,11 +81,15 @@ multiple YAML documents, and then validates:
 
 - `schema` is `1`;
 - the only descriptor extension is `.xdocs.md`;
-- `ai.mode` is `prompt` or `auto`;
+- `ai.mode` defaults to `auto` and accepts only `auto` or `prompt`;
 - exclusions are non-empty directory names;
 - project name is a string.
 
 Global state and update cache live under `~/.guiho/xdocs/`.
+
+In `auto` mode, agents make relevant documentation changes in the same work
+unit. In `prompt` mode, agents announce the needed documentation changes and
+wait for confirmation.
 
 ## Descriptor contract
 
@@ -261,9 +265,9 @@ go mod tidy
 go test ./...
 go vet ./...
 go run ./devops/build-binaries.go \
-  --version 0.8.1 \
+  --version 0.9.0 \
   --commit "$(git rev-parse HEAD)" \
-  --build-date "2026-07-24T00:00:00Z"
+  --build-date "2026-07-26T00:00:00Z"
 ```
 
 Cross-compilation proves buildability, not foreign runtime behavior. Native CI

@@ -40,5 +40,7 @@ version during release preparation. The skill instructs agents to use
 `xdocs context "<query>" --documents --files --format json` before opening broad
 code/documentation, `xdocs meta [path] --documents --format json` before opening
 full Markdown bodies, and `xdocs doctor` before finishing documentation-heavy
-changes. It also instructs agents to use the installed native `xdocs` CLI first,
-reserving Bun source execution for xdocs development checkouts.
+changes. It identifies `auto` as the default `ai.mode` and `prompt` as the
+confirmation-gated alternative. It also instructs agents to use the installed
+native `xdocs` CLI first, reserving Bun source execution for xdocs development
+checkouts.

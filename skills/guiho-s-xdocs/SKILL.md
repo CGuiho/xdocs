@@ -12,9 +12,9 @@ keywords:
   - guiho-s-xdocs
   - xdocs metadata
   - documentation workflow
-version: "0.8.1"
+version: "0.9.0"
 metadata:
-  version: "0.8.1"
+  version: "0.9.0"
 ---
 
 # xdocs Structured Documentation
@@ -39,11 +39,11 @@ xdocs uses YAML only. Resolve it in this order:
 2. project `xdocs.yaml`;
 3. `~/.guiho/xdocs/xdocs.yaml`.
 
-Read `ai.mode` before writing documentation:
+Read `ai.mode` before writing documentation. The default is `auto`:
 
-- `prompt`: announce the descriptors/documents that need updates and wait for
-  confirmation;
 - `auto`: make relevant documentation changes in the same work unit.
+- `prompt`: announce the descriptors/documents that need updates and wait for
+  confirmation.
 
 There are no configuration settings for automatic skill or instruction
 mutation. Data commands never change agent files. `xdocs init` is the setup

@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/CGuiho/xdocs/internal/config"
 	"github.com/CGuiho/xdocs/internal/upgrade"
 )
 
@@ -168,6 +169,20 @@ keywords: [example]
 		if err := json.Unmarshal([]byte(out), &value); err != nil {
 			t.Fatalf("%v did not emit exactly one JSON document: %v\n%s", args, err, out)
 		}
+	}
+}
+
+func TestInitCreatesAutoModeConfiguration(t *testing.T) {
+	root := t.TempDir()
+	if _, _, err := execute(t, "--cwd", root, "init", "--local"); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := config.Load(root, "", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.AIMode != "auto" {
+		t.Fatalf("xdocs init created ai.mode %q, want auto", cfg.AIMode)
 	}
 }
 

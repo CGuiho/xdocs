@@ -17,7 +17,7 @@ func TestLoadUsesExplicitProjectGlobalPrecedence(t *testing.T) {
 		t.Fatal(err)
 	}
 	explicit := filepath.Join(t.TempDir(), Filename)
-	content := strings.Replace(DefaultContent(project), `mode: prompt`, `mode: auto`, 1)
+	content := strings.Replace(DefaultContent(project), `mode: auto`, `mode: prompt`, 1)
 	if err := os.WriteFile(explicit, []byte(content), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -25,8 +25,52 @@ func TestLoadUsesExplicitProjectGlobalPrecedence(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.Path != explicit || cfg.AIMode != "auto" {
+	if cfg.Path != explicit || cfg.AIMode != "prompt" {
 		t.Fatalf("explicit configuration did not win: %#v", cfg)
+	}
+}
+
+func TestAIModeDefaultsToAuto(t *testing.T) {
+	root := t.TempDir()
+
+	defaults, err := Defaults(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if defaults.AIMode != "auto" {
+		t.Fatalf("in-memory default AI mode = %q, want auto", defaults.AIMode)
+	}
+	if !strings.Contains(DefaultContent(root), "ai:\n  mode: auto\n") {
+		t.Fatalf("generated configuration does not use auto mode:\n%s", DefaultContent(root))
+	}
+
+	path := filepath.Join(root, Filename)
+	if err := os.WriteFile(path, []byte("schema: 1\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := Load(root, "", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.AIMode != "auto" {
+		t.Fatalf("omitted ai.mode = %q, want auto", cfg.AIMode)
+	}
+}
+
+func TestAIModeSupportsAutoAndPrompt(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, Filename)
+	for _, mode := range []string{"auto", "prompt"} {
+		if err := os.WriteFile(path, []byte("schema: 1\nai:\n  mode: "+mode+"\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		cfg, err := Load(root, "", true)
+		if err != nil {
+			t.Fatalf("supported ai.mode %q was rejected: %v", mode, err)
+		}
+		if cfg.AIMode != mode {
+			t.Fatalf("loaded ai.mode = %q, want %q", cfg.AIMode, mode)
+		}
 	}
 }
 
