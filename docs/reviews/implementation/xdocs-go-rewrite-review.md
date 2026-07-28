@@ -18,8 +18,9 @@ keywords:
 
 ## Verdict
 
-Accepted for Git commit and tag publication after the resolved findings below
-were revalidated.
+Accepted. The native Go implementation was published as `xdocs/v0.9.0`; the
+subsequent plain-invocation bootstrap history was integrated non-destructively
+and revalidated on 2026-07-28.
 
 ## Findings
 
@@ -95,13 +96,15 @@ Resolved during review:
 
 ## Docs And TODO Check
 
-The task remains in testing until the remote tag workflow, GitHub Release,
-public installer, and issue closure are verified.
+The task remains in testing only until the integrated main push and CI are
+verified. The published release, public assets, and installer workflow have
+already passed.
 
 ## Residual Risk
 
-Remote GitHub Actions and public installer behavior cannot be proven until the
-`xdocs/v0.8.0` tag is pushed.
+Foreign target binaries were cross-built locally and were runtime-smoked by
+the repository's published workflow on their available native runners. The
+integrated main CI remains the final archival gate.
 
 ## References
 
