@@ -104,9 +104,18 @@ descriptorless generation, Git glob edge behavior, and excluded descendants.
 Both final re-reviews reported no findings. The accepted review is recorded in
 `docs/reviews/implementation/ignore-paths-and-frontmatter-review.md`.
 
-## Release Readiness
+## Published Release Verification
 
-The integrated release preparation is ready for `mirror version apply minor
---yes`. Tag-triggered GitHub Actions, the public eleven-asset Release, public
-installer checks, and remote checksum verification remain to be observed after
-the apply step.
+- Mirror applied `0.9.0 -> 0.10.0` and pushed canonical tag
+  `xdocs/v0.10.0`, which dereferences to exact validated release commit
+  `1d353b79b73e23d7aeb73f670c60a2743039d1c6`.
+- GitHub Actions run `30771328125` completed successfully. Its `Publish` and
+  `Verify exact-version public Windows installer` jobs both passed.
+- The stable public GitHub Release contains exactly the expected eleven assets
+  and only the exact 0.10.0 changelog section as its description.
+- The independently downloaded public checksum manifest validated
+  `xdocs-windows-amd64.exe` as
+  `2c2da7c1b58454d5dc8d5054d277b49bd8c7576d98c7b8536936ca9a8c5aab32`.
+  That downloaded binary reported `xdocs v0.10.0`.
+- Public release:
+  `https://github.com/CGuiho/xdocs/releases/tag/xdocs/v0.10.0`.
