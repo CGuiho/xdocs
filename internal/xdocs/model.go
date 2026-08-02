@@ -16,10 +16,11 @@ type Metadata struct {
 type Frontmatter map[string]any
 
 type MarkdownDocument struct {
-	Path         string `json:"-"`
-	RelativePath string `json:"relativePath"`
-	Directory    string `json:"-"`
-	Name         string `json:"name"`
+	Path                string `json:"-"`
+	RelativePath        string `json:"relativePath"`
+	Directory           string `json:"-"`
+	Name                string `json:"name"`
+	FrontmatterRequired bool   `json:"frontmatterRequired"`
 }
 
 type File struct {
@@ -64,14 +65,15 @@ type Filters struct {
 }
 
 type MetaDocument struct {
-	Path         string      `json:"-"`
-	RelativePath string      `json:"path"`
-	Directory    string      `json:"-"`
-	Name         string      `json:"name"`
-	Owner        string      `json:"owner,omitempty"`
-	Valid        bool        `json:"valid"`
-	Frontmatter  Frontmatter `json:"frontmatter,omitempty"`
-	Errors       []string    `json:"errors"`
+	Path                string      `json:"-"`
+	RelativePath        string      `json:"path"`
+	Directory           string      `json:"-"`
+	Name                string      `json:"name"`
+	Owner               string      `json:"owner,omitempty"`
+	FrontmatterRequired bool        `json:"frontmatterRequired"`
+	Valid               bool        `json:"valid"`
+	Frontmatter         Frontmatter `json:"frontmatter,omitempty"`
+	Errors              []string    `json:"errors"`
 }
 
 type MetaDescriptor struct {
