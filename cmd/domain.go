@@ -122,7 +122,11 @@ func newScanCommand(options *commonOptions) *cobra.Command {
 							fmt.Fprintf(out, "    error: %s\n", message)
 						}
 						for _, document := range file.Documents {
-							fmt.Fprintf(out, "    document: %s\n", document.Name)
+							suffix := ""
+							if !document.FrontmatterRequired {
+								suffix = " [frontmatter not required]"
+							}
+							fmt.Fprintf(out, "    document: %s%s\n", document.Name, suffix)
 						}
 					}
 				}
@@ -210,7 +214,10 @@ func newGenerateCommand(options *commonOptions) *cobra.Command {
 			if len(args) == 1 {
 				target = args[0]
 			}
-			content := domain.Generate(cfg, scan, target)
+			content, err := domain.Generate(cfg, scan, target)
+			if err != nil {
+				return err
+			}
 			if output != "" {
 				path := output
 				if !filepath.IsAbs(path) {
@@ -551,6 +558,9 @@ func renderMeta(command *cobra.Command, format string, result domain.MetaResult)
 				if document.Owner != "" {
 					fmt.Fprintf(out, ", owner: `%s`", document.Owner)
 				}
+				if !document.FrontmatterRequired {
+					fmt.Fprint(out, ", frontmatter: not required")
+				}
 				fmt.Fprintln(out)
 			}
 		}
@@ -582,6 +592,9 @@ func renderMeta(command *cobra.Command, format string, result domain.MetaResult)
 				fmt.Fprintf(out, "    document %s", document.Name)
 				if document.Owner != "" {
 					fmt.Fprintf(out, " owner=%s", document.Owner)
+				}
+				if !document.FrontmatterRequired {
+					fmt.Fprint(out, " frontmatter=not-required")
 				}
 				fmt.Fprintln(out)
 			}
@@ -633,14 +646,15 @@ func renderContext(command *cobra.Command, format string, result domain.ContextR
 }
 
 type metaJSONDocument struct {
-	Path         string             `json:"path"`
-	RelativePath string             `json:"relativePath"`
-	Directory    string             `json:"directory"`
-	Name         string             `json:"name"`
-	Owner        *string            `json:"owner"`
-	Valid        bool               `json:"valid"`
-	Frontmatter  domain.Frontmatter `json:"frontmatter"`
-	Errors       []string           `json:"errors"`
+	Path                string             `json:"path"`
+	RelativePath        string             `json:"relativePath"`
+	Directory           string             `json:"directory"`
+	Name                string             `json:"name"`
+	Owner               *string            `json:"owner"`
+	FrontmatterRequired bool               `json:"frontmatterRequired"`
+	Valid               bool               `json:"valid"`
+	Frontmatter         domain.Frontmatter `json:"frontmatter"`
+	Errors              []string           `json:"errors"`
 }
 
 type metaJSONDescriptor struct {
@@ -684,7 +698,8 @@ func metaJSON(result domain.MetaResult) metaJSONResult {
 		for _, document := range descriptor.Documents {
 			item := metaJSONDocument{
 				Path: document.Path, RelativePath: document.RelativePath, Directory: document.Directory,
-				Name: document.Name, Valid: document.Valid, Frontmatter: document.Frontmatter,
+				Name: document.Name, FrontmatterRequired: document.FrontmatterRequired,
+				Valid: document.Valid, Frontmatter: document.Frontmatter,
 				Errors: append([]string{}, document.Errors...),
 			}
 			if document.Owner != "" {
