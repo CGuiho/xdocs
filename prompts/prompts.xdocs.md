@@ -1,6 +1,6 @@
 ---
 subject: xdocs-prompts
-description: Embedded four-prompt catalog and canonical guiho-i-xdocs.md release manifest.
+description: Ignore-aware embedded four-prompt catalog and canonical guiho-i-xdocs.md release manifest.
 parent: xdocs-package
 children: []
 files: {}
@@ -17,6 +17,8 @@ keywords:
   - guiho-i-xdocs
   - embedded prompts
   - prompt catalog
+  - gitignore
+  - frontmatter opt-out
 flags: []
 status: stable
 ---
