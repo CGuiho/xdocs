@@ -31,8 +31,8 @@ All Rights Reserved.
 | Status | Count |
 | --- | ---: |
 | todo | 1 |
-| in progress | 1 |
-| testing | 0 |
+| in progress | 0 |
+| testing | 1 |
 | stopped | 0 |
 | completed | 7 |
 
@@ -136,13 +136,17 @@ All Rights Reserved.
 
 ### 9. Ignore Git Paths And Opt Out Of Frontmatter
 
-- Status: in progress
+- Status: testing
 - Created: `2026-08-02T23:38:54+02:00`
-- Updated: `2026-08-02T23:38:54+02:00`
+- Updated: `2026-08-03T00:41:14+02:00`
 - Outcome: Honor `.gitignore` by default and add strict file/directory rules
   that keep selected Markdown documents tracked without requiring or adding
   YAML frontmatter.
 - Spec: [docs/todo/ignore-paths-and-frontmatter.md](docs/todo/ignore-paths-and-frontmatter.md)
+- Review: [docs/reviews/implementation/ignore-paths-and-frontmatter-review.md](docs/reviews/implementation/ignore-paths-and-frontmatter-review.md)
+- Validation: [docs/validation/ignore-paths-and-frontmatter.md](docs/validation/ignore-paths-and-frontmatter.md)
+- Handoff: locally validated with no remaining review findings; push, CI,
+  versioning, and release remain unauthorized.
 
 ## Completion Archive
 
