@@ -3,7 +3,7 @@ name: xdocs-ignore-paths-and-frontmatter
 purpose: Define Git-aware path exclusion and explicit frontmatter opt-out behavior for xdocs.
 description: Task contract for honoring .gitignore and keeping configured Markdown files visible without requiring YAML frontmatter.
 created: 2026-08-02
-owner: xdocs-todo
+owner: xdocs-todo-done
 flags: []
 tags:
   - todo
@@ -20,10 +20,10 @@ keywords:
 
 ## Status
 
-- State: testing
-- Updated: `2026-08-03T00:58:08+02:00`
-- Executing plan unit: prepare, validate, publish, and independently verify the
-  authorized XDocs 0.10.0 minor release from integrated `main`.
+- State: completed
+- Updated: `2026-08-03T01:04:15+02:00`
+- Executing plan unit: completed the XDocs 0.10.0 minor release, public
+  verification, and completion archive from integrated `main`.
 
 ## Outcome
 
@@ -110,4 +110,11 @@ ignore:
 - Pull request 18 merged the exact reviewed and validated implementation head
   into `main`. Release preparation, full Go/XDocs validation, installer syntax,
   the exact eleven-artifact matrix, checksums, native version, and packaged
-  skill version all pass. Mirror apply and public verification remain.
+  skill version all pass.
+- Mirror published `xdocs/v0.10.0` from exact commit `1d353b7`. GitHub Actions
+  run `30771328125` passed both the publish and public Windows installer jobs.
+- The stable public release contains exactly eleven assets and the exact
+  version-scoped changelog notes. The independently downloaded Windows AMD64
+  asset matched SHA-256
+  `2c2da7c1b58454d5dc8d5054d277b49bd8c7576d98c7b8536936ca9a8c5aab32`
+  and reported `xdocs v0.10.0`.
