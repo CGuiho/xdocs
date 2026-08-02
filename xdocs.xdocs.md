@@ -1,6 +1,6 @@
 ---
 subject: xdocs-package
-description: Native Go XDocs CLI root, release tooling, embedded agent resources, documentation, and historical migration sources.
+description: Native Go XDocs CLI root with Git-aware ignores, release tooling, embedded agent resources, documentation, and historical migration sources.
 parent: null
 children:
   - xdocs-cmd
@@ -17,7 +17,7 @@ files:
   go.mod: Authoritative Go module definition for Cobra and strict YAML dependencies.
   go.sum: Reproducible Go dependency checksums.
   mirror.yaml: Git-only Mirror configuration using canonical xdocs/vX.Y.Z tags.
-  xdocs.yaml: YAML configuration for xdocs documentation workflows in this repository.
+  xdocs.yaml: YAML configuration for xdocs documentation workflows, Git-aware exclusions, and frontmatter opt-outs in this repository.
   package.json: Legacy package metadata retained only as TypeScript migration history; it is not a version source or runtime input.
   jsr.json: Legacy JSR metadata retained only as migration history; it is not a version source or release output.
   tsconfig.json: Historical TypeScript source settings.
