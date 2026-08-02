@@ -6,12 +6,12 @@ children: []
 files:
   root.go: Root command, persistent flags, plain-invocation agent bootstrap routing, startup lifecycle, exit mapping, and hidden worker routes.
   help.go: Command-tree and Markdown help generated from live Cobra definitions.
-  domain.go: Adapters for init, scan, generate, merge, tree, list, meta, context, and doctor.
+  domain.go: Adapters for init, scan, generate, merge, tree, list, meta, context, doctor, and frontmatter-policy output.
   agent.go: Explicit skill, instruction, and prompt commands.
   upgrade.go: Release listing, checking, upgrading, and uninstall command adapters.
   uninstall_unix.go: Unix executable removal behavior.
   uninstall_windows.go: Windows deferred executable removal behavior.
-  root_test.go: Root bootstrap, exclusion, idempotence, marker safety, banner, version, catalog, depth, JSON, upgrade-completion, and recovery contract tests.
+  root_test.go: Root bootstrap, ignore defaults, frontmatter-policy JSON, exclusion, idempotence, marker safety, banner, version, catalog, depth, upgrade-completion, and recovery tests.
   resources_test.go: Deterministic embedded-resource fixtures for command tests.
 documents: {}
 tags:
@@ -22,6 +22,7 @@ keywords:
   - help tree
   - exit codes
   - startup bootstrap
+  - frontmatter policy
 flags: []
 status: stable
 ---
