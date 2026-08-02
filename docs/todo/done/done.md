@@ -10,6 +10,8 @@ tags:
 keywords:
   - XDocs Go rewrite
   - shared agent bootstrap
+  - gitignore
+  - frontmatter opt-out
 ---
 
 # XDocs Completed Tasks
@@ -38,3 +40,18 @@ keywords:
 - Spec: [shared-agent-bootstrap.md](shared-agent-bootstrap.md)
 - Plan: [../../plans/shared-agent-bootstrap.md](../../plans/shared-agent-bootstrap.md)
 - Validation: [../../validation/shared-agent-bootstrap.md](../../validation/shared-agent-bootstrap.md)
+
+## Ignore Git Paths And Opt Out Of Frontmatter
+
+- Status: completed
+- Created: `2026-08-02T23:38:54+02:00`
+- Completed: `2026-08-03T01:04:15+02:00`
+- Outcome: XDocs honors Git-ignored paths by default and keeps explicitly
+  opted-out Markdown files tracked without requiring or adding YAML
+  frontmatter.
+- Spec: [ignore-paths-and-frontmatter.md](ignore-paths-and-frontmatter.md)
+- Review: [../../reviews/implementation/ignore-paths-and-frontmatter-review.md](../../reviews/implementation/ignore-paths-and-frontmatter-review.md)
+- Validation: [../../validation/ignore-paths-and-frontmatter.md](../../validation/ignore-paths-and-frontmatter.md)
+- Pull request: [CGuiho/xdocs#18](https://github.com/CGuiho/xdocs/pull/18)
+- Release: [xdocs/v0.10.0](https://github.com/CGuiho/xdocs/releases/tag/xdocs/v0.10.0)
+- Workflow: [Publish 30771328125](https://github.com/CGuiho/xdocs/actions/runs/30771328125)
