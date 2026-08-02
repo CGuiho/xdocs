@@ -21,7 +21,7 @@ keywords:
 
 ## Verdict
 
-Accepted for local integration. Two independent final reviews reported no
+Accepted for release integration. Two independent final reviews reported no
 remaining findings after the corrections below.
 
 ## Review Scope
@@ -68,6 +68,6 @@ The complete command evidence and release-matrix inventory are recorded in
 
 ## Residual Risk
 
-Remote integration, CI, versioning, tagging, and release behavior remain
-unverified because this task did not authorize publication. No local
-correctness finding remains.
+The exact reviewed head was integrated through pull request 18. Release
+publication evidence is tracked separately in the validation report. No
+implementation correctness finding remains.
