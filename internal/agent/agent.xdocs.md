@@ -1,10 +1,10 @@
 ---
 subject: xdocs-internal-agent
-description: Atomic and idempotent embedded skill, instruction, prompt, and plain-startup bootstrap operations.
+description: Atomic and idempotent embedded skill, ignore-aware instruction, prompt, and plain-startup bootstrap operations.
 parent: xdocs-internal
 children: []
 files:
-  agent.go: Resource validation, no-op-aware dual-tool skill mutation, strict instruction preflight and reconciliation, bootstrap coordination, and prompt reads.
+  agent.go: Resource validation, no-op-aware dual-tool skill mutation, strict ignore-aware instruction reconciliation, bootstrap coordination, and prompt reads.
   agent_test.go: Local/global path, atomicity, no-op idempotence, malformed-marker preflight, and managed-block regression tests.
 documents: {}
 tags:
