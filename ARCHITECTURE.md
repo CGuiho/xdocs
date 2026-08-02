@@ -58,13 +58,17 @@ documented catalog.
 `go.yaml.in/yaml/v3` decodes exactly one YAML document with unknown fields
 rejected. Typed structs and semantic validation enforce schema 1, named
 `*.xdocs.md` descriptors, `auto` AI mode by default with `prompt` as the other
-supported mode, and safe exclusion names.
+supported mode, Git-aware ignores enabled by default, strict file/directory
+frontmatter opt-out rules, and safe exclusion names.
 
 ## Structured-documentation domain
 
 `internal/xdocs` owns descriptor parsing, metadata-only discovery, containment
 trees, minimal reading-context recommendations, health checks, generation,
-merge, and listing. Descriptors use YAML frontmatter and named `*.xdocs.md`
+merge, and listing. A dependency-free path-policy layer loads root and nested
+`.gitignore` rules during traversal, excludes Git-ignored paths, and keeps
+explicit `frontmatter: false` matches discoverable without reading or
+validating their YAML frontmatter. Descriptors use YAML frontmatter and named `*.xdocs.md`
 filenames. Same-directory Markdown companion documents are mapped by the
 descriptor’s `documents` field.
 
