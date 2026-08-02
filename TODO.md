@@ -136,17 +136,17 @@ All Rights Reserved.
 
 ### 9. Ignore Git Paths And Opt Out Of Frontmatter
 
-- Status: testing
+- Status: in progress
 - Created: `2026-08-02T23:38:54+02:00`
-- Updated: `2026-08-03T00:41:14+02:00`
+- Updated: `2026-08-03T00:54:15+02:00`
 - Outcome: Honor `.gitignore` by default and add strict file/directory rules
   that keep selected Markdown documents tracked without requiring or adding
   YAML frontmatter.
 - Spec: [docs/todo/ignore-paths-and-frontmatter.md](docs/todo/ignore-paths-and-frontmatter.md)
 - Review: [docs/reviews/implementation/ignore-paths-and-frontmatter-review.md](docs/reviews/implementation/ignore-paths-and-frontmatter-review.md)
 - Validation: [docs/validation/ignore-paths-and-frontmatter.md](docs/validation/ignore-paths-and-frontmatter.md)
-- Handoff: locally validated with no remaining review findings; push, CI,
-  versioning, and release remain unauthorized.
+- Handoff: PR 18 merged the reviewed implementation into `main`; XDocs 0.10.0
+  minor release preparation and final validation are in progress.
 
 ## Completion Archive
 
