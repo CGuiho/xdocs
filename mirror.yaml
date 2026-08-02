@@ -14,5 +14,5 @@ git:
   push: true
   allow_dirty: false
 agents:
-  write_changelog: false
+  write_changelog: true
   changelog_path: CHANGELOG.md
