@@ -16,6 +16,17 @@ keywords:
 
 # GUIHO XDocs Changelog
 
+## 0.10.0 - 2026-08-03
+
+- Honor root and nested `.gitignore` rules by default across discovery,
+  metadata, context, doctor, coverage, and generated directory listings.
+- Add strict `xdocs.yaml` file and directory ignore rules that keep selected
+  Markdown documents referenced and searchable without requiring, parsing, or
+  adding YAML frontmatter.
+- Default AGENTS.md, README.md, and CLAUDE.md to frontmatter opt-out behavior,
+  and align CLI output, embedded prompts, agent guidance, documentation, and
+  regression coverage with the new contract.
+
 ## 0.9.0 - 2026-07-26
 
 - Make `auto` the default `ai.mode` for omitted configuration, in-memory
