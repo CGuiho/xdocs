@@ -20,8 +20,8 @@ keywords:
 
 ## Status
 
-- State: in progress
-- Updated: `2026-08-02T23:38:54+02:00`
+- State: testing
+- Updated: `2026-08-03T00:41:14+02:00`
 - Executing plan unit: implement the configuration, matcher, discovery policy,
   validation, agent guidance, and user documentation as one compatible feature.
 
@@ -60,15 +60,16 @@ ignore:
   and context. xdocs does not require, parse, validate, generate, or recommend
   YAML frontmatter for them.
 - A directory rule applies to every descendant Markdown document.
-- The three agent/public entry files above are the default rules. An explicit
-  empty `ignore.rules: []` disables those presets.
+- The three agent/public entry files above are the default rules. Any explicit
+  rules list replaces those presets; an empty `ignore.rules: []` disables them
+  without adding replacements.
 - Existing `scan.exclude` remains supported for name-only directory exclusions.
 
 ## Acceptance Criteria
 
 1. Strict YAML decoding accepts the new section and rejects unknown fields,
-   invalid kinds, empty or absolute patterns, and any rule that does not
-   explicitly set `frontmatter: false`.
+   invalid kinds, empty, absolute, or malformed patterns, and any rule that
+   does not explicitly set `frontmatter: false`.
 2. Defaults, omitted configuration, and `xdocs init` all enable `.gitignore`
    handling and the three preset rules.
 3. Root and nested `.gitignore` patterns, negation, directory patterns, and
@@ -98,3 +99,14 @@ ignore:
 - No release, tag, or Mirror version apply is authorized by this task. The
   compatible feature implies a future minor version, deferred until explicit
   release authorization.
+
+## Validation And Handoff
+
+- All implementation, documentation, native smoke, exact eleven-artifact
+  release-matrix, checksum, and XDocs health checks pass.
+- Two independent final reviews report no remaining findings after their
+  findings were corrected with regressions.
+- Review: `docs/reviews/implementation/ignore-paths-and-frontmatter-review.md`.
+- Validation: `docs/validation/ignore-paths-and-frontmatter.md`.
+- The task remains in `testing` rather than the completion archive because push,
+  CI, versioning, and release were not authorized.
