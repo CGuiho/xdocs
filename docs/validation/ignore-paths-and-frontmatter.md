@@ -24,9 +24,12 @@ keywords:
 - Checkout: `C:\GUIHO\xdocs`.
 - `git fetch --prune origin` and `git pull --ff-only origin main` completed
   before planning; the remote baseline was `origin/main` at `6f6e8e3`.
-- Work is isolated on `codex/xdocs-ignore` above three local planning commits.
-- `mirror.yaml` sets `agents.write_changelog: false`; no changelog was edited.
-- No push, version apply, tag, GitHub release, or publication was authorized.
+- Pull request 18 integrated reviewed head `4ee1f02` into `main` through merge
+  commit `aa8c055`; the release-preparation commits build on that merge.
+- `mirror.yaml` now enables changelog maintenance because the tag workflow
+  requires an exact-version section for GitHub Release notes.
+- The developer authorized a minor version apply, tag push, and public GitHub
+  Release. Mirror planned `0.9.0 -> 0.10.0` and tag `xdocs/v0.10.0`.
 
 ## Functional Coverage
 
@@ -52,9 +55,11 @@ Automated tests verify:
 | --- | --- |
 | `gofmt -w main.go cmd internal devops` | passed |
 | `go mod tidy` plus `git diff --exit-code -- go.mod go.sum` | passed; module files unchanged |
-| sequential `go test -p 1 ./...` | passed for every package |
+| sequential `go test -count=1 -p 1 ./...` | passed for every package |
 | `go vet ./...` | passed |
 | `CGO_ENABLED=0 go build -trimpath -o bin/xdocs.exe .` | passed |
+| PowerShell installer parse | passed |
+| Git Bash `bash -n devops/install.sh` | passed |
 | `git diff --check` | passed |
 
 The shared Windows Go module-cache stat writer emitted non-fatal access-denied
@@ -76,8 +81,9 @@ The newly built Windows AMD64 binary produced:
 
 ## Release-Matrix Verification
 
-The pure-Go release builder ran with version `0.9.0`, commit metadata
-`193c4ed`, and build date `2026-08-02T22:06:00Z`. It produced exactly:
+The pure-Go release builder ran with version `0.10.0`, commit metadata
+`702dfb041ef8487144be3679b73cd655ee7c3b16`, and build date
+`2026-08-03T00:55:46+02:00`. It produced exactly:
 
 - eight native binaries for Linux AMD64/ARM64/ARMv7/ARMv6, Darwin AMD64/ARM64,
   and Windows AMD64/ARM64;
@@ -86,7 +92,9 @@ The pure-Go release builder ran with version `0.9.0`, commit metadata
 - `checksums.txt`.
 
 The directory contained exactly eleven artifacts. All ten manifest entries
-were independently recomputed with SHA-256 and matched.
+were independently recomputed with SHA-256 and matched. The native Windows
+AMD64 binary reported `xdocs v0.10.0`, and both packaged skill version fields
+reported `0.10.0`.
 
 ## Review Evidence
 
@@ -96,8 +104,9 @@ descriptorless generation, Git glob edge behavior, and excluded descendants.
 Both final re-reviews reported no findings. The accepted review is recorded in
 `docs/reviews/implementation/ignore-paths-and-frontmatter-review.md`.
 
-## Readiness And Deferred Work
+## Release Readiness
 
-The feature is locally validated and ready to push for CI review. Remote
-integration, a future minor-version decision, tagging, and release remain
-deferred until explicitly authorized.
+The integrated release preparation is ready for `mirror version apply minor
+--yes`. Tag-triggered GitHub Actions, the public eleven-asset Release, public
+installer checks, and remote checksum verification remain to be observed after
+the apply step.
