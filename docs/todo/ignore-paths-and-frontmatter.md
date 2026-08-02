@@ -20,8 +20,8 @@ keywords:
 
 ## Status
 
-- State: in progress
-- Updated: `2026-08-03T00:54:15+02:00`
+- State: testing
+- Updated: `2026-08-03T00:58:08+02:00`
 - Executing plan unit: prepare, validate, publish, and independently verify the
   authorized XDocs 0.10.0 minor release from integrated `main`.
 
@@ -108,4 +108,6 @@ ignore:
 - Review: `docs/reviews/implementation/ignore-paths-and-frontmatter-review.md`.
 - Validation: `docs/validation/ignore-paths-and-frontmatter.md`.
 - Pull request 18 merged the exact reviewed and validated implementation head
-  into `main`. Release preparation and final 0.10.0 validation are in progress.
+  into `main`. Release preparation, full Go/XDocs validation, installer syntax,
+  the exact eleven-artifact matrix, checksums, native version, and packaged
+  skill version all pass. Mirror apply and public verification remain.
