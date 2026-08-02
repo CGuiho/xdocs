@@ -20,10 +20,10 @@ keywords:
 
 ## Status
 
-- State: testing
-- Updated: `2026-08-03T00:41:14+02:00`
-- Executing plan unit: implement the configuration, matcher, discovery policy,
-  validation, agent guidance, and user documentation as one compatible feature.
+- State: in progress
+- Updated: `2026-08-03T00:54:15+02:00`
+- Executing plan unit: prepare, validate, publish, and independently verify the
+  authorized XDocs 0.10.0 minor release from integrated `main`.
 
 ## Outcome
 
@@ -96,9 +96,8 @@ ignore:
 - A separate plan document is unnecessary: the change is one Go CLI plan unit
   contained by `internal/config`, `internal/xdocs`, tests, embedded guidance,
   and canonical documentation.
-- No release, tag, or Mirror version apply is authorized by this task. The
-  compatible feature implies a future minor version, deferred until explicit
-  release authorization.
+- The developer authorized the minor bump and public release on 2026-08-03.
+  Mirror planned `0.9.0 -> 0.10.0` with canonical tag `xdocs/v0.10.0`.
 
 ## Validation And Handoff
 
@@ -108,5 +107,5 @@ ignore:
   findings were corrected with regressions.
 - Review: `docs/reviews/implementation/ignore-paths-and-frontmatter-review.md`.
 - Validation: `docs/validation/ignore-paths-and-frontmatter.md`.
-- The task remains in `testing` rather than the completion archive because push,
-  CI, versioning, and release were not authorized.
+- Pull request 18 merged the exact reviewed and validated implementation head
+  into `main`. Release preparation and final 0.10.0 validation are in progress.
