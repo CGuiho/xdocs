@@ -4,6 +4,18 @@ extensions:
     - .xdocs.md
 ai:
   mode: auto
+ignore:
+  gitignore: true
+  rules:
+    - pattern: AGENTS.md
+      kind: file
+      frontmatter: false
+    - pattern: README.md
+      kind: file
+      frontmatter: false
+    - pattern: CLAUDE.md
+      kind: file
+      frontmatter: false
 scan:
   exclude:
     - node_modules
