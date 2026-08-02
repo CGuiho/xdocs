@@ -184,6 +184,79 @@ func TestInitCreatesAutoModeConfiguration(t *testing.T) {
 	if cfg.AIMode != "auto" {
 		t.Fatalf("xdocs init created ai.mode %q, want auto", cfg.AIMode)
 	}
+	if !cfg.Gitignore || len(cfg.IgnoreRules) != 3 {
+		t.Fatalf("xdocs init created incomplete ignore defaults: %#v", cfg)
+	}
+}
+
+func TestMetaReportsTrackedDocumentWithoutRequiredFrontmatter(t *testing.T) {
+	root := t.TempDir()
+	descriptor := `---
+subject: example
+description: Example module.
+parent: null
+children: []
+files: {}
+documents:
+  ignored.md: Git-ignored guide.
+  README.md: Public overview.
+tags: []
+keywords: []
+flags: []
+---
+`
+	if err := os.WriteFile(filepath.Join(root, "example.xdocs.md"), []byte(descriptor), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "README.md"), []byte("# Public overview\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "ignored.md"), []byte("# Ignored\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte("ignored.md\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, config.Filename), []byte(config.DefaultContent(root)), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, _, err := execute(t, "--cwd", root, "--format", "json", "meta", "--documents", "--strict")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var result struct {
+		Descriptors []struct {
+			Frontmatter map[string]any `json:"frontmatter"`
+			Metadata    struct {
+				Documents map[string]string `json:"documents"`
+			} `json:"metadata"`
+			Documents []struct {
+				Name                string `json:"name"`
+				FrontmatterRequired bool   `json:"frontmatterRequired"`
+				Valid               bool   `json:"valid"`
+			} `json:"documents"`
+		} `json:"descriptors"`
+	}
+	if err := json.Unmarshal([]byte(out), &result); err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Descriptors) != 1 || len(result.Descriptors[0].Documents) != 1 {
+		t.Fatalf("unexpected metadata result: %#v", result)
+	}
+	document := result.Descriptors[0].Documents[0]
+	if document.Name != "README.md" || document.FrontmatterRequired || !document.Valid {
+		t.Fatalf("frontmatter opt-out was not exposed in JSON: %#v", document)
+	}
+	if _, exists := result.Descriptors[0].Metadata.Documents["ignored.md"]; exists {
+		t.Fatalf("ignored document leaked through typed JSON metadata: %#v", result.Descriptors[0].Metadata.Documents)
+	}
+	rawDocuments, ok := result.Descriptors[0].Frontmatter["documents"].(map[string]any)
+	if !ok {
+		t.Fatalf("raw JSON frontmatter documents have an unexpected shape: %#v", result.Descriptors[0].Frontmatter)
+	}
+	if _, exists := rawDocuments["ignored.md"]; exists {
+		t.Fatalf("ignored document leaked through raw JSON frontmatter: %#v", rawDocuments)
+	}
 }
 
 func TestContextRejectsNonPositiveLimit(t *testing.T) {
