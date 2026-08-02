@@ -83,6 +83,18 @@ extensions:
     - .xdocs.md
 ai:
   mode: auto
+ignore:
+  gitignore: true
+  rules:
+    - pattern: AGENTS.md
+      kind: file
+      frontmatter: false
+    - pattern: README.md
+      kind: file
+      frontmatter: false
+    - pattern: CLAUDE.md
+      kind: file
+      frontmatter: false
 scan:
   exclude:
     - node_modules
@@ -101,8 +113,34 @@ project:
 relevant documentation changes in the same work unit, and `prompt`, which
 announces needed documentation changes and waits for confirmation.
 
+`ignore.gitignore` defaults to `true`, so Git-ignored files and directories do
+not enter xdocs discovery, metadata, context, or health checks. Each strict
+`ignore.rules` object has a repository-relative `pattern`, a `kind` of `file`
+or `directory`, and `frontmatter: false`. These matches remain discoverable and
+must still be listed in descriptor metadata, but xdocs never requires or
+recommends YAML frontmatter for them. A pattern without `/` matches that name
+at any depth, and a directory rule applies to all descendants and may end in
+`/`. Malformed globs fail configuration loading. Any explicit rules list
+replaces the three presets; use `ignore.rules: []` to remove them without
+adding replacements.
+
+For example, these rules keep `cloud.md` and every Markdown file under
+`docs/legacy` tracked without xdocs-owned frontmatter:
+
+```yaml
+ignore:
+  rules:
+    - pattern: cloud.md
+      kind: file
+      frontmatter: false
+    - pattern: docs/legacy
+      kind: directory
+      frontmatter: false
+```
+
 Unknown configuration fields, multiple YAML documents, unsupported descriptor
-extensions, invalid AI modes, and invalid exclusion entries fail explicitly.
+extensions, invalid AI modes, malformed ignore rules, and invalid exclusion
+entries fail explicitly.
 
 ## Descriptor model
 
@@ -126,7 +164,8 @@ flags: []
 ---
 ```
 
-Plain sibling Markdown files must be declared in `documents` and have
+Every non-excluded plain sibling Markdown file must be declared in `documents`.
+Unless a matching ignore rule sets `frontmatter: false`, it must have
 frontmatter containing `name`, `purpose`, `description`, `created`, `owner`,
 `flags`, `tags`, and `keywords`.
 
