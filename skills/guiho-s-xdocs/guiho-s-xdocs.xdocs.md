@@ -13,6 +13,8 @@ tags:
 keywords:
   - xdocs skill
   - companion metadata
+  - gitignore
+  - frontmatter opt-out
   - metadata-only scan
   - context recommendations
   - doctor checks
@@ -32,9 +34,11 @@ package. The installer treats `SKILL.md` as the source of truth and refreshes
 installed copies when the bundled version or content changes.
 The skill describes ordinary Citty-generated help and contextual usage errors,
 while retaining extended `--help-tree` and `--help-docs` workflows.
-The skill also documents the standard frontmatter fields expected on ordinary
-companion Markdown documents: `name`, `purpose`, `description`, `created`,
-`flags`, `tags`, `keywords`, and `owner`. It includes both the legacy top-level
+The skill also documents Git-aware exclusions and strict file/directory rules
+that keep selected companion documents tracked without frontmatter. For other
+ordinary companion Markdown documents it requires `name`, `purpose`,
+`description`, `created`, `flags`, `tags`, `keywords`, and `owner`. It includes
+both the legacy top-level
 `version` and `metadata.version`, which must stay aligned with the package
 version during release preparation. The skill instructs agents to use
 `xdocs context "<query>" --documents --files --format json` before opening broad
