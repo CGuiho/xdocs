@@ -45,6 +45,18 @@ Read `ai.mode` before writing documentation. The default is `auto`:
 - `prompt`: announce the descriptors/documents that need updates and wait for
   confirmation.
 
+Read `ignore` before scanning or editing documentation:
+
+- `ignore.gitignore` defaults to `true`; do not enter or document paths matched
+  by root or nested `.gitignore` files.
+- `ignore.rules` contains strict `pattern`, `kind`, and `frontmatter` fields.
+  A `file` or `directory` match with `frontmatter: false` remains a tracked
+  companion document, but never add, rewrite, require, or recommend YAML
+  frontmatter for it.
+- The default frontmatter opt-outs are `AGENTS.md`, `README.md`, and
+  `CLAUDE.md` at any depth. Any explicit rules list replaces the presets; an
+  empty list removes them without adding replacements.
+
 There are no configuration settings for automatic skill or instruction
 mutation. Data commands never change agent files. `xdocs init` is the setup
 exception: it installs or refreshes the skill globally by default; pass
@@ -80,8 +92,9 @@ status: stable
 The tree represents containment, not dependencies. `parent` and `children`
 must agree.
 
-Same-directory ordinary Markdown files are companion documents. List them in
-the descriptor `documents` map and give them frontmatter:
+Same-directory ordinary Markdown files are companion documents. List every
+non-excluded document in the descriptor `documents` map. Give it frontmatter
+unless a matching ignore rule sets `frontmatter: false`:
 
 ```yaml
 ---
@@ -93,7 +106,7 @@ keywords: []
 
 ## Workflow
 
-1. Read `xdocs.yaml` and its `ai.mode`.
+1. Read `xdocs.yaml`, its `ai.mode`, and its complete `ignore` policy.
 2. Use metadata-first discovery:
 
    ```bash
@@ -104,7 +117,8 @@ keywords: []
 3. Read only the recommended descriptors, implementation files, and companion
    documents.
 4. Make the implementation/documentation change.
-5. Update the owning descriptor:
+5. Update the owning descriptor without touching Git-ignored paths or adding
+   frontmatter to opted-out documents:
    - add/remove/rename `files` entries;
    - add/remove/rename `documents` entries;
    - keep parent/children links synchronized;
@@ -219,6 +233,10 @@ xdocs agent prompt show write
 
 - Do not edit generated build, bundle, binary, or vendor output manually.
 - Do not invent descriptors for excluded/generated directories.
+- Do not read, list, or validate Git-ignored paths when
+  `ignore.gitignore: true`.
+- Keep `frontmatter: false` documents listed and trackable, but never add,
+  rewrite, require, or recommend YAML frontmatter for them.
 - Do not read whole repositories when metadata can select a smaller context.
 - Do not run skill or instruction mutations implicitly outside the documented
   plain-invocation bootstrap and explicit setup or agent-management actions.
@@ -229,8 +247,10 @@ xdocs agent prompt show write
 ## Completion gate
 
 - configuration and `ai.mode` were respected;
+- `.gitignore` and explicit ignore/frontmatter rules were respected;
 - every changed module has accurate descriptor metadata;
-- companion documents are listed and owned;
+- companion documents are listed; required frontmatter is owned and opted-out
+  documents were left untouched;
 - tree links are consistent;
 - strict metadata and doctor checks pass for the touched scope;
 - all documentation references use `xdocs.yaml` and the singular `agent`
