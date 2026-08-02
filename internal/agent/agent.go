@@ -30,7 +30,10 @@ companion documents, repository scanning, metadata discovery, or validation.
 
 The project configuration is ` + "`xdocs.yaml`" + `. Respect ` + "`ai.mode`" + `:
 ` + "`prompt`" + ` requires confirmation before documentation writes, while
-` + "`auto`" + ` permits immediate descriptor maintenance. Use ` + "`xdocs scan`" + `,
+` + "`auto`" + ` permits immediate descriptor maintenance. Also respect
+` + "`ignore.gitignore`" + ` and every ` + "`ignore.rules`" + ` entry: excluded paths are
+outside the xdocs corpus, while ` + "`frontmatter: false`" + ` keeps matching documents
+tracked without adding or requiring YAML frontmatter. Use ` + "`xdocs scan`" + `,
 ` + "`xdocs meta`" + `, ` + "`xdocs context`" + `, ` + "`xdocs tree`" + `, and
 ` + "`xdocs doctor`" + ` to discover and validate documentation.
 `

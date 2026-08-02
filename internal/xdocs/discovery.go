@@ -23,8 +23,12 @@ func ScanProject(cfg config.Config) (ScanResult, error) {
 	}
 	documentsByDirectory := map[string][]MarkdownDocument{}
 	var directories []string
+	policy, err := newPathPolicy(cfg, cfg.CWD)
+	if err != nil {
+		return ScanResult{}, err
+	}
 
-	err := filepath.WalkDir(cfg.CWD, func(path string, entry os.DirEntry, walkErr error) error {
+	err = filepath.WalkDir(cfg.CWD, func(path string, entry os.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			if entry != nil && entry.IsDir() {
 				return filepath.SkipDir
@@ -32,22 +36,31 @@ func ScanProject(cfg config.Config) (ScanResult, error) {
 			return nil
 		}
 		if entry.IsDir() {
-			if path != cfg.CWD && excluded(entry.Name(), cfg.Exclude) {
+			if path != cfg.CWD && (excluded(entry.Name(), cfg.Exclude) || policy.ignored(path, true)) {
 				return filepath.SkipDir
 			}
+			if err := policy.loadGitignore(path); err != nil {
+				return err
+			}
 			directories = append(directories, path)
+			return nil
+		}
+		if policy.ignored(path, false) {
 			return nil
 		}
 		result.TotalFiles++
 		switch {
 		case IsDescriptor(path):
-			result.XDocsFiles = append(result.XDocsFiles, ParseFile(path, cfg.CWD))
+			file := ParseFile(path, cfg.CWD)
+			filterMetadata(file.Metadata, nil, file.Directory, policy)
+			result.XDocsFiles = append(result.XDocsFiles, file)
 		case IsPlainMarkdown(path):
 			document := MarkdownDocument{
-				Path:         path,
-				RelativePath: slashRelative(cfg.CWD, path),
-				Directory:    filepath.Dir(path),
-				Name:         filepath.Base(path),
+				Path:                path,
+				RelativePath:        slashRelative(cfg.CWD, path),
+				Directory:           filepath.Dir(path),
+				Name:                filepath.Base(path),
+				FrontmatterRequired: policy.frontmatterRequired(path),
 			}
 			result.MarkdownDocuments = append(result.MarkdownDocuments, document)
 			documentsByDirectory[document.Directory] = append(documentsByDirectory[document.Directory], document)
@@ -59,7 +72,7 @@ func ScanProject(cfg config.Config) (ScanResult, error) {
 	}
 
 	rootPath := filepath.Join(cfg.CWD, rootFilename)
-	if content, readErr := os.ReadFile(rootPath); readErr == nil {
+	if content, readErr := os.ReadFile(rootPath); readErr == nil && !policy.ignored(rootPath, false) {
 		result.XDocsFiles = append(result.XDocsFiles, File{
 			Path: rootPath, RelativePath: rootFilename, Directory: cfg.CWD,
 			Documents: []MarkdownDocument{}, Body: string(content), Valid: false, Errors: []string{},
@@ -72,7 +85,7 @@ func ScanProject(cfg config.Config) (ScanResult, error) {
 	enrichFiles(result.XDocsFiles, documentsByDirectory)
 
 	covered := map[string]bool{}
-	if info, err := os.Stat(rootPath); err == nil && info.Mode().IsRegular() {
+	if info, err := os.Stat(rootPath); err == nil && info.Mode().IsRegular() && !policy.ignored(rootPath, false) {
 		covered[cfg.CWD] = true
 	}
 	for _, file := range result.XDocsFiles {

@@ -37,7 +37,14 @@ func ScanMetadata(cfg config.Config, options MetaOptions) (MetaResult, error) {
 		Descriptors:      []MetaDescriptor{},
 		Errors:           []string{},
 	}
+	if scanExcludedPath(cfg.CWD, target, cfg.Exclude) {
+		return result, nil
+	}
 	documents := map[string][]MarkdownDocument{}
+	policy, err := newPathPolicy(cfg, target)
+	if err != nil {
+		return MetaResult{}, err
+	}
 	err = filepath.WalkDir(target, func(path string, entry os.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			if entry != nil && entry.IsDir() {
@@ -46,15 +53,26 @@ func ScanMetadata(cfg config.Config, options MetaOptions) (MetaResult, error) {
 			return nil
 		}
 		if entry.IsDir() {
-			if path != target && excluded(entry.Name(), cfg.Exclude) {
+			if (path != cfg.CWD && excluded(entry.Name(), cfg.Exclude)) || (path != cfg.CWD && policy.ignored(path, true)) {
 				return filepath.SkipDir
+			}
+			if err := policy.loadGitignore(path); err != nil {
+				return err
 			}
 			return nil
 		}
+		if policy.ignored(path, false) {
+			return nil
+		}
 		if IsDescriptor(path) {
-			result.Descriptors = append(result.Descriptors, parseMetaDescriptor(path, cfg.CWD))
+			descriptor := parseMetaDescriptor(path, cfg.CWD)
+			filterMetadata(descriptor.Metadata, descriptor.Frontmatter, descriptor.Directory, policy)
+			result.Descriptors = append(result.Descriptors, descriptor)
 		} else if IsPlainMarkdown(path) {
-			document := MarkdownDocument{Path: path, RelativePath: slashRelative(cfg.CWD, path), Directory: filepath.Dir(path), Name: filepath.Base(path)}
+			document := MarkdownDocument{
+				Path: path, RelativePath: slashRelative(cfg.CWD, path), Directory: filepath.Dir(path),
+				Name: filepath.Base(path), FrontmatterRequired: policy.frontmatterRequired(path),
+			}
 			documents[document.Directory] = append(documents[document.Directory], document)
 		}
 		return nil
@@ -144,7 +162,7 @@ func enrichMeta(descriptors []MetaDescriptor, documents map[string][]MarkdownDoc
 				continue
 			}
 			if includeDocuments {
-				descriptor.Documents = append(descriptor.Documents, parseDocument(document.Path, root, descriptor.Metadata.Subject))
+				descriptor.Documents = append(descriptor.Documents, parseDocument(document.Path, root, descriptor.Metadata.Subject, document.FrontmatterRequired))
 			}
 		}
 		sort.Slice(descriptor.Documents, func(i, j int) bool {

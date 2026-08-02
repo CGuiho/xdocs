@@ -20,10 +20,12 @@ You are an AI assistant tasked with writing xdocs documentation for a directory/
 
 ## Instructions
 
-1. Scan the target directory and all its subdirectories.
-2. Read every source file to understand what it does.
-3. Identify the purpose of this module/directory.
-4. Create a named xdocs descriptor with YAML frontmatter containing:
+1. Read `xdocs.yaml`, including `ignore.gitignore` and `ignore.rules`.
+2. Scan the target directory and all its subdirectories without entering paths
+   excluded by `.gitignore` when enabled.
+3. Read every non-excluded source file needed to understand what it does.
+4. Identify the purpose of this module/directory.
+5. Create a named xdocs descriptor with YAML frontmatter containing:
    - subject: A short identifier for this module
    - description: A concise description of what this module does
    - parent: The parent module's subject (or null if this is a root module)
@@ -33,15 +35,18 @@ You are an AI assistant tasked with writing xdocs documentation for a directory/
    - tags: Relevant tags (empty array if none)
    - keywords: Search terms and concepts that should help agents match requests
    - flags: Relevant flags (empty array if none)
-5. Write a Markdown body below the frontmatter with:
+6. Write a Markdown body below the frontmatter with:
    - An overview section explaining the module in more detail
    - Usage examples if relevant
    - Any important notes or caveats
-6. Name the file as `<module-name>.xdocs.md` in the target directory. Never name
+7. Name the file as `<module-name>.xdocs.md` in the target directory. Never name
    a file only `.xdocs.md`; `.xdocs.md` is the extension, not the full filename.
-7. Use only `.xdocs.md` for xdocs descriptors. Do not create `.docs.md` files.
-8. If the directory contains sibling plain `*.md` files, list each one under
-   `documents` in this descriptor.
+8. Use only `.xdocs.md` for xdocs descriptors. Do not create `.docs.md` files.
+9. If the directory contains non-excluded sibling plain `*.md` files, list each
+   one under `documents` in this descriptor.
+10. When an `ignore.rules` file or directory rule matches a document with
+    `frontmatter: false`, keep the document listed but never add, rewrite,
+    require, or recommend YAML frontmatter for it.
 
 ## Frontmatter Template
 

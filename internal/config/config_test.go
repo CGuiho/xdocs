@@ -57,6 +57,108 @@ func TestAIModeDefaultsToAuto(t *testing.T) {
 	}
 }
 
+func TestIgnoreDefaultsAndGeneratedConfiguration(t *testing.T) {
+	root := t.TempDir()
+	defaults, err := Defaults(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !defaults.Gitignore {
+		t.Fatal("in-memory defaults disabled .gitignore")
+	}
+	want := []string{"AGENTS.md", "README.md", "CLAUDE.md"}
+	if len(defaults.IgnoreRules) != len(want) {
+		t.Fatalf("default ignore rules = %#v", defaults.IgnoreRules)
+	}
+	for index, pattern := range want {
+		rule := defaults.IgnoreRules[index]
+		if rule.Pattern != pattern || rule.Kind != "file" || rule.Frontmatter {
+			t.Fatalf("default ignore rule %d = %#v", index, rule)
+		}
+	}
+	content := DefaultContent(root)
+	for _, expected := range []string{"ignore:\n  gitignore: true\n", "pattern: AGENTS.md", "frontmatter: false"} {
+		if !strings.Contains(content, expected) {
+			t.Fatalf("generated configuration missing %q:\n%s", expected, content)
+		}
+	}
+
+	path := filepath.Join(root, Filename)
+	if err := os.WriteFile(path, []byte("schema: 1\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := Load(root, "", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !cfg.Gitignore || len(cfg.IgnoreRules) != 3 {
+		t.Fatalf("omitted ignore section lost defaults: %#v", cfg)
+	}
+}
+
+func TestIgnoreSupportsExplicitDisableAndRules(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, Filename)
+	content := `schema: 1
+ignore:
+  gitignore: false
+  rules:
+    - pattern: docs/private/
+      kind: directory
+      frontmatter: false
+`
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := Load(root, "", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Gitignore || len(cfg.IgnoreRules) != 1 || cfg.IgnoreRules[0].Kind != "directory" || cfg.IgnoreRules[0].Pattern != "docs/private" {
+		t.Fatalf("explicit ignore configuration was not retained: %#v", cfg)
+	}
+
+	if err := os.WriteFile(path, []byte("schema: 1\nignore:\n  rules: []\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err = Load(root, "", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !cfg.Gitignore || len(cfg.IgnoreRules) != 0 {
+		t.Fatalf("explicit empty ignore rules were replaced with defaults: %#v", cfg)
+	}
+}
+
+func TestIgnoreRejectsInvalidRules(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, Filename)
+	tests := []string{
+		"pattern: ''\n      kind: file\n      frontmatter: false",
+		"pattern: /README.md\n      kind: file\n      frontmatter: false",
+		"pattern: docs\\README.md\n      kind: file\n      frontmatter: false",
+		"pattern: docs//README.md\n      kind: file\n      frontmatter: false",
+		"pattern: ./README.md\n      kind: file\n      frontmatter: false",
+		"pattern: docs/./private\n      kind: directory\n      frontmatter: false",
+		"pattern: ./\n      kind: directory\n      frontmatter: false",
+		"pattern: ../README.md\n      kind: file\n      frontmatter: false",
+		"pattern: docs/[abc\n      kind: directory\n      frontmatter: false",
+		"pattern: README.md/\n      kind: file\n      frontmatter: false",
+		"pattern: README.md\n      kind: document\n      frontmatter: false",
+		"pattern: README.md\n      kind: file",
+		"pattern: README.md\n      kind: file\n      frontmatter: true",
+	}
+	for _, rule := range tests {
+		content := "schema: 1\nignore:\n  rules:\n    - " + rule + "\n"
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := Load(root, "", true); err == nil {
+			t.Fatalf("invalid ignore rule accepted:\n%s", content)
+		}
+	}
+}
+
 func TestAIModeSupportsAutoAndPrompt(t *testing.T) {
 	root := t.TempDir()
 	path := filepath.Join(root, Filename)

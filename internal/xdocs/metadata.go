@@ -138,13 +138,15 @@ func validateMetadata(metadata Metadata) []string {
 	return errors
 }
 
-func parseDocument(path, root, expectedOwner string) MetaDocument {
+func parseDocument(path, root, expectedOwner string, frontmatterRequired bool) MetaDocument {
 	result := MetaDocument{
-		Path:         path,
-		RelativePath: slashRelative(root, path),
-		Directory:    filepath.Dir(path),
-		Name:         filepath.Base(path),
-		Errors:       []string{},
+		Path: path, RelativePath: slashRelative(root, path), Directory: filepath.Dir(path),
+		Name: filepath.Base(path), Owner: expectedOwner, FrontmatterRequired: frontmatterRequired,
+		Errors: []string{},
+	}
+	if !frontmatterRequired {
+		result.Valid = true
+		return result
 	}
 	raw, ok, err := ReadFrontmatter(path)
 	if err != nil {

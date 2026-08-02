@@ -82,6 +82,10 @@ multiple YAML documents, and then validates:
 - `schema` is `1`;
 - the only descriptor extension is `.xdocs.md`;
 - `ai.mode` defaults to `auto` and accepts only `auto` or `prompt`;
+- `ignore.gitignore` defaults to `true`;
+- each `ignore.rules` entry has a non-empty, syntactically valid,
+  repository-relative forward-slash glob, `kind` set to `file` or `directory`,
+  and `frontmatter` explicitly set to `false`;
 - exclusions are non-empty directory names;
 - project name is a string.
 
@@ -90,6 +94,52 @@ Global state and update cache live under `~/.guiho/xdocs/`.
 In `auto` mode, agents make relevant documentation changes in the same work
 unit. In `prompt` mode, agents announce the needed documentation changes and
 wait for confirmation.
+
+The default ignore contract is:
+
+```yaml
+ignore:
+  gitignore: true
+  rules:
+    - pattern: AGENTS.md
+      kind: file
+      frontmatter: false
+    - pattern: README.md
+      kind: file
+      frontmatter: false
+    - pattern: CLAUDE.md
+      kind: file
+      frontmatter: false
+```
+
+When `gitignore` is enabled, root and nested `.gitignore` files exclude matching
+files and directories from counts, discovery, descriptor metadata projections,
+list, meta, context, and doctor. Matching supports Git-style comments,
+negation, directory-only patterns, `*`, `?`, character classes, and `**`
+without adding an external runtime dependency.
+
+Ignore-rule patterns are repository-relative forward-slash globs. A pattern
+without `/` matches a basename at any depth. A `directory` rule applies to all
+descendant Markdown files and may use an optional trailing `/` for clarity.
+Malformed globs fail configuration loading. `frontmatter: false` does not exclude a document:
+the file stays discovered, must remain in its descriptor's `documents` map,
+appears in list/meta/context results, and is reported as valid without reading
+or validating frontmatter. Any explicit rules list replaces the presets;
+`ignore.rules: []` removes them without adding replacements.
+
+For example, a `cloud.md` file and every Markdown document below a selected
+directory can opt out while remaining tracked:
+
+```yaml
+ignore:
+  rules:
+    - pattern: cloud.md
+      kind: file
+      frontmatter: false
+    - pattern: docs/legacy
+      kind: directory
+      frontmatter: false
+```
 
 ## Descriptor contract
 
@@ -106,20 +156,24 @@ Descriptors require:
 
 The root `XDOCS.md` has no frontmatter. A bare `.xdocs.md` filename is invalid.
 Multiple descriptors in one directory are invalid. Every plain sibling
-Markdown document must be declared, and every declared document must exist.
+Markdown document not excluded by `.gitignore` must be declared, and every
+declared non-excluded document must exist.
 
 Companion documents require `name`, `purpose`, `description`, `created`
-(`YYYY-MM-DD`), `owner`, `flags`, `tags`, and `keywords`. `owner` must equal
-the owning descriptor subject.
+(`YYYY-MM-DD`), `owner`, `flags`, `tags`, and `keywords` unless a matching
+ignore rule sets `frontmatter: false`. `owner` must equal the owning descriptor
+subject when frontmatter is required. Opted-out documents remain associated
+with that descriptor subject without xdocs modifying their content.
 
 ## Command catalog
 
 ### Project setup and coverage
 
 - `init [--local]` creates missing root files and installs the embedded skill.
-- `scan` reports descriptor and companion-document coverage.
-- `doctor [path]` validates descriptors, companion metadata, tree links, and
-  documented files. `--warnings-as-errors` promotes warnings.
+- `scan` reports non-excluded descriptor and companion-document coverage and,
+  in verbose output, identifies documents whose frontmatter is not required.
+- `doctor [path]` validates descriptors, required companion metadata, tree
+  links, and documented files. `--warnings-as-errors` promotes warnings.
 
 ### Documentation views
 
@@ -130,8 +184,10 @@ the owning descriptor subject.
 
 ### Agent context
 
-- `meta [path]` reads frontmatter only. `--documents` includes companion
-  frontmatter; `--owner`, `--tag`, and `--keyword` filter before full reads.
+- `meta [path]` reads frontmatter only. `--documents` includes required
+  companion frontmatter and tracks opted-out documents with
+  `frontmatterRequired: false`; `--owner`, `--tag`, and `--keyword` filter
+  before full reads.
 - `context <query> [path]` tokenizes a query, applies stable weighted ranking,
   and returns the smallest useful descriptor/file/document reading set.
   `--explain` includes match reasons.

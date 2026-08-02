@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -17,14 +18,20 @@ const Filename = "xdocs.yaml"
 const defaultAIMode = "auto"
 
 var (
-	defaultExtensions = []string{".xdocs.md"}
-	defaultExclude    = []string{"node_modules", ".git", "dist", "build", "library", "bin", "bundle", "vendor"}
+	defaultExtensions  = []string{".xdocs.md"}
+	defaultExclude     = []string{"node_modules", ".git", "dist", "build", "library", "bin", "bundle", "vendor"}
+	defaultIgnoreRules = []IgnoreRule{
+		{Pattern: "AGENTS.md", Kind: "file", Frontmatter: false},
+		{Pattern: "README.md", Kind: "file", Frontmatter: false},
+		{Pattern: "CLAUDE.md", Kind: "file", Frontmatter: false},
+	}
 )
 
 type rawConfig struct {
 	Schema     yaml.Node   `yaml:"schema"`
 	Extensions *extensions `yaml:"extensions"`
 	AI         *ai         `yaml:"ai"`
+	Ignore     *ignore     `yaml:"ignore"`
 	Scan       *scan       `yaml:"scan"`
 	Project    *project    `yaml:"project"`
 }
@@ -37,6 +44,17 @@ type ai struct {
 	Mode string `yaml:"mode"`
 }
 
+type ignore struct {
+	Gitignore *bool         `yaml:"gitignore"`
+	Rules     *[]ignoreRule `yaml:"rules"`
+}
+
+type ignoreRule struct {
+	Pattern     string `yaml:"pattern"`
+	Kind        string `yaml:"kind"`
+	Frontmatter *bool  `yaml:"frontmatter"`
+}
+
 type scan struct {
 	Exclude []string `yaml:"exclude"`
 }
@@ -45,14 +63,22 @@ type project struct {
 	Name string `yaml:"name"`
 }
 
+type IgnoreRule struct {
+	Pattern     string
+	Kind        string
+	Frontmatter bool
+}
+
 type Config struct {
-	Schema     int
-	CWD        string
-	Path       string
-	Extensions []string
-	AIMode     string
-	Exclude    []string
-	Project    string
+	Schema      int
+	CWD         string
+	Path        string
+	Extensions  []string
+	AIMode      string
+	Gitignore   bool
+	IgnoreRules []IgnoreRule
+	Exclude     []string
+	Project     string
 }
 
 func Defaults(cwd string) (Config, error) {
@@ -61,12 +87,14 @@ func Defaults(cwd string) (Config, error) {
 		return Config{}, apperror.Wrap(apperror.Configuration, "resolve working directory", err)
 	}
 	return Config{
-		Schema:     1,
-		CWD:        absolute,
-		Extensions: append([]string(nil), defaultExtensions...),
-		AIMode:     defaultAIMode,
-		Exclude:    append([]string(nil), defaultExclude...),
-		Project:    filepath.Base(absolute),
+		Schema:      1,
+		CWD:         absolute,
+		Extensions:  append([]string(nil), defaultExtensions...),
+		AIMode:      defaultAIMode,
+		Gitignore:   true,
+		IgnoreRules: cloneIgnoreRules(defaultIgnoreRules),
+		Exclude:     append([]string(nil), defaultExclude...),
+		Project:     filepath.Base(absolute),
 	}, nil
 }
 
@@ -200,6 +228,23 @@ func decode(path string) (Config, error) {
 	if aiMode != "prompt" && aiMode != "auto" {
 		return Config{}, apperror.New(apperror.Configuration, `invalid ai.mode: expected "prompt" or "auto"`)
 	}
+	gitignore := true
+	ignoreRules := cloneIgnoreRules(defaultIgnoreRules)
+	if raw.Ignore != nil {
+		if raw.Ignore.Gitignore != nil {
+			gitignore = *raw.Ignore.Gitignore
+		}
+		if raw.Ignore.Rules != nil {
+			ignoreRules = make([]IgnoreRule, 0, len(*raw.Ignore.Rules))
+			for index, rule := range *raw.Ignore.Rules {
+				validated, err := validateIgnoreRule(index, rule)
+				if err != nil {
+					return Config{}, err
+				}
+				ignoreRules = append(ignoreRules, validated)
+			}
+		}
+	}
 	exclude := append([]string(nil), defaultExclude...)
 	if raw.Scan != nil {
 		exclude = append([]string(nil), raw.Scan.Exclude...)
@@ -217,12 +262,57 @@ func decode(path string) (Config, error) {
 		}
 	}
 	return Config{
-		Schema:     schema,
-		Extensions: supported,
-		AIMode:     aiMode,
-		Exclude:    exclude,
-		Project:    projectName,
+		Schema:      schema,
+		Extensions:  supported,
+		AIMode:      aiMode,
+		Gitignore:   gitignore,
+		IgnoreRules: ignoreRules,
+		Exclude:     exclude,
+		Project:     projectName,
 	}, nil
+}
+
+func validateIgnoreRule(index int, rule ignoreRule) (IgnoreRule, error) {
+	label := fmt.Sprintf("ignore.rules[%d]", index)
+	pattern := strings.TrimSpace(rule.Pattern)
+	if pattern == "" {
+		return IgnoreRule{}, apperror.New(apperror.Configuration, label+".pattern must be a non-empty repository-relative glob")
+	}
+	if strings.Contains(pattern, `\`) || strings.HasPrefix(pattern, "/") || filepath.IsAbs(pattern) || filepath.VolumeName(pattern) != "" {
+		return IgnoreRule{}, apperror.New(apperror.Configuration, label+".pattern must use forward slashes and be relative to the repository")
+	}
+	kind := strings.TrimSpace(rule.Kind)
+	if kind != "file" && kind != "directory" {
+		return IgnoreRule{}, apperror.New(apperror.Configuration, label+`.kind must be "file" or "directory"`)
+	}
+	if strings.HasSuffix(pattern, "/") {
+		if kind != "directory" {
+			return IgnoreRule{}, apperror.New(apperror.Configuration, label+".pattern may end with a slash only when kind is directory")
+		}
+		pattern = strings.TrimSuffix(pattern, "/")
+	}
+	for _, part := range strings.Split(pattern, "/") {
+		if part == "" {
+			return IgnoreRule{}, apperror.New(apperror.Configuration, label+".pattern must not contain empty path segments")
+		}
+		if part == "." {
+			return IgnoreRule{}, apperror.New(apperror.Configuration, label+".pattern must not contain current-directory path segments")
+		}
+		if part == ".." {
+			return IgnoreRule{}, apperror.New(apperror.Configuration, label+".pattern must not traverse outside the repository")
+		}
+	}
+	if _, err := path.Match(pattern, ""); err != nil {
+		return IgnoreRule{}, apperror.New(apperror.Configuration, label+".pattern is not a valid glob: "+err.Error())
+	}
+	if rule.Frontmatter == nil || *rule.Frontmatter {
+		return IgnoreRule{}, apperror.New(apperror.Configuration, label+".frontmatter must be explicitly false")
+	}
+	return IgnoreRule{Pattern: pattern, Kind: kind, Frontmatter: false}, nil
+}
+
+func cloneIgnoreRules(rules []IgnoreRule) []IgnoreRule {
+	return append([]IgnoreRule(nil), rules...)
 }
 
 func DefaultContent(cwd string) string {
@@ -233,6 +323,18 @@ extensions:
     - .xdocs.md
 ai:
   mode: auto
+ignore:
+  gitignore: true
+  rules:
+    - pattern: AGENTS.md
+      kind: file
+      frontmatter: false
+    - pattern: README.md
+      kind: file
+      frontmatter: false
+    - pattern: CLAUDE.md
+      kind: file
+      frontmatter: false
 scan:
   exclude:
     - node_modules

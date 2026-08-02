@@ -5,6 +5,7 @@ parent: xdocs-reviews
 children: []
 files: {}
 documents:
+  ignore-paths-and-frontmatter-review.md: Findings-first acceptance review of Git-aware exclusion, frontmatter opt-outs, raw output safety, command boundaries, and resolved review findings.
   open-issue-and-release-hardening-review.md: Findings-first review approving release assets, installers, issues 7 through 12, and exact-version release hardening for a patch release.
   rfc-0034-cli-compliance-migration-review.md: Findings-first acceptance review including the resolved root-help, live examples, and Darwin installer corrections.
   simple-upgrade-list-output-review.md: Reviews the concise six-column text output, preserved structured formats, pagination, tests, and release evidence for Mirror issue 16.
@@ -15,6 +16,8 @@ tags:
   - implementation
 keywords:
   - implementation review
+  - gitignore
+  - frontmatter opt-out
   - RFC 0034
   - release hardening
   - Go rewrite

@@ -48,7 +48,7 @@ func List(scan ScanResult, root, target string) []ListedEntry {
 	return result
 }
 
-func Generate(cfg config.Config, scan ScanResult, target string) string {
+func Generate(cfg config.Config, scan ScanResult, target string) (string, error) {
 	targetPath := cfg.CWD
 	if target != "" {
 		targetPath = target
@@ -70,9 +70,17 @@ func Generate(cfg config.Config, scan ScanResult, target string) string {
 			}
 			lines = append(lines, renderDescriptor(file, 3)...)
 		}
-		return strings.Join(lines, "\n")
+		return strings.Join(lines, "\n"), nil
+	}
+	policy, err := newPathPolicy(cfg, targetPath)
+	if err != nil {
+		return "", err
 	}
 	lines := []string{"# " + displayTarget(cfg.CWD, targetPath), ""}
+	if policy.ignored(targetPath, true) || scanExcludedPath(cfg.CWD, targetPath, cfg.Exclude) {
+		lines = append(lines, "Target is ignored by xdocs.", "")
+		return strings.Join(lines, "\n"), nil
+	}
 	found := false
 	for _, file := range scan.XDocsFiles {
 		if file.Metadata == nil || !inScope(file.Path, targetPath) {
@@ -83,15 +91,36 @@ func Generate(cfg config.Config, scan ScanResult, target string) string {
 	}
 	if !found {
 		lines = append(lines, "No xdocs descriptors found in this directory.", "", "### Directory contents", "")
-		entries, _ := os.ReadDir(targetPath)
+		entries, err := os.ReadDir(targetPath)
+		if err != nil {
+			return "", fmt.Errorf("read generate target %s: %w", filepath.ToSlash(targetPath), err)
+		}
 		for _, entry := range entries {
-			if !strings.HasPrefix(entry.Name(), ".") {
-				lines = append(lines, "- `"+entry.Name()+"`")
+			if strings.HasPrefix(entry.Name(), ".") || (entry.IsDir() && excluded(entry.Name(), cfg.Exclude)) {
+				continue
 			}
+			if policy.ignored(filepath.Join(targetPath, entry.Name()), entry.IsDir()) {
+				continue
+			}
+			lines = append(lines, "- `"+entry.Name()+"`")
 		}
 		lines = append(lines, "")
 	}
-	return strings.Join(lines, "\n")
+	return strings.Join(lines, "\n"), nil
+}
+
+func scanExcludedPath(root, target string, values []string) bool {
+	relative, err := filepath.Rel(root, target)
+	if err != nil || relative == "." || relative == "" {
+		return false
+	}
+	parts := strings.Split(filepath.Clean(relative), string(filepath.Separator))
+	for _, part := range parts {
+		if excluded(part, values) {
+			return true
+		}
+	}
+	return false
 }
 
 func Merge(scan ScanResult, root, target string) (string, int) {

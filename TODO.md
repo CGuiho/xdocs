@@ -32,7 +32,7 @@ All Rights Reserved.
 | --- | ---: |
 | todo | 1 |
 | in progress | 0 |
-| testing | 0 |
+| testing | 1 |
 | stopped | 0 |
 | completed | 7 |
 
@@ -133,6 +133,20 @@ All Rights Reserved.
 - External: [CGuiho/mirror#16](https://github.com/CGuiho/mirror/issues/16)
 - Release: [@guiho/xdocs@0.7.1](https://github.com/CGuiho/xdocs/releases/tag/%40guiho%2Fxdocs%400.7.1)
 - Evidence: [XDocs acceptance](https://github.com/CGuiho/mirror/issues/16#issuecomment-5061756753)
+
+### 9. Ignore Git Paths And Opt Out Of Frontmatter
+
+- Status: testing
+- Created: `2026-08-02T23:38:54+02:00`
+- Updated: `2026-08-03T00:41:14+02:00`
+- Outcome: Honor `.gitignore` by default and add strict file/directory rules
+  that keep selected Markdown documents tracked without requiring or adding
+  YAML frontmatter.
+- Spec: [docs/todo/ignore-paths-and-frontmatter.md](docs/todo/ignore-paths-and-frontmatter.md)
+- Review: [docs/reviews/implementation/ignore-paths-and-frontmatter-review.md](docs/reviews/implementation/ignore-paths-and-frontmatter-review.md)
+- Validation: [docs/validation/ignore-paths-and-frontmatter.md](docs/validation/ignore-paths-and-frontmatter.md)
+- Handoff: locally validated with no remaining review findings; push, CI,
+  versioning, and release remain unauthorized.
 
 ## Completion Archive
 
