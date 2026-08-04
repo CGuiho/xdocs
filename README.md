@@ -1,23 +1,8 @@
----
-name: xdocs-readme
-purpose: Introduce xdocs and provide its primary installation and usage guide.
-description: Public overview of the native Go XDocs CLI, structured-documentation model, commands, configuration, agents, upgrades, and releases.
-created: 2026-06-01
-owner: xdocs-package
-flags: []
-tags:
-  - readme
-  - cli
-  - documentation
-keywords:
-  - xdocs install
-  - xdocs Go
-  - Cobra
----
+#### &copy; 2026 [GUIHO](https://guiho.co) as represented by [Cristóvão GUIHO](https://guiho.co/cguiho) All Rights Reserved.
 
-# xdocs
+# GUIHO XDocs
 
-xdocs is a native Go CLI for structured repository documentation. It discovers
+XDocs is a native Go CLI for structured repository documentation. It discovers
 named `*.xdocs.md` descriptors, validates companion Markdown metadata, renders
 containment trees, recommends minimal reading sets, and reports documentation
 health issues.
