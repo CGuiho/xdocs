@@ -33,7 +33,7 @@ bundled skill into both global agent locations, and verify the executable.
 
 ```text
 xdocs
-Hello Windows - xdocs v0.9.0
+Hello Windows - xdocs v0.10.1
 ```
 
 A plain argument-free invocation first ensures the embedded

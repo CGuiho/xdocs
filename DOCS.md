@@ -330,9 +330,9 @@ go mod tidy
 go test ./...
 go vet ./...
 go run ./devops/build-binaries.go \
-  --version 0.10.0 \
+  --version 0.10.1 \
   --commit "$(git rev-parse HEAD)" \
-  --build-date "2026-08-03T00:00:00Z"
+  --build-date "2026-08-16T00:00:00Z"
 ```
 
 Cross-compilation proves buildability, not foreign runtime behavior. Native CI
