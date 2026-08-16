@@ -102,17 +102,12 @@ func NewRootCommand(deps Dependencies, info BuildInfo) *cobra.Command {
 			if command.Flags().Changed("help-tree-depth") && options.helpDepth < 1 {
 				return apperror.New(apperror.Usage, "--help-tree-depth must be a positive integer")
 			}
-			cwd := options.cwd
-			if cwd == "." && deps.WorkingDirectory != "" {
-				cwd = deps.WorkingDirectory
-			}
-			absolute, err := filepath.Abs(cwd)
+			cwd, err := resolveEffectiveCWD(options, deps)
 			if err != nil {
-				return apperror.Wrap(apperror.Usage, "resolve --cwd", err)
+				return err
 			}
-			options.cwd = absolute
 			if !internalProtocolCommand(command) {
-				if err := removeLegacyRootIndex(options.cwd); err != nil {
+				if err := removeLegacyRootIndex(cwd); err != nil {
 					return err
 				}
 			}
@@ -180,24 +175,22 @@ func NewRootCommand(deps Dependencies, info BuildInfo) *cobra.Command {
 	root.SetVersionTemplate("{{.Name}} v{{.Version}}\n")
 	root.CompletionOptions.DisableDefaultCmd = true
 	helpCommand := &cobra.Command{
-		Use:    "help [command]",
-		Short:  "Help about any command.",
+		Use:    "help",
 		Hidden: true,
-		Args:   maxArgs(1),
-		RunE: func(command *cobra.Command, args []string) error {
-			target := command.Root()
-			if len(args) == 1 {
-				found, _, err := command.Root().Find([]string{args[0]})
-				if err != nil {
-					return apperror.Wrap(apperror.Usage, "find help command", err)
-				}
-				target = found
-			}
-			return target.Help()
-		},
 	}
-	installDeferredHelpFlags(helpCommand, &options.helpRequested)
 	root.SetHelpCommand(helpCommand)
+	defaultHelpFunc := root.HelpFunc()
+	root.SetHelpFunc(func(command *cobra.Command, args []string) {
+		if !internalProtocolCommand(command) {
+			if cwd, err := resolveEffectiveCWD(options, deps); err == nil {
+				_ = removeLegacyRootIndex(cwd)
+			}
+		}
+		if command == helpCommand && command.Flags().Changed("help") {
+			return
+		}
+		defaultHelpFunc(command, args)
+	})
 	root.SetFlagErrorFunc(func(_ *cobra.Command, err error) error {
 		return apperror.Wrap(apperror.Usage, "parse flags", err)
 	})
@@ -232,11 +225,43 @@ func NewRootCommand(deps Dependencies, info BuildInfo) *cobra.Command {
 }
 
 func installDeferredHelpFlags(command *cobra.Command, requested *bool) {
-	command.Flags().VarP(&deferredBoolValue{requested: requested}, "help", "h", "help for "+command.CommandPath())
+	command.Flags().VarP(&deferredBoolValue{requested: requested}, "help", "h", defaultHelpFlagUsage(command))
 	command.Flags().Lookup("help").NoOptDefVal = "true"
+	originalArgs := command.Args
+	command.Args = func(command *cobra.Command, args []string) error {
+		if *requested {
+			return nil
+		}
+		if originalArgs == nil {
+			return nil
+		}
+		return originalArgs(command, args)
+	}
 	for _, child := range command.Commands() {
 		installDeferredHelpFlags(child, requested)
 	}
+}
+
+func defaultHelpFlagUsage(command *cobra.Command) string {
+	usage := "help for "
+	name := command.DisplayName()
+	if name == "" {
+		return usage + "this command"
+	}
+	return usage + name
+}
+
+func resolveEffectiveCWD(options *commonOptions, deps Dependencies) (string, error) {
+	cwd := options.cwd
+	if cwd == "." && deps.WorkingDirectory != "" {
+		cwd = deps.WorkingDirectory
+	}
+	absolute, err := filepath.Abs(cwd)
+	if err != nil {
+		return "", apperror.Wrap(apperror.Usage, "resolve --cwd", err)
+	}
+	options.cwd = absolute
+	return absolute, nil
 }
 
 func internalProtocolCommand(command *cobra.Command) bool {

@@ -315,6 +315,38 @@ func TestNoArgumentVersionAndCatalog(t *testing.T) {
 	}
 }
 
+func TestCobraHelpRenderingRemainsStable(t *testing.T) {
+	rootHelp, _, err := execute(t, "--help")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(rootHelp, "\n  help              \n") ||
+		!strings.Contains(rootHelp, "  -h, --help                  help for xdocs\n") ||
+		strings.Contains(rootHelp, "Help about any command.") {
+		t.Fatalf("root help drifted from Cobra's existing catalog:\n%s", rootHelp)
+	}
+
+	scanHelp, _, err := execute(t, "scan", "--help")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(scanHelp, "  -h, --help   help for scan\n") || strings.Contains(scanHelp, "help for xdocs scan") {
+		t.Fatalf("scan help drifted from Cobra's existing flag text:\n%s", scanHelp)
+	}
+
+	contextHelp, _, err := execute(t, "context", "--help")
+	if err != nil || !strings.Contains(contextHelp, "  -h, --help             help for context\n") {
+		t.Fatalf("context help did not use Cobra's existing flag path: output=%q err=%v", contextHelp, err)
+	}
+}
+
+func TestHiddenHelpCommandRemainsSilentForUnknownTopics(t *testing.T) {
+	out, _, err := execute(t, "help", "agent", "skill", "install")
+	if err != nil || out != "" {
+		t.Fatalf("hidden help command behavior drifted: output=%q err=%v", out, err)
+	}
+}
+
 func TestUserFacingInvocationsRemoveLegacyRootIndex(t *testing.T) {
 	cases := [][]string{
 		{},
@@ -324,6 +356,7 @@ func TestUserFacingInvocationsRemoveLegacyRootIndex(t *testing.T) {
 		{"--help-docs"},
 		{"--version"},
 		{"help"},
+		{"help", "--help"},
 		{"init", "--help"},
 		{"scan", "--help"},
 		{"agent", "prompt", "list", "--help"},
