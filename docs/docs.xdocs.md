@@ -13,7 +13,7 @@ children:
   - xdocs-validation
 files: {}
 documents:
-  2026-07-05-xdocs-document-model.md: Defines the named descriptor plus companion Markdown document model for xdocs modules.
+  2026-07-05-xdocs-document-model.md: Defines xdocs.yaml configuration, the named descriptor plus companion Markdown document model, and legacy root-index cleanup for xdocs modules.
 tags:
   - documentation
   - design

@@ -61,8 +61,10 @@ Stop if you can not find it.
 - The xdocs CLI is a structured documentation tool, not a versioning tool. It
   does not bump versions or mutate package manifests.
 - Supported commands: `init`, `scan`, `generate`, `merge`, `tree`, `list`, `meta`, `context`, `doctor`, `agent`, `upgrade`, `uninstall`.
-- `xdocs init` creates `XDOCS.md` and `xdocs.yaml` and installs the bundled
-  skill for both supported agent tools. A successful plain invocation also
+- `xdocs init` creates `xdocs.yaml` when missing and installs the bundled skill
+  for both supported agent tools. Every valid user-facing invocation first
+  removes a legacy `XDOCS.md` from the effective project directory. A
+  successful plain invocation also
   idempotently bootstraps both global skill targets and the current
   repository's bounded instruction block; other agent-resource changes use
   explicit `xdocs agent` actions.
@@ -105,7 +107,7 @@ Stop if you can not find it.
 
 ## Key Concepts
 
-- xdocs descriptors use Markdown with YAML frontmatter and must be named `*.xdocs.md`; `.docs.md` is not supported and `.xdocs.md` by itself is invalid. Same-directory non-excluded plain `*.md` files are companion documents listed in the descriptor's `documents` metadata. Companion frontmatter is required unless a matching `ignore.rules` file or directory rule sets `frontmatter: false`; those documents remain tracked and must not be modified to add frontmatter. The root file is always `XDOCS.md` (uppercase, no prefix, no frontmatter). Use `xdocs meta [path] --documents --format json` when an agent needs descriptor and companion-document policy without reading full Markdown bodies.
+- xdocs uses `xdocs.yaml` for configuration and named Markdown descriptors with YAML frontmatter as the only structured documentation metadata. Descriptors must be named `*.xdocs.md`; `.docs.md` is not supported and `.xdocs.md` by itself is invalid. Same-directory non-excluded plain `*.md` files are companion documents listed in the descriptor's `documents` metadata. Companion frontmatter is required unless a matching `ignore.rules` file or directory rule sets `frontmatter: false`; those documents remain tracked and must not be modified to add frontmatter. A legacy `XDOCS.md` is not a root descriptor; valid user-facing commands remove it before behavior, while direct package callers may treat a surviving file as ordinary Markdown. Use `xdocs meta [path] --documents --format json` when an agent needs descriptor and companion-document policy without reading full Markdown bodies.
 - Metadata fields: `subject`, `description`, `parent`, `children`, `files`, `documents`, `tags`, `keywords`, `flags`, and optional `status`.
 - The tree is a parent-child containment hierarchy, not a dependency graph. Built from `subject`/`parent`/`children` fields.
 - Configuration lives in `xdocs.yaml`. Sections: `extensions`, `ai`, `ignore`, `scan`, and `project`. `ignore.gitignore` defaults to `true`; strict `ignore.rules` objects use `pattern`, `kind`, and `frontmatter: false`.
@@ -194,8 +196,8 @@ repository's AGENTS.md GUIHO Project section.
 
 This project uses **xdocs** for structured, machine-readable documentation.
 Load the `guiho-s-xdocs` agent skill when working with structured
-documentation, `XDOCS.md` indexes, named `*.xdocs.md` descriptors,
-companion documents, repository scanning, metadata discovery, or validation.
+documentation, named `*.xdocs.md` descriptors, companion documents, legacy
+`XDOCS.md` cleanup, repository scanning, metadata discovery, or validation.
 
 The project configuration is `xdocs.yaml`. Respect `ai.mode`:
 `prompt` requires confirmation before documentation writes, while

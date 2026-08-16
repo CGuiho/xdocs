@@ -31,7 +31,7 @@ func executeWithRoots(t *testing.T, cwd, home string, args ...string) (string, s
 	}, BuildInfo{Version: "0.8.0", Target: "xdocs-windows-amd64"})
 	root.SetArgs(args)
 	err := root.Execute()
-	if err == errHelpRendered {
+	if err == errHelpRendered || err == errVersionRendered {
 		err = nil
 	}
 	return out.String(), stderr.String(), err
@@ -143,14 +143,17 @@ keywords: [example]
 	if err := json.Unmarshal([]byte(out), &scan); err != nil {
 		t.Fatalf("scan did not emit one JSON document: %v\n%s", err, out)
 	}
-	if len(scan.XDocsFiles) != 2 || scan.XDocsFiles[0].Path != "XDOCS.md" {
-		t.Fatalf("scan omitted root index or descriptor: %#v", scan.XDocsFiles)
+	if len(scan.XDocsFiles) != 1 || scan.XDocsFiles[0].Path != "module/module.xdocs.md" {
+		t.Fatalf("scan omitted descriptor after legacy cleanup: %#v", scan.XDocsFiles)
 	}
-	if len(scan.XDocsFiles[1].DiscoveredDocuments) != 1 || scan.XDocsFiles[1].DiscoveredDocuments[0] != "module/guide.md" {
-		t.Fatalf("scan discoveredDocuments shape drifted: %#v", scan.XDocsFiles[1])
+	if len(scan.XDocsFiles[0].DiscoveredDocuments) != 1 || scan.XDocsFiles[0].DiscoveredDocuments[0] != "module/guide.md" {
+		t.Fatalf("scan discoveredDocuments shape drifted: %#v", scan.XDocsFiles[0])
 	}
 	if len(scan.MarkdownDocuments) != 1 || scan.MarkdownDocuments[0] != "module/guide.md" {
 		t.Fatalf("scan markdownDocuments shape drifted: %#v", scan.MarkdownDocuments)
+	}
+	if _, err := os.Stat(filepath.Join(root, "XDOCS.md")); !os.IsNotExist(err) {
+		t.Fatalf("scan did not remove the legacy root index: %v", err)
 	}
 
 	for _, args := range [][]string{
@@ -174,8 +177,12 @@ keywords: [example]
 
 func TestInitCreatesAutoModeConfiguration(t *testing.T) {
 	root := t.TempDir()
-	if _, _, err := execute(t, "--cwd", root, "init", "--local"); err != nil {
+	out, _, err := execute(t, "--cwd", root, "init", "--local")
+	if err != nil {
 		t.Fatal(err)
+	}
+	if strings.Contains(out, "XDOCS.md") {
+		t.Fatalf("xdocs init text output still reports the legacy root index: %s", out)
 	}
 	cfg, err := config.Load(root, "", true)
 	if err != nil {
@@ -186,6 +193,24 @@ func TestInitCreatesAutoModeConfiguration(t *testing.T) {
 	}
 	if !cfg.Gitignore || len(cfg.IgnoreRules) != 3 {
 		t.Fatalf("xdocs init created incomplete ignore defaults: %#v", cfg)
+	}
+	if _, err := os.Stat(filepath.Join(root, "XDOCS.md")); !os.IsNotExist(err) {
+		t.Fatalf("xdocs init created the legacy root index: %v", err)
+	}
+}
+
+func TestInitOutputOmitsLegacyRootIndex(t *testing.T) {
+	root := t.TempDir()
+	out, _, err := execute(t, "--cwd", root, "--format", "json", "init", "--local")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var result map[string]any
+	if err := json.Unmarshal([]byte(out), &result); err != nil {
+		t.Fatal(err)
+	}
+	if _, exists := result["root"]; exists || strings.Contains(out, "XDOCS.md") {
+		t.Fatalf("init output still reports the legacy root index: %s", out)
 	}
 }
 
@@ -290,6 +315,99 @@ func TestNoArgumentVersionAndCatalog(t *testing.T) {
 	}
 }
 
+func TestUserFacingInvocationsRemoveLegacyRootIndex(t *testing.T) {
+	cases := [][]string{
+		{},
+		{"--help"},
+		{"--help-tree"},
+		{"--help-tree-depth", "1"},
+		{"--help-docs"},
+		{"--version"},
+		{"help"},
+		{"init", "--help"},
+		{"scan", "--help"},
+		{"agent", "prompt", "list", "--help"},
+		{"upgrade", "--help"},
+	}
+	for _, args := range cases {
+		root := t.TempDir()
+		if err := os.WriteFile(filepath.Join(root, "XDOCS.md"), []byte("# legacy\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if _, _, err := executeWithRoots(t, root, t.TempDir(), args...); err != nil {
+			t.Fatalf("%v failed: %v", args, err)
+		}
+		if _, err := os.Lstat(filepath.Join(root, "XDOCS.md")); !os.IsNotExist(err) {
+			t.Fatalf("%v left the legacy root index behind: %v", args, err)
+		}
+	}
+}
+
+func TestLegacyRootCleanupHonorsCwd(t *testing.T) {
+	processCWD := t.TempDir()
+	target := t.TempDir()
+	if err := os.WriteFile(filepath.Join(processCWD, "XDOCS.md"), []byte("process"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(target, "XDOCS.md"), []byte("target"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := executeWithRoots(t, processCWD, t.TempDir(), "--cwd", target, "--help"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Lstat(filepath.Join(target, "XDOCS.md")); !os.IsNotExist(err) {
+		t.Fatalf("effective --cwd legacy root index was not removed: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(processCWD, "XDOCS.md")); err != nil {
+		t.Fatalf("process cwd legacy root index was unexpectedly changed: %v", err)
+	}
+}
+
+func TestLegacyRootCleanupIsIdempotentWhenAbsent(t *testing.T) {
+	root := t.TempDir()
+	for range 2 {
+		if _, _, err := executeWithRoots(t, root, t.TempDir(), "--help"); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func TestLegacyRootCleanupRemovesSymlinkWithoutFollowingTarget(t *testing.T) {
+	root := t.TempDir()
+	target := filepath.Join(root, "target.md")
+	link := filepath.Join(root, "XDOCS.md")
+	if err := os.WriteFile(target, []byte("target"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(target, link); err != nil {
+		t.Skipf("symbolic links unavailable: %v", err)
+	}
+	if _, _, err := executeWithRoots(t, root, t.TempDir(), "--help"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Lstat(link); !os.IsNotExist(err) {
+		t.Fatalf("legacy symlink was not removed: %v", err)
+	}
+	if _, err := os.Stat(target); err != nil {
+		t.Fatalf("symlink target was unexpectedly removed: %v", err)
+	}
+}
+
+func TestLegacyRootCleanupRefusesDirectory(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, "XDOCS.md")
+	if err := os.Mkdir(path, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	_, _, err := executeWithRoots(t, root, t.TempDir(), "--help")
+	if ExitCode(err) != 5 {
+		t.Fatalf("directory cleanup returned %v with exit code %d, want mutation category 5", err, ExitCode(err))
+	}
+	if info, statErr := os.Stat(path); statErr != nil || !info.IsDir() {
+		t.Fatalf("directory named XDOCS.md was changed: info=%v err=%v", info, statErr)
+	}
+}
+
 func TestPlainInvocationBootstrapsBothGlobalSkillsAndInstructionFilesIdempotently(t *testing.T) {
 	cwd := t.TempDir()
 	home := t.TempDir()
@@ -324,7 +442,9 @@ func TestPlainInvocationBootstrapsBothGlobalSkillsAndInstructionFilesIdempotentl
 	}
 	agentsContent, _ := os.ReadFile(agentsPath)
 	if !strings.HasPrefix(string(agentsContent), "# Existing agents\n") ||
-		!strings.Contains(string(agentsContent), "`XDOCS.md` indexes") ||
+		strings.Contains(string(agentsContent), "`XDOCS.md` indexes") ||
+		!strings.Contains(string(agentsContent), "`xdocs.yaml`") ||
+		!strings.Contains(string(agentsContent), "legacy `XDOCS.md`") ||
 		!strings.Contains(string(agentsContent), "`xdocs scan`") {
 		t.Fatalf("AGENTS.md was not reconciled correctly:\n%s", agentsContent)
 	}

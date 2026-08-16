@@ -140,8 +140,10 @@ The xdocs CLI is the primary interface for both humans and AI to interact with x
 
 Initializes xdocs in a project. This command:
 
-- Creates a root `XDOCS.md` file for the project
-- Creates an `xdocs.config.toml` configuration file with defaults
+- Uses `xdocs.yaml` for project configuration and named `*.xdocs.md` files for
+  structured documentation metadata; each user-facing invocation removes a
+  legacy `XDOCS.md` file before running
+- Creates an `xdocs.yaml` configuration file with defaults when it is missing
 - Updates the project's `AGENTS.md` file to include instructions for AI agents to use xdocs
 - Installs the xdocs agent skills into the repository (or prompts the user to choose where to place them, since there are default locations supported by many tools)
 

@@ -12,7 +12,6 @@ import (
 
 const (
 	descriptorSuffix = ".xdocs.md"
-	rootFilename     = "XDOCS.md"
 )
 
 func ScanProject(cfg config.Config) (ScanResult, error) {
@@ -71,13 +70,6 @@ func ScanProject(cfg config.Config) (ScanResult, error) {
 		return ScanResult{}, err
 	}
 
-	rootPath := filepath.Join(cfg.CWD, rootFilename)
-	if content, readErr := os.ReadFile(rootPath); readErr == nil && !policy.ignored(rootPath, false) {
-		result.XDocsFiles = append(result.XDocsFiles, File{
-			Path: rootPath, RelativePath: rootFilename, Directory: cfg.CWD,
-			Documents: []MarkdownDocument{}, Body: string(content), Valid: false, Errors: []string{},
-		})
-	}
 	sort.Slice(result.XDocsFiles, func(i, j int) bool { return result.XDocsFiles[i].RelativePath < result.XDocsFiles[j].RelativePath })
 	sort.Slice(result.MarkdownDocuments, func(i, j int) bool {
 		return result.MarkdownDocuments[i].RelativePath < result.MarkdownDocuments[j].RelativePath
@@ -85,9 +77,6 @@ func ScanProject(cfg config.Config) (ScanResult, error) {
 	enrichFiles(result.XDocsFiles, documentsByDirectory)
 
 	covered := map[string]bool{}
-	if info, err := os.Stat(rootPath); err == nil && info.Mode().IsRegular() && !policy.ignored(rootPath, false) {
-		covered[cfg.CWD] = true
-	}
 	for _, file := range result.XDocsFiles {
 		if file.Valid {
 			covered[file.Directory] = true
@@ -112,7 +101,7 @@ func IsDescriptor(path string) bool {
 func IsPlainMarkdown(path string) bool {
 	name := filepath.Base(path)
 	lower := strings.ToLower(name)
-	return strings.HasSuffix(lower, ".md") && !strings.EqualFold(name, rootFilename) && !IsDescriptor(path)
+	return strings.HasSuffix(lower, ".md") && !IsDescriptor(path)
 }
 
 func excluded(name string, values []string) bool {
@@ -179,8 +168,7 @@ func validateDocumentReferences(file *File) {
 func validPlainMarkdownName(name string) bool {
 	lower := strings.ToLower(name)
 	return filepath.Base(name) == name && !strings.ContainsAny(name, `/\`) &&
-		strings.HasSuffix(lower, ".md") && !strings.EqualFold(name, rootFilename) &&
-		!strings.HasSuffix(lower, descriptorSuffix)
+		strings.HasSuffix(lower, ".md") && !strings.HasSuffix(lower, descriptorSuffix)
 }
 
 func inScope(path, target string) bool {
