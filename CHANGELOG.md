@@ -16,6 +16,17 @@ keywords:
 
 # GUIHO XDocs Changelog
 
+## 0.10.1 - 2026-08-16
+
+- Remove the special `XDOCS.md` root-index concept: `xdocs init` now creates
+  configuration without creating or reporting a root index, and every valid
+  user-facing invocation silently deletes a legacy file from the effective
+  project directory before ordinary command behavior.
+- Make named `*.xdocs.md` descriptors the only structured documentation
+  metadata, remove legacy root coverage from discovery, and align current
+  documentation, embedded agent instructions, prompts, and the bundled skill
+  while preserving existing Cobra help and version behavior.
+
 ## 0.10.0 - 2026-08-03
 
 - Honor root and nested `.gitignore` rules by default across discovery,

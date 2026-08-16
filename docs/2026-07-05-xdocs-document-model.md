@@ -1,7 +1,7 @@
 ---
 name: xdocs Document Model
 purpose: Record the descriptor-plus-companion-document model for future xdocs implementation work.
-description: Explains how named xdocs descriptors, root XDOCS.md, and same-directory Markdown companion documents work together for AI navigation.
+description: Explains how xdocs.yaml, named xdocs descriptors, and same-directory Markdown companion documents work together for AI navigation, including legacy root-index cleanup.
 created: 2026-07-05
 owner: xdocs-docs
 flags:
@@ -19,11 +19,12 @@ keywords:
 
 ## Summary
 
-xdocs now treats a directory as documented by exactly one named `*.xdocs.md`
-descriptor. The root of a repository still uses `XDOCS.md` as a plain index with
-no frontmatter, but normal modules use a descriptor such as
-`authentication.xdocs.md`. A file named only `.xdocs.md` is invalid because
-`.xdocs.md` is the extension, not the filename.
+xdocs uses `xdocs.yaml` for project configuration and treats a directory as
+documented by exactly one named `*.xdocs.md` descriptor. There is no special
+root index. A legacy `XDOCS.md` file is removed by every user-facing xdocs
+invocation before its command behavior; direct package callers may observe a
+surviving file as ordinary companion Markdown. A file named only `.xdocs.md`
+is invalid because `.xdocs.md` is the extension, not the filename.
 
 ## Descriptor Metadata
 
@@ -54,12 +55,12 @@ status: stable
 ```
 
 `files` is for implementation, configuration, and asset files. `documents` is
-only for same-directory plain `*.md` files that are not `*.xdocs.md` descriptors
-and not `XDOCS.md`.
+only for same-directory plain `*.md` files that are not `*.xdocs.md` descriptors.
 
 `keywords` is for search terms and concepts an agent can use to match a user
 request to the right descriptor. Companion Markdown documents use the same idea
-in their own frontmatter.
+in their own frontmatter. `XDOCS.md` is a valid companion filename when a
+direct package caller preserves one and the owning descriptor lists it.
 
 ## AI Workflow
 

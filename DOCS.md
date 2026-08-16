@@ -20,9 +20,11 @@ keywords:
 
 ## Purpose
 
-xdocs gives humans and agents a deterministic map of a repository through one
-root `XDOCS.md`, one named `*.xdocs.md` descriptor per documented module, and
-declared companion Markdown documents.
+xdocs gives humans and agents a deterministic map of a repository through
+`xdocs.yaml` configuration, one named `*.xdocs.md` descriptor per documented
+module, and declared companion Markdown documents. A legacy `XDOCS.md` is not
+part of the document model; every user-facing invocation removes it from the
+effective project directory before performing its requested behavior.
 
 The active implementation is a native Go CLI. The historical TypeScript tree
 is retained as migration reference only and is not used by the executable,
@@ -67,6 +69,12 @@ developer-help, init, data, explicit agent, upgrade, uninstall, and hidden
 worker commands do not enter this bootstrap path. Bootstrap does not load
 configuration or scan, generate, merge, or otherwise mutate the documentation
 corpus.
+
+Before any valid user-facing command behavior, xdocs removes a legacy
+`XDOCS.md` file from the effective `--cwd` directory. Missing files are
+silently ignored, regular files and symbolic links are removed, and a
+directory named `XDOCS.md` is refused without recursive deletion. Hidden
+update-worker and Windows-replacement protocols do not perform this cleanup.
 
 ## Configuration
 
@@ -154,7 +162,7 @@ Descriptors require:
 - `tags`, `keywords`, and `flags`: string arrays;
 - optional `status`.
 
-The root `XDOCS.md` has no frontmatter. A bare `.xdocs.md` filename is invalid.
+There is no special root descriptor. A bare `.xdocs.md` filename is invalid.
 Multiple descriptors in one directory are invalid. Every plain sibling
 Markdown document not excluded by `.gitignore` must be declared, and every
 declared non-excluded document must exist.
@@ -169,7 +177,8 @@ with that descriptor subject without xdocs modifying their content.
 
 ### Project setup and coverage
 
-- `init [--local]` creates missing root files and installs the embedded skill.
+- `init [--local]` creates missing `xdocs.yaml` configuration and installs the
+  embedded skill. It does not create a root index.
 - `scan` reports non-excluded descriptor and companion-document coverage and,
   in verbose output, identifies documents whose frontmatter is not required.
 - `doctor [path]` validates descriptors, required companion metadata, tree
@@ -321,9 +330,9 @@ go mod tidy
 go test ./...
 go vet ./...
 go run ./devops/build-binaries.go \
-  --version 0.10.0 \
+  --version 0.10.1 \
   --commit "$(git rev-parse HEAD)" \
-  --build-date "2026-08-03T00:00:00Z"
+  --build-date "2026-08-16T00:00:00Z"
 ```
 
 Cross-compilation proves buildability, not foreign runtime behavior. Native CI

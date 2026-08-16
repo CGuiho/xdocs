@@ -25,7 +25,8 @@ You are an AI assistant tasked with updating the AGENTS.md file to include xdocs
 3. If the section exists, update it with the current xdocs configuration.
 4. If the section does not exist, add it at the end of the file.
 5. The xdocs section should instruct AI agents to:
-   - Read XDOCS.md and named `*.xdocs.md` descriptor files when entering the project
+   - Treat `xdocs.yaml` as configuration and named `*.xdocs.md` descriptors as the only structured documentation metadata
+   - Know that every user-facing xdocs command removes a legacy `XDOCS.md` file from the effective project directory
    - Respect the configured AI behavior mode (prompt or auto)
    - Respect `ignore.gitignore` exclusions and every file or directory rule in
      `ignore.rules`

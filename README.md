@@ -33,7 +33,7 @@ bundled skill into both global agent locations, and verify the executable.
 
 ```text
 xdocs
-Hello Windows - xdocs v0.9.0
+Hello Windows - xdocs v0.10.1
 ```
 
 A plain argument-free invocation first ensures the embedded
@@ -50,8 +50,12 @@ xdocs tree
 xdocs doctor
 ```
 
-`xdocs init` creates `xdocs.yaml` and `XDOCS.md`, then installs the skill
+`xdocs init` creates `xdocs.yaml` when it is missing, then installs the skill
 globally by default. Use `xdocs init --local` for project-local skill targets.
+Every user-facing invocation removes a legacy `XDOCS.md` from the effective
+project directory before performing its requested behavior. Configuration
+lives in `xdocs.yaml`; named `*.xdocs.md` descriptors own documentation
+metadata.
 
 ## Configuration
 
@@ -192,8 +196,9 @@ Skill operations target both `.agents/skills/guiho-s-xdocs` and
 blocks, preserve every byte outside the block and its LF/CRLF convention, and
 write replacements atomically. The plain root invocation is the shared
 bootstrap boundary; help, version, data commands, explicit agent management,
-upgrade, and uninstall do not run bootstrap. Bootstrap never scans or changes
-`XDOCS.md`, descriptors, or companion documents.
+upgrade, and uninstall do not run bootstrap. Legacy `XDOCS.md` cleanup occurs
+before this distinction; bootstrap never scans or changes named descriptors or
+companion documents.
 
 ## Updates and upgrades
 

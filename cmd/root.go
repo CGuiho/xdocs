@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/CGuiho/xdocs/internal/agent"
@@ -34,23 +35,45 @@ type Dependencies struct {
 }
 
 type commonOptions struct {
-	cwd       string
-	config    string
-	format    string
-	verbose   bool
-	helpTree  bool
-	helpDepth int
-	helpDocs  bool
+	cwd              string
+	config           string
+	format           string
+	verbose          bool
+	helpRequested    bool
+	versionRequested bool
+	helpTree         bool
+	helpDepth        int
+	helpDocs         bool
 }
 
 var errHelpRendered = errors.New("developer context help rendered")
+var errVersionRendered = errors.New("version rendered")
+
+type deferredBoolValue struct {
+	requested *bool
+}
+
+func (value *deferredBoolValue) Set(raw string) error {
+	enabled, err := strconv.ParseBool(raw)
+	if err != nil {
+		return err
+	}
+	*value.requested = enabled
+	return nil
+}
+
+func (*deferredBoolValue) Type() string { return "bool" }
+
+func (*deferredBoolValue) String() string { return "false" }
+
+func (*deferredBoolValue) IsBoolFlag() bool { return true }
 
 func Execute(info BuildInfo, resources fs.FS) error {
 	root := NewRootCommand(Dependencies{
 		In: os.Stdin, Out: os.Stdout, Err: os.Stderr, Resources: resources,
 	}, info)
 	err := root.Execute()
-	if errors.Is(err, errHelpRendered) {
+	if errors.Is(err, errHelpRendered) || errors.Is(err, errVersionRendered) {
 		return nil
 	}
 	return err
@@ -79,6 +102,25 @@ func NewRootCommand(deps Dependencies, info BuildInfo) *cobra.Command {
 			if command.Flags().Changed("help-tree-depth") && options.helpDepth < 1 {
 				return apperror.New(apperror.Usage, "--help-tree-depth must be a positive integer")
 			}
+			cwd, err := resolveEffectiveCWD(options, deps)
+			if err != nil {
+				return err
+			}
+			if !internalProtocolCommand(command) {
+				if err := removeLegacyRootIndex(cwd); err != nil {
+					return err
+				}
+			}
+			if options.helpRequested {
+				if err := command.Help(); err != nil {
+					return err
+				}
+				return errHelpRendered
+			}
+			if options.versionRequested {
+				fmt.Fprintf(command.OutOrStdout(), "%s v%s\n", command.Name(), info.Version)
+				return errVersionRendered
+			}
 			if options.helpTree || command.Flags().Changed("help-tree-depth") {
 				fmt.Fprint(command.OutOrStdout(), renderCommandTree(command, options.helpDepth))
 				return errHelpRendered
@@ -94,16 +136,7 @@ func NewRootCommand(deps Dependencies, info BuildInfo) *cobra.Command {
 			if err := validateFormat(options.format); err != nil {
 				return err
 			}
-			cwd := options.cwd
-			if cwd == "." && deps.WorkingDirectory != "" {
-				cwd = deps.WorkingDirectory
-			}
-			absolute, err := filepath.Abs(cwd)
-			if err != nil {
-				return apperror.Wrap(apperror.Usage, "resolve --cwd", err)
-			}
-			options.cwd = absolute
-			if command.Name() != "__update-worker" && command.Name() != "__replace-windows" {
+			if !internalProtocolCommand(command) {
 				if completion, found, err := upgrade.ReadAndClearCompletion(); err != nil {
 					fmt.Fprintf(command.ErrOrStderr(), "Warning: could not read the prior XDocs upgrade result: %v\n", err)
 				} else if found {
@@ -141,7 +174,23 @@ func NewRootCommand(deps Dependencies, info BuildInfo) *cobra.Command {
 	root.SetErr(deps.Err)
 	root.SetVersionTemplate("{{.Name}} v{{.Version}}\n")
 	root.CompletionOptions.DisableDefaultCmd = true
-	root.SetHelpCommand(&cobra.Command{Use: "help", Hidden: true})
+	helpCommand := &cobra.Command{
+		Use:    "help",
+		Hidden: true,
+	}
+	root.SetHelpCommand(helpCommand)
+	defaultHelpFunc := root.HelpFunc()
+	root.SetHelpFunc(func(command *cobra.Command, args []string) {
+		if !internalProtocolCommand(command) {
+			if cwd, err := resolveEffectiveCWD(options, deps); err == nil {
+				_ = removeLegacyRootIndex(cwd)
+			}
+		}
+		if command == helpCommand && command.Flags().Changed("help") {
+			return
+		}
+		defaultHelpFunc(command, args)
+	})
 	root.SetFlagErrorFunc(func(_ *cobra.Command, err error) error {
 		return apperror.Wrap(apperror.Usage, "parse flags", err)
 	})
@@ -154,6 +203,8 @@ func NewRootCommand(deps Dependencies, info BuildInfo) *cobra.Command {
 	flags.BoolVar(&options.helpTree, "help-tree", false, "Show the command subtree")
 	flags.IntVar(&options.helpDepth, "help-tree-depth", 0, "Limit command-tree recursion to a positive depth")
 	flags.BoolVar(&options.helpDocs, "help-docs", false, "Show Markdown documentation for this command scope")
+	root.Flags().VarP(&deferredBoolValue{requested: &options.versionRequested}, "version", "v", "version for xdocs")
+	root.Flags().Lookup("version").NoOptDefVal = "true"
 
 	root.AddCommand(newInitCommand(options, agents))
 	root.AddCommand(newScanCommand(options))
@@ -169,7 +220,73 @@ func NewRootCommand(deps Dependencies, info BuildInfo) *cobra.Command {
 	root.AddCommand(newUninstallCommand(options))
 	root.AddCommand(newUpdateWorkerCommand())
 	root.AddCommand(newWindowsReplacementCommand())
+	installDeferredHelpFlags(root, &options.helpRequested)
 	return root
+}
+
+func installDeferredHelpFlags(command *cobra.Command, requested *bool) {
+	command.Flags().VarP(&deferredBoolValue{requested: requested}, "help", "h", defaultHelpFlagUsage(command))
+	command.Flags().Lookup("help").NoOptDefVal = "true"
+	originalArgs := command.Args
+	command.Args = func(command *cobra.Command, args []string) error {
+		if *requested {
+			return nil
+		}
+		if originalArgs == nil {
+			return nil
+		}
+		return originalArgs(command, args)
+	}
+	for _, child := range command.Commands() {
+		installDeferredHelpFlags(child, requested)
+	}
+}
+
+func defaultHelpFlagUsage(command *cobra.Command) string {
+	usage := "help for "
+	name := command.DisplayName()
+	if name == "" {
+		return usage + "this command"
+	}
+	return usage + name
+}
+
+func resolveEffectiveCWD(options *commonOptions, deps Dependencies) (string, error) {
+	cwd := options.cwd
+	if cwd == "." && deps.WorkingDirectory != "" {
+		cwd = deps.WorkingDirectory
+	}
+	absolute, err := filepath.Abs(cwd)
+	if err != nil {
+		return "", apperror.Wrap(apperror.Usage, "resolve --cwd", err)
+	}
+	options.cwd = absolute
+	return absolute, nil
+}
+
+func internalProtocolCommand(command *cobra.Command) bool {
+	return command.Name() == "__update-worker" || command.Name() == "__replace-windows"
+}
+
+func removeLegacyRootIndex(cwd string) error {
+	path := filepath.Join(cwd, "XDOCS.md")
+	info, err := os.Lstat(path)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil {
+		return apperror.Wrap(apperror.Mutation, "inspect legacy XDOCS.md", err)
+	}
+	if info.IsDir() {
+		return apperror.New(apperror.Mutation, fmt.Sprintf("legacy XDOCS.md path is a directory: %s", path))
+	}
+	if !info.Mode().IsRegular() && info.Mode()&os.ModeSymlink == 0 {
+		return apperror.New(apperror.Mutation, fmt.Sprintf("legacy XDOCS.md path is not a regular file or symbolic link: %s", path))
+	}
+	if err := os.Remove(path); err != nil {
+		return apperror.Wrap(apperror.Mutation, "remove legacy XDOCS.md", err)
+	}
+	return nil
 }
 
 func plainRootInvocation(command *cobra.Command) bool {

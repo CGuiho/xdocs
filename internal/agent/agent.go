@@ -25,8 +25,11 @@ const InstructionTemplate = `## XDocs Structured Documentation
 
 This project uses **xdocs** for structured, machine-readable documentation.
 Load the ` + "`guiho-s-xdocs`" + ` agent skill when working with structured
-documentation, ` + "`XDOCS.md`" + ` indexes, named ` + "`*.xdocs.md`" + ` descriptors,
-companion documents, repository scanning, metadata discovery, or validation.
+documentation, named ` + "`*.xdocs.md`" + ` descriptors, companion documents,
+repository scanning, metadata discovery, or validation. ` + "`xdocs.yaml`" + `
+configures behavior while named descriptors own documentation metadata. Every
+user-facing xdocs command removes a legacy ` + "`XDOCS.md`" + ` file from the
+effective project directory before performing its requested behavior.
 
 The project configuration is ` + "`xdocs.yaml`" + `. Respect ` + "`ai.mode`" + `:
 ` + "`prompt`" + ` requires confirmation before documentation writes, while

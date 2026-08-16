@@ -31,16 +31,6 @@ func newInitCommand(options *commonOptions, agents *agent.Service) *cobra.Comman
 				}
 				configAction = "created"
 			}
-			rootPath := filepath.Join(options.cwd, "XDOCS.md")
-			rootAction := "exists"
-			if _, err := os.Stat(rootPath); err == nil {
-			} else {
-				content := fmt.Sprintf("# %s -- XDocs Root\n\nThe single root index for this repository.\n\n## Packages\n\n## Applications\n", filepath.Base(options.cwd))
-				if err := writeFile(rootPath, []byte(content), 0o644); err != nil {
-					return err
-				}
-				rootAction = "created"
-			}
 			scope := "global"
 			if local {
 				scope = "local"
@@ -53,13 +43,11 @@ func newInitCommand(options *commonOptions, agents *agent.Service) *cobra.Comman
 				return writeJSON(command, map[string]any{
 					"command": "xdocs init",
 					"config":  map[string]string{"action": configAction, "path": configPath},
-					"root":    map[string]string{"action": rootAction, "path": rootPath},
 					"scope":   scope,
 					"skills":  results,
 				})
 			}
 			fmt.Fprintf(command.OutOrStdout(), "%s: xdocs.yaml\n", configAction)
-			fmt.Fprintf(command.OutOrStdout(), "%s: XDOCS.md\n", rootAction)
 			for _, result := range results {
 				action := "current"
 				if result.Installed {
@@ -107,9 +95,6 @@ func newScanCommand(options *commonOptions) *cobra.Command {
 				fmt.Fprintln(out, "\nfiles:")
 				for _, file := range result.XDocsFiles {
 					status, subject := "incomplete", ""
-					if file.RelativePath == "XDOCS.md" && file.Metadata == nil {
-						status = "root index"
-					}
 					if file.Valid {
 						status = "valid"
 					}

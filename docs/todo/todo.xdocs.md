@@ -10,6 +10,7 @@ documents:
   citty-cli-migration-implementation.md: Tracks migration progress, decisions, verification evidence, and handoff state for the Citty CLI migration.
   citty-cli-migration.md: Defines the required full migration from xdocs handwritten CLI parsing and routing to Citty.
   improve-json-output-coverage.md: Follow-up task spec for consistent JSON output coverage across xdocs commands.
+  remove-special-root-index.md: Defines removal of the special XDOCS.md model, invocation-time legacy cleanup, compatibility boundaries, and patch-release acceptance.
   simple-public-installers.md: Defines the tested one-line PowerShell and Bash native installation experience.
   simple-upgrade-list-output.md: Defines the concise RunX-style XDocs text table while preserving pagination and complete Markdown/JSON metadata for Mirror issue 16.
   rfc-0034-cli-compliance-migration.md: Defines the required breaking outcome, global-by-default initialization setup, root-catalog help signals, scope, constraints, and completion criteria for full xdocs RFC 0034 compliance.
