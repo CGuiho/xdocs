@@ -6,6 +6,7 @@ children: []
 files: {}
 documents:
   citty-cli-migration-review.md: Reviews the Citty migration plan for traceability, sequencing, acceptance criteria, and safe execution.
+  remove-special-root-index-review.md: Confirms the legacy root-index removal plan is sealed, scoped, testable, and ready for unattended execution.
   rfc-0034-cli-compliance-migration-review.md: Reviews the breaking xdocs RFC 0034 migration for Bun-only source, TypeBox/YAML sequencing, agents, prompts, distribution, self-documentation, and validation.
   xdocs-go-rewrite-review.md: Reviews the Go rewrite plan for traceability, sequencing, exact acceptance gates, and release safety.
   upgrade-reliability-implementation-review.md: Reviews the upgrade reliability plan for transaction safety, recovery, catalog completeness, and execution readiness.

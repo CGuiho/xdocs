@@ -31,7 +31,7 @@ All Rights Reserved.
 | Status | Count |
 | --- | ---: |
 | todo | 1 |
-| in progress | 0 |
+| in progress | 1 |
 | testing | 0 |
 | stopped | 0 |
 | completed | 7 |
@@ -133,6 +133,18 @@ All Rights Reserved.
 - External: [CGuiho/mirror#16](https://github.com/CGuiho/mirror/issues/16)
 - Release: [@guiho/xdocs@0.7.1](https://github.com/CGuiho/xdocs/releases/tag/%40guiho%2Fxdocs%400.7.1)
 - Evidence: [XDocs acceptance](https://github.com/CGuiho/mirror/issues/16#issuecomment-5061756753)
+
+### 9. Remove The Special XDOCS.md Root Index
+
+- Status: testing
+- Created: `2026-08-16T14:58:10Z`
+- Updated: `2026-08-16T16:25:47Z`
+- Outcome: Remove `XDOCS.md` from the xdocs document model, stop `xdocs init`
+  from creating it, and make every user-facing xdocs invocation delete the
+  legacy file from the effective project directory.
+- Spec: [docs/todo/remove-special-root-index.md](docs/todo/remove-special-root-index.md)
+- Plan: [docs/plans/remove-special-root-index.md](docs/plans/remove-special-root-index.md)
+- Plan review: [docs/reviews/plans/remove-special-root-index-review.md](docs/reviews/plans/remove-special-root-index-review.md)
 
 ## Completion Archive
 

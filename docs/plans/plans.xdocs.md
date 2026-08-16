@@ -6,6 +6,7 @@ children: []
 files: {}
 documents:
   citty-cli-migration.md: Executable unit-by-unit plan for replacing handwritten CLI parsing and routing with Citty.
+  remove-special-root-index.md: Execution-ready plan for removing XDOCS.md creation, deleting the legacy file on every user-facing invocation, updating the document model, and shipping patch 0.10.1.
   rfc-0034-cli-compliance-migration.md: Approved breaking migration plan for Bun-only source, TypeBox, YAML, startup, help, agents, prompts, upgrades, distribution, twelve native binaries plus two named .md agent assets, docs, and validation.
   shared-agent-bootstrap.md: Executable plan for safe plain-invocation global skill and repository instruction bootstrap, regression tests, documentation, and validation.
   upgrade-reliability-implementation.md: Executable plan for complete release discovery, immediate verified self-upgrade, recovery guidance, installer hardening, and validation.
