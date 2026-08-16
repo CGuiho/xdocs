@@ -4,6 +4,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -119,6 +120,25 @@ func TestInstructionsAreIdempotentAndPreserveContent(t *testing.T) {
 	content, _ := os.ReadFile(path)
 	if string(content[:10]) != "# Existing" {
 		t.Fatalf("existing content was not preserved: %s", content)
+	}
+}
+
+func TestCheckedInAgentsManagedBlockIsCanonical(t *testing.T) {
+	_, source, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("could not locate the agent test source")
+	}
+	agentsPath := filepath.Join(filepath.Dir(source), "..", "..", "AGENTS.md")
+	content, err := os.ReadFile(agentsPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	canonical, err := reconcileInstruction(string(content), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if canonical != string(content) {
+		t.Fatal("checked-in AGENTS.md XDocs block is not canonical or bootstrap-idempotent")
 	}
 }
 
