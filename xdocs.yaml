@@ -26,5 +26,10 @@ scan:
     - bin
     - bundle
     - vendor
+    - .temp
+    - .tmp
+    - .tmp-home
+    - .tmp-opencode
+    - _opencode_workspace
 project:
   name: xdocs
