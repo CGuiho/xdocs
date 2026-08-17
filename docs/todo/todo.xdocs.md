@@ -10,6 +10,7 @@ documents:
   citty-cli-migration-implementation.md: Tracks migration progress, decisions, verification evidence, and handoff state for the Citty CLI migration.
   citty-cli-migration.md: Defines the required full migration from xdocs handwritten CLI parsing and routing to Citty.
   improve-json-output-coverage.md: Follow-up task spec for consistent JSON output coverage across xdocs commands.
+  guiho-cli-convention-0001-compliance-migration.md: Tracks the approved breaking migration through accepted architecture, question-sealed focused PR units, deterministic governance evidence, exact-head review and validation, read-only Mirror handoff, and separate release-preparation gates.
   simple-public-installers.md: Defines the tested one-line PowerShell and Bash native installation experience.
   simple-upgrade-list-output.md: Defines the concise RunX-style XDocs text table while preserving pagination and complete Markdown/JSON metadata for Mirror issue 16.
   rfc-0034-cli-compliance-migration.md: Defines the required breaking outcome, global-by-default initialization setup, root-catalog help signals, scope, constraints, and completion criteria for full xdocs RFC 0034 compliance.
@@ -29,6 +30,10 @@ keywords:
   - xdocs.yaml
   - agent prompt catalog
   - todo spec
+  - GUIHO CLI Convention 0001
+  - guiho-p-xdocs
+  - question ledger
+  - exact-head review
   - format flag
   - upgrade reliability
   - rollback
