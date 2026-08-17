@@ -6,6 +6,10 @@
 .env
 **/.env
 .env.keys
+.tmp/
+_opencode_workspace/
+.tmp-home/
+.tmp-opencode/
 
 # Application-related
 **/.temp/
@@ -21,3 +25,4 @@
 **/library/
 **/bundle/
 **/bin/
+.tmp*
