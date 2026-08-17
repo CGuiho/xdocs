@@ -7,6 +7,7 @@ children:
   - xdocs-decisions
   - xdocs-migrations
   - xdocs-plans
+  - xdocs-questions
   - xdocs-reviews
   - xdocs-superpowers
   - xdocs-todo
