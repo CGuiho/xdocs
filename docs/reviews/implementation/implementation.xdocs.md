@@ -5,6 +5,7 @@ parent: xdocs-reviews
 children: []
 files: {}
 documents:
+  guiho-cli-convention-0001-compliance-review.md: Findings-first audit of xdocs against GUIHO CLI Convention 0001 across tooling, flags, configuration, agents, lifecycle, releases, documentation, and validation.
   ignore-paths-and-frontmatter-review.md: Findings-first acceptance review of Git-aware exclusion, frontmatter opt-outs, raw output safety, command boundaries, and resolved review findings.
   open-issue-and-release-hardening-review.md: Findings-first review approving release assets, installers, issues 7 through 12, and exact-version release hardening for a patch release.
   rfc-0034-cli-compliance-migration-review.md: Findings-first acceptance review including the resolved root-help, live examples, and Darwin installer corrections.
