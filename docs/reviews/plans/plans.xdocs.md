@@ -6,6 +6,7 @@ children: []
 files: {}
 documents:
   citty-cli-migration-review.md: Reviews the Citty migration plan for traceability, sequencing, acceptance criteria, and safe execution.
+  guiho-cli-convention-0001-compliance-migration-review.md: Reviews GUIHO CLI Convention 0001 audit coverage, unit dependencies, branch and worktree isolation, exact ownership, question sealing, Kimi and lifecycle gates, release targeting, and safe validation.
   rfc-0034-cli-compliance-migration-review.md: Reviews the breaking xdocs RFC 0034 migration for Bun-only source, TypeBox/YAML sequencing, agents, prompts, distribution, self-documentation, and validation.
   xdocs-go-rewrite-review.md: Reviews the Go rewrite plan for traceability, sequencing, exact acceptance gates, and release safety.
   upgrade-reliability-implementation-review.md: Reviews the upgrade reliability plan for transaction safety, recovery, catalog completeness, and execution readiness.
@@ -19,6 +20,9 @@ keywords:
   - Go rewrite
   - CLI migration
   - RFC 0034
+  - GUIHO CLI Convention 0001
+  - exact-head review
+  - isolated worktree
   - xdocs.yaml
   - upgrade reliability
 flags: []
