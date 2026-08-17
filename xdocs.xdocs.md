@@ -10,7 +10,9 @@ children:
   - xdocs-scripts
   - xdocs-skills
   - xdocs-prompts
+  - xdocs-github
   - xdocs-docs
+  - xdocs-vscode
 files:
   main.go: Thin native entrypoint with embedded skill and prompt resources plus linker-injected build metadata.
   main_test.go: Verifies that both embedded skill version fields match the current native Go release.
