@@ -31,7 +31,7 @@ All Rights Reserved.
 | Status | Count |
 | --- | ---: |
 | todo | 1 |
-| in progress | 0 |
+| in progress | 1 |
 | testing | 0 |
 | stopped | 0 |
 | completed | 7 |
@@ -133,6 +133,25 @@ All Rights Reserved.
 - External: [CGuiho/mirror#16](https://github.com/CGuiho/mirror/issues/16)
 - Release: [@guiho/xdocs@0.7.1](https://github.com/CGuiho/xdocs/releases/tag/%40guiho%2Fxdocs%400.7.1)
 - Evidence: [XDocs acceptance](https://github.com/CGuiho/mirror/issues/16#issuecomment-5061756753)
+
+### 9. Migrate xdocs to GUIHO CLI Convention 0001
+
+- Status: in progress
+- Created: `2026-08-16`
+- Updated: `2026-08-17`
+- Outcome: Replace the obsolete direct-binary, single-configuration,
+  eleven-asset lifecycle with complete GUIHO CLI Convention 0001 tooling,
+  configuration, agent, launcher, release, install, upgrade, uninstall,
+  documentation, validation, and version behavior.
+- Confirmed main prompt ID: `guiho-p-xdocs`
+- Spec: [docs/todo/guiho-cli-convention-0001-compliance-migration.md](docs/todo/guiho-cli-convention-0001-compliance-migration.md)
+- Architecture: [docs/architecture/guiho-cli-convention-0001-compliance-architecture.md](docs/architecture/guiho-cli-convention-0001-compliance-architecture.md)
+- Architecture review: Ready for planning; accepted SHA-256
+  `8532586ae3b91614443835f2e510b2cefb5e264c876e263f427b9a38a045700a`.
+- Plan: [docs/plans/guiho-cli-convention-0001-compliance-migration.md](docs/plans/guiho-cli-convention-0001-compliance-migration.md)
+- Plan review: revised to address all recorded findings; awaiting fresh
+  `guiho-a-0047-plan-reviewer` exact-tree verdict before implementation.
+- Audit: [docs/reviews/implementation/guiho-cli-convention-0001-compliance-review.md](docs/reviews/implementation/guiho-cli-convention-0001-compliance-review.md)
 
 ## Completion Archive
 
