@@ -116,9 +116,6 @@ func IsPlainMarkdown(path string) bool {
 }
 
 func excluded(name string, values []string) bool {
-	if strings.HasPrefix(name, ".") {
-		return true
-	}
 	for _, value := range values {
 		if name == value {
 			return true
