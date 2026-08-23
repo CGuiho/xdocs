@@ -267,8 +267,27 @@ func TestContextRejectsNonPositiveLimit(t *testing.T) {
 
 func TestNoArgumentVersionAndCatalog(t *testing.T) {
 	out, _, err := execute(t)
-	if err != nil || out != "Hello Windows - xdocs v0.8.0\n" {
-		t.Fatalf("unexpected welcome: %q %v", out, err)
+	if err != nil {
+		t.Fatalf("welcome failed: %v", err)
+	}
+	for _, required := range []string{
+		"████╗", "Structured documentation for codebases and AI agents",
+		"GUIHO", "Cristóvão GUIHO",
+		"organization", "platform", "Windows x64", "version", "v0.8.0",
+		"Run xdocs --help to see available commands.",
+	} {
+		if !strings.Contains(out, required) {
+			t.Fatalf("welcome output omits %q:\n%s", required, out)
+		}
+	}
+	if !strings.HasPrefix(out, "\n\n") {
+		t.Fatalf("welcome output does not start with two blank lines: %q", out)
+	}
+	if !strings.HasSuffix(out, "\n\n") {
+		t.Fatalf("welcome output does not end with two blank lines: %q", out)
+	}
+	if strings.Contains(out, "Hello Windows") || strings.Contains(out, "\x1b[") {
+		t.Fatalf("welcome output should be beautiful borderless without legacy text or ANSI in non-terminal mode: %q", out)
 	}
 	out, _, err = execute(t, "--version")
 	if err != nil || out != "xdocs v0.8.0\n" {
@@ -303,8 +322,16 @@ func TestPlainInvocationBootstrapsBothGlobalSkillsAndInstructionFilesIdempotentl
 	}
 
 	out, stderr, err := executeWithRoots(t, cwd, home)
-	if err != nil || out != "Hello Windows - xdocs v0.8.0\n" || stderr != "" {
+	if err != nil || stderr != "" {
 		t.Fatalf("unexpected bootstrap result: stdout=%q stderr=%q err=%v", out, stderr, err)
+	}
+	for _, required := range []string{"████╗", "Structured documentation", "organization", "platform", "Windows x64", "v0.8.0", "xdocs --help"} {
+		if !strings.Contains(out, required) {
+			t.Fatalf("bootstrap welcome omits %q: %q", required, out)
+		}
+	}
+	if !strings.HasPrefix(out, "\n\n") || !strings.HasSuffix(out, "\n\n") {
+		t.Fatalf("bootstrap welcome does not have two blank lines before/after: %q", out)
 	}
 
 	managedPaths := []string{agentsPath, claudePath}

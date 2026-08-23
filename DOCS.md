@@ -46,8 +46,9 @@ runtime services.
 ## Plain-invocation bootstrap
 
 A successful invocation with no arguments or flags performs a local,
-filesystem-only agent bootstrap before printing
-`Hello Windows - xdocs v<version>`:
+filesystem-only agent bootstrap before printing the beautiful borderless hello
+window (two blank lines before and after the window) using the five-tone earth
+palette (`#7F5539`, `#A68A64`, `#EDE0D4`, `#656D4A`, `#414833`):
 
 1. preflight the current repository's selected instruction files and reject
    malformed, duplicated, noncanonical, or out-of-order XDocs markers;
@@ -321,9 +322,9 @@ go mod tidy
 go test ./...
 go vet ./...
 go run ./devops/build-binaries.go \
-  --version 0.10.0 \
+  --version 0.11.0 \
   --commit "$(git rev-parse HEAD)" \
-  --build-date "2026-08-03T00:00:00Z"
+  --build-date "2026-08-23T00:00:00Z"
 ```
 
 Cross-compilation proves buildability, not foreign runtime behavior. Native CI

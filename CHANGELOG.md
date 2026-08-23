@@ -16,6 +16,13 @@ keywords:
 
 # GUIHO XDocs Changelog
 
+## 0.11.0 - 2026-08-23
+
+- Replace the plain `Hello Windows - xdocs v<version>` greeting with a beautiful borderless hello window that matches the RunX and Genius siblings while using the five-tone earth palette (`#7F5539`, `#A68A64`, `#EDE0D4`, `#656D4A`, `#414833`).
+- Render a centered XDOCS block logo with a six-line gradient, the tagline `Structured documentation for codebases and AI agents`, the `GUIHO · Cristóvão GUIHO` identity line, and `organization`, `platform`, and `version` details with the earth-tone ANSI styles.
+- Keep the welcome borderless and deterministic, reserve two blank lines before and after the hello window, support `--color` for forced ANSI, honor `NO_COLOR` and `TERM=dumb`, and retain a plain non-ANSI fallback for non-terminal output and exact JSON behavior.
+- Add the new `internal/welcome` package and its `xdocs-internal-welcome` descriptor and wire the welcome through `cmd/root.go`.
+
 ## 0.10.0 - 2026-08-03
 
 - Honor root and nested `.gitignore` rules by default across discovery,

@@ -9,6 +9,7 @@ children:
   - xdocs-internal-release
   - xdocs-internal-update
   - xdocs-internal-upgrade
+  - xdocs-internal-welcome
   - xdocs-internal-domain
 files: {}
 documents: {}

@@ -8,12 +8,14 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/CGuiho/xdocs/internal/agent"
 	"github.com/CGuiho/xdocs/internal/apperror"
 	"github.com/CGuiho/xdocs/internal/update"
 	"github.com/CGuiho/xdocs/internal/upgrade"
+	"github.com/CGuiho/xdocs/internal/welcome"
 	"github.com/spf13/cobra"
 )
 
@@ -132,7 +134,18 @@ func NewRootCommand(deps Dependencies, info BuildInfo) *cobra.Command {
 					"message": fmt.Sprintf("Hello Windows - xdocs v%s", info.Version),
 				})
 			}
-			fmt.Fprintf(command.OutOrStdout(), "Hello Windows - xdocs v%s\n", info.Version)
+			useColor := welcome.ShouldUseColor(isTerminalWriter(command.OutOrStdout()))
+			if flag := command.Flags().Lookup("color"); flag != nil && flag.Changed {
+				if v, err := command.Flags().GetBool("color"); err == nil {
+					useColor = v && welcome.ShouldUseColor(true)
+				}
+			} else if flag := command.PersistentFlags().Lookup("color"); flag != nil && flag.Changed {
+				if v, err := command.PersistentFlags().GetBool("color"); err == nil {
+					useColor = v && welcome.ShouldUseColor(true)
+				}
+			}
+			text := welcome.RenderWithColor(runtime.GOOS, runtime.GOARCH, info.Version, useColor)
+			fmt.Fprint(command.OutOrStdout(), text)
 			return nil
 		},
 	}
@@ -154,6 +167,7 @@ func NewRootCommand(deps Dependencies, info BuildInfo) *cobra.Command {
 	flags.BoolVar(&options.helpTree, "help-tree", false, "Show the command subtree")
 	flags.IntVar(&options.helpDepth, "help-tree-depth", 0, "Limit command-tree recursion to a positive depth")
 	flags.BoolVar(&options.helpDocs, "help-docs", false, "Show Markdown documentation for this command scope")
+	flags.Bool("color", false, "Enable ANSI color output when supported.")
 
 	root.AddCommand(newInitCommand(options, agents))
 	root.AddCommand(newScanCommand(options))
@@ -272,4 +286,16 @@ func trimVersion(value string) string {
 
 func marshalIndented(value any) ([]byte, error) {
 	return json.MarshalIndent(value, "", "  ")
+}
+
+func isTerminalWriter(writer io.Writer) bool {
+	file, ok := writer.(*os.File)
+	if !ok {
+		return false
+	}
+	info, err := file.Stat()
+	if err != nil {
+		return false
+	}
+	return info.Mode()&os.ModeCharDevice != 0
 }
