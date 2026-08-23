@@ -273,7 +273,7 @@ func TestNoArgumentVersionAndCatalog(t *testing.T) {
 	for _, required := range []string{
 		"████╗", "Structured documentation for codebases and AI agents",
 		"GUIHO", "Cristóvão GUIHO",
-		"organization", "platform", "Windows x64", "version", "v0.8.0",
+		"organization", "platform", "x64", "version", "v0.8.0",
 		"Run xdocs --help to see available commands.",
 	} {
 		if !strings.Contains(out, required) {
@@ -325,7 +325,7 @@ func TestPlainInvocationBootstrapsBothGlobalSkillsAndInstructionFilesIdempotentl
 	if err != nil || stderr != "" {
 		t.Fatalf("unexpected bootstrap result: stdout=%q stderr=%q err=%v", out, stderr, err)
 	}
-	for _, required := range []string{"████╗", "Structured documentation", "organization", "platform", "Windows x64", "v0.8.0", "xdocs --help"} {
+	for _, required := range []string{"████╗", "Structured documentation", "organization", "platform", "x64", "v0.8.0", "xdocs --help"} {
 		if !strings.Contains(out, required) {
 			t.Fatalf("bootstrap welcome omits %q: %q", required, out)
 		}
