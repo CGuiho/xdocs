@@ -2,18 +2,21 @@ package xdocs
 
 import (
 	"encoding/json"
+	"os"
 	"path/filepath"
 	"reflect"
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/CGuiho/xdocs/internal/config"
 )
 
 func TestBuildTreeContainsEveryDiscoveredDescriptorByDirectory(t *testing.T) {
 	root := t.TempDir()
 	missingParent := "missing-parent"
 	files := []File{
-		treeTestFile(root, "XDOCS.md", false, nil),
+		treeTestFile(root, "XDOCS.md", true, nil),
 		treeTestFile(root, "technologies/technologies.xdocs.md", true, treeTestMetadata("technologies", "Technology directory context.", nil)),
 		treeTestFile(root, "technologies/cloud/cloud.xdocs.md", true, treeTestMetadata("cloud", "Cloud directory context.", treeStringPointer("technologies"))),
 		treeTestFile(root, "technologies/cloud/observability/observability.xdocs.md", true, treeTestMetadata("observability", "Observability directory context.", treeStringPointer("cloud"))),
@@ -74,8 +77,8 @@ func TestBuildTreeContainsEveryDiscoveredDescriptorByDirectory(t *testing.T) {
 	if index.Subject != "XDOCS.md" {
 		t.Errorf("root index subject = %q, want XDOCS.md", index.Subject)
 	}
-	if index.Valid {
-		t.Error("special root index should preserve its non-descriptor validity state")
+	if !index.Valid {
+		t.Error("special root index should be a valid navigable tree entry")
 	}
 
 	invalid := byPath["technologies/cloud/broken/broken.xdocs.md"][0]
@@ -155,7 +158,7 @@ func TestTreeRenderersAreDeterministicAndExposeAllPathsAndContext(t *testing.T) 
 		treeTestFile(root, "zeta/zeta.xdocs.md", true, treeTestMetadata("zeta", "Zeta context.", nil)),
 		treeTestFile(root, "alpha/alpha.xdocs.md", true, treeTestMetadata("alpha", "Alpha context.", nil)),
 		treeTestFile(root, "alpha/deep/broken.xdocs.md", false, nil, "Missing YAML frontmatter."),
-		treeTestFile(root, "XDOCS.md", false, nil),
+		treeTestFile(root, "XDOCS.md", true, nil),
 	}
 	reversed := append([]File(nil), files...)
 	for left, right := 0, len(reversed)-1; left < right; left, right = left+1, right-1 {
@@ -192,6 +195,103 @@ func TestTreeRenderersAreDeterministicAndExposeAllPathsAndContext(t *testing.T) 
 			}
 		}
 	}
+	for _, context := range []string{"Alpha context.", "Zeta context.", "Missing YAML frontmatter."} {
+		if !strings.Contains(textFirst, context) {
+			t.Errorf("text tree omitted available context or diagnostic %q:\n%s", context, textFirst)
+		}
+	}
+
+	for path, wantPrefix := range map[string]string{
+		"XDOCS.md":                   "|  |- ",
+		"alpha/alpha.xdocs.md":       "|  |- ",
+		"alpha/deep/broken.xdocs.md": "|    |- ",
+		"zeta/zeta.xdocs.md":         "|  |- ",
+	} {
+		line := treeTestRenderedLine(textFirst, path)
+		if line == "" {
+			t.Errorf("text tree omitted line for %q:\n%s", path, textFirst)
+			continue
+		}
+		if !strings.HasPrefix(line, wantPrefix) {
+			t.Errorf("text tree line for %q = %q, want prefix %q", path, line, wantPrefix)
+		}
+	}
+}
+
+func TestScanTreeRetainsMalformedDescriptorsAndExcludesIgnoredDescriptors(t *testing.T) {
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, "visible", "deep"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(root, "ignored"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeTreeTestDiskFile(t, root, "XDOCS.md", "# Root\n")
+	writeTreeTestDiskFile(t, root, ".gitignore", "ignored/\n")
+	writeTreeTestDiskFile(t, root, "visible/visible.xdocs.md", `---
+subject: visible
+description: Visible directory context.
+parent: null
+children: []
+files: {}
+documents: {}
+tags: []
+keywords: []
+flags: []
+---
+# Visible
+`)
+	writeTreeTestDiskFile(t, root, "visible/deep/broken.xdocs.md", "---\nsubject: broken\n")
+	writeTreeTestDiskFile(t, root, "ignored/ignored.xdocs.md", `---
+subject: ignored
+description: This descriptor is ignored.
+parent: null
+children: []
+files: {}
+documents: {}
+tags: []
+keywords: []
+flags: []
+---
+`)
+
+	cfg, err := config.Defaults(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	scan, err := ScanProject(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	paths := make([]string, 0, len(scan.XDocsFiles))
+	for _, file := range scan.XDocsFiles {
+		paths = append(paths, file.RelativePath)
+	}
+	sort.Strings(paths)
+	if !reflect.DeepEqual(paths, []string{"XDOCS.md", "visible/deep/broken.xdocs.md", "visible/visible.xdocs.md"}) {
+		t.Fatalf("scan descriptor paths = %#v", paths)
+	}
+
+	tree := BuildTree(scan.XDocsFiles)
+	text := RenderTree(tree)
+	for _, path := range []string{"XDOCS.md", "visible/visible.xdocs.md", "visible/deep/broken.xdocs.md"} {
+		if !strings.Contains(text, path) {
+			t.Errorf("scanned tree omitted %q:\n%s", path, text)
+		}
+	}
+	if strings.Contains(text, "ignored/ignored.xdocs.md") {
+		t.Errorf("scanned tree included gitignored descriptor:\n%s", text)
+	}
+	if got := treeTestParentPaths(tree)["visible/deep/broken.xdocs.md"]; got != "visible/visible.xdocs.md" {
+		t.Errorf("scanned malformed descriptor parent = %q, want visible descriptor", got)
+	}
+	broken := treeTestRenderedLine(text, "visible/deep/broken.xdocs.md")
+	if broken == "" || !strings.Contains(broken, "Missing YAML frontmatter") {
+		t.Errorf("scanned tree lost malformed descriptor diagnostic: %q\n%s", broken, text)
+	}
+	if rootIndex := treeTestRenderedLine(text, "XDOCS.md"); rootIndex == "" || strings.Contains(rootIndex, "[invalid]") {
+		t.Errorf("scanned root index should be valid and distinguishable: %q", rootIndex)
+	}
 }
 
 func treeTestFile(root, relativePath string, valid bool, metadata *Metadata, errors ...string) File {
@@ -204,6 +304,14 @@ func treeTestFile(root, relativePath string, valid bool, metadata *Metadata, err
 		Valid:        valid,
 		Errors:       append([]string(nil), errors...),
 		Documents:    []MarkdownDocument{},
+	}
+}
+
+func writeTreeTestDiskFile(t *testing.T, root, relativePath, content string) {
+	t.Helper()
+	path := filepath.Join(root, filepath.FromSlash(relativePath))
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
 	}
 }
 
@@ -261,6 +369,15 @@ func treeTestParentPaths(root *TreeNode) map[string]string {
 	}
 	visit(root, "")
 	return result
+}
+
+func treeTestRenderedLine(rendered, path string) string {
+	for _, line := range strings.Split(rendered, "\n") {
+		if strings.Contains(line, path) {
+			return line
+		}
+	}
+	return ""
 }
 
 func treeStringPointer(value string) *string {
