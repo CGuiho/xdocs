@@ -132,6 +132,26 @@ func TestPromptCatalogIsEmbedded(t *testing.T) {
 	}
 }
 
+func TestInstructionTemplateStatesExplicitDocumentationAuthorization(t *testing.T) {
+	for _, required := range []string{
+		"documentation.directories",
+		"documentation.frontmatter",
+		"ai.mode",
+		"frontmatter: false",
+		"exactly one named descriptor per directory",
+		"xdocs tree",
+		"existing-frontmatter",
+		"--output",
+	} {
+		if !strings.Contains(InstructionTemplate, required) {
+			t.Errorf("instruction template omits %q", required)
+		}
+	}
+	if strings.Contains(InstructionTemplate, "requires confirmation before documentation writes") {
+		t.Error("instruction template still treats ai.mode as the authorization policy")
+	}
+}
+
 func TestSkillInstallStagesBothTargetsBeforeMutation(t *testing.T) {
 	root := t.TempDir()
 	agentsSkill := filepath.Join(root, ".agents", "skills", SkillName)

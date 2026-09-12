@@ -12,6 +12,7 @@ import (
 )
 
 func ScanMetadata(cfg config.Config, options MetaOptions) (MetaResult, error) {
+	includeDocuments := options.IncludeDocuments || options.ExistingFrontmatter
 	target := cfg.CWD
 	if options.TargetPath != "" {
 		target = options.TargetPath
@@ -29,13 +30,15 @@ func ScanMetadata(cfg config.Config, options MetaOptions) (MetaResult, error) {
 	}
 
 	result := MetaResult{
-		Root:             cfg.CWD,
-		TargetPath:       displayTarget(cfg.CWD, target),
-		IncludeDocuments: options.IncludeDocuments,
-		Strict:           options.Strict,
-		Filters:          options.Filters,
-		Descriptors:      []MetaDescriptor{},
-		Errors:           []string{},
+		Root:                cfg.CWD,
+		TargetPath:          displayTarget(cfg.CWD, target),
+		IncludeDocuments:    includeDocuments,
+		ExistingFrontmatter: options.ExistingFrontmatter,
+		Strict:              options.Strict,
+		Filters:             options.Filters,
+		Descriptors:         []MetaDescriptor{},
+		Documents:           []MetaDocument{},
+		Errors:              []string{},
 	}
 	if scanExcludedPath(cfg.CWD, target, cfg.Exclude) {
 		return result, nil
@@ -64,7 +67,11 @@ func ScanMetadata(cfg config.Config, options MetaOptions) (MetaResult, error) {
 		if policy.ignored(path, false) {
 			return nil
 		}
-		if IsDescriptor(path) {
+		if entry.Type()&os.ModeSymlink != 0 {
+			result.Errors = append(result.Errors, fmt.Sprintf("%s: skipped symlink during metadata discovery", slashRelative(cfg.CWD, path)))
+			return nil
+		}
+		if IsDescriptorCandidate(path) {
 			descriptor := parseMetaDescriptor(path, cfg.CWD)
 			filterMetadata(descriptor.Metadata, descriptor.Frontmatter, descriptor.Directory, policy)
 			result.Descriptors = append(result.Descriptors, descriptor)
@@ -81,8 +88,16 @@ func ScanMetadata(cfg config.Config, options MetaOptions) (MetaResult, error) {
 		return MetaResult{}, err
 	}
 	sort.Slice(result.Descriptors, func(i, j int) bool { return result.Descriptors[i].RelativePath < result.Descriptors[j].RelativePath })
-	enrichMeta(result.Descriptors, documents, options.IncludeDocuments, cfg.CWD)
-	result.Descriptors = filterDescriptors(result.Descriptors, options.Filters, options.IncludeDocuments)
+	enrichMeta(result.Descriptors, documents, includeDocuments, options.ExistingFrontmatter, cfg.CWD)
+	if options.ExistingFrontmatter {
+		for _, document := range allMarkdownDocuments(documents) {
+			result.Documents = append(result.Documents, parseDocument(document.Path, cfg.CWD, "", document.FrontmatterRequired, true))
+		}
+	}
+	result.Descriptors = filterDescriptors(result.Descriptors, options.Filters, includeDocuments)
+	if options.ExistingFrontmatter {
+		result.Documents = filterMetaDocuments(result.Documents, options.Filters)
+	}
 	for _, descriptor := range result.Descriptors {
 		for _, message := range descriptor.Errors {
 			result.Errors = append(result.Errors, descriptor.RelativePath+": "+message)
@@ -93,7 +108,34 @@ func ScanMetadata(cfg config.Config, options MetaOptions) (MetaResult, error) {
 			}
 		}
 	}
+	for _, document := range result.Documents {
+		for _, message := range document.Errors {
+			result.Errors = append(result.Errors, document.RelativePath+": "+message)
+		}
+	}
 	return result, nil
+}
+
+func allMarkdownDocuments(documents map[string][]MarkdownDocument) []MarkdownDocument {
+	result := []MarkdownDocument{}
+	for _, values := range documents {
+		result = append(result, values...)
+	}
+	sort.Slice(result, func(i, j int) bool { return result[i].RelativePath < result[j].RelativePath })
+	return result
+}
+
+func filterMetaDocuments(documents []MetaDocument, filters Filters) []MetaDocument {
+	if filters.Owner == "" && filters.Tag == "" && filters.Keyword == "" {
+		return documents
+	}
+	result := []MetaDocument{}
+	for _, document := range documents {
+		if documentMatches(document, filters) {
+			result = append(result, document)
+		}
+	}
+	return result
 }
 
 func parseMetaDescriptor(path, root string) MetaDescriptor {
@@ -104,13 +146,22 @@ func parseMetaDescriptor(path, root string) MetaDescriptor {
 		Documents:    []MetaDocument{},
 		Errors:       []string{},
 	}
-	raw, ok, err := ReadFrontmatter(path)
+	if strings.EqualFold(filepath.Base(path), ".xdocs.md") {
+		result.Errors = append(result.Errors, `Invalid xdocs descriptor filename. Use a named file such as "authentication.xdocs.md"; ".xdocs.md" is only the extension.`)
+	} else if strings.HasSuffix(strings.ToLower(filepath.Base(path)), ".docs.md") {
+		result.Errors = append(result.Errors, `Invalid xdocs descriptor filename. Use a named file such as "authentication.xdocs.md"; ".docs.md" is not a supported descriptor.`)
+	}
+	raw, ok, present, err := readFrontmatterDetailed(path)
 	if err != nil {
 		result.Errors = append(result.Errors, fmt.Sprintf("Read frontmatter: %v", err))
 		return result
 	}
 	if !ok {
-		result.Errors = append(result.Errors, "Missing YAML frontmatter.")
+		if present {
+			result.Errors = append(result.Errors, "Malformed YAML frontmatter: missing a closing delimiter.")
+		} else {
+			result.Errors = append(result.Errors, "Missing YAML frontmatter.")
+		}
 		return result
 	}
 	metadata, frontmatter, errors := parseMetadata(raw)
@@ -126,7 +177,7 @@ func parseMetaDescriptor(path, root string) MetaDescriptor {
 	return result
 }
 
-func enrichMeta(descriptors []MetaDescriptor, documents map[string][]MarkdownDocument, includeDocuments bool, root string) {
+func enrichMeta(descriptors []MetaDescriptor, documents map[string][]MarkdownDocument, includeDocuments, existingFrontmatter bool, root string) {
 	byDirectory := map[string][]int{}
 	for index := range descriptors {
 		byDirectory[descriptors[index].Directory] = append(byDirectory[descriptors[index].Directory], index)
@@ -162,7 +213,7 @@ func enrichMeta(descriptors []MetaDescriptor, documents map[string][]MarkdownDoc
 				continue
 			}
 			if includeDocuments {
-				descriptor.Documents = append(descriptor.Documents, parseDocument(document.Path, root, descriptor.Metadata.Subject, document.FrontmatterRequired))
+				descriptor.Documents = append(descriptor.Documents, parseDocument(document.Path, root, descriptor.Metadata.Subject, document.FrontmatterRequired, existingFrontmatter))
 			}
 		}
 		sort.Slice(descriptor.Documents, func(i, j int) bool {

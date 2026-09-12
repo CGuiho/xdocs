@@ -1,6 +1,7 @@
 package xdocs
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -20,6 +21,7 @@ func ScanProject(cfg config.Config) (ScanResult, error) {
 		XDocsFiles:        []File{},
 		MarkdownDocuments: []MarkdownDocument{},
 		UncoveredPaths:    []string{},
+		Errors:            []string{},
 	}
 	documentsByDirectory := map[string][]MarkdownDocument{}
 	var directories []string
@@ -30,6 +32,7 @@ func ScanProject(cfg config.Config) (ScanResult, error) {
 
 	err = filepath.WalkDir(cfg.CWD, func(path string, entry os.DirEntry, walkErr error) error {
 		if walkErr != nil {
+			result.Errors = append(result.Errors, fmt.Sprintf("Unable to inspect %s: %v", slashRelative(cfg.CWD, path), walkErr))
 			if entry != nil && entry.IsDir() {
 				return filepath.SkipDir
 			}
@@ -48,9 +51,13 @@ func ScanProject(cfg config.Config) (ScanResult, error) {
 		if policy.ignored(path, false) {
 			return nil
 		}
+		if entry.Type()&os.ModeSymlink != 0 {
+			result.Errors = append(result.Errors, fmt.Sprintf("Skipped symlink during discovery: %s", slashRelative(cfg.CWD, path)))
+			return nil
+		}
 		result.TotalFiles++
 		switch {
-		case IsDescriptor(path):
+		case IsDescriptorCandidate(path):
 			file := ParseFile(path, cfg.CWD)
 			filterMetadata(file.Metadata, nil, file.Directory, policy)
 			result.XDocsFiles = append(result.XDocsFiles, file)
@@ -72,11 +79,25 @@ func ScanProject(cfg config.Config) (ScanResult, error) {
 	}
 
 	rootPath := filepath.Join(cfg.CWD, rootFilename)
-	if content, readErr := os.ReadFile(rootPath); readErr == nil && !policy.ignored(rootPath, false) {
-		result.XDocsFiles = append(result.XDocsFiles, File{
-			Path: rootPath, RelativePath: rootFilename, Directory: cfg.CWD,
-			Documents: []MarkdownDocument{}, Body: string(content), Valid: false, Errors: []string{},
-		})
+	rootInfo, rootStatErr := os.Lstat(rootPath)
+	if rootStatErr == nil && rootInfo.Mode()&os.ModeSymlink != 0 {
+		if !policy.ignored(rootPath, false) {
+			result.Errors = append(result.Errors, fmt.Sprintf("Skipped symlink during discovery: %s", rootFilename))
+		}
+		rootStatErr = os.ErrInvalid
+	}
+	if rootStatErr != nil && !errors.Is(rootStatErr, os.ErrNotExist) && !errors.Is(rootStatErr, os.ErrInvalid) {
+		result.Errors = append(result.Errors, fmt.Sprintf("Unable to inspect %s: %v", rootFilename, rootStatErr))
+	}
+	if rootStatErr == nil && !policy.ignored(rootPath, false) {
+		if content, readErr := os.ReadFile(rootPath); readErr == nil {
+			result.XDocsFiles = append(result.XDocsFiles, File{
+				Path: rootPath, RelativePath: rootFilename, Directory: cfg.CWD,
+				Documents: []MarkdownDocument{}, Body: string(content), Valid: false, Errors: []string{},
+			})
+		} else {
+			result.Errors = append(result.Errors, fmt.Sprintf("Unable to read %s: %v", rootFilename, readErr))
+		}
 	}
 	sort.Slice(result.XDocsFiles, func(i, j int) bool { return result.XDocsFiles[i].RelativePath < result.XDocsFiles[j].RelativePath })
 	sort.Slice(result.MarkdownDocuments, func(i, j int) bool {
@@ -85,7 +106,7 @@ func ScanProject(cfg config.Config) (ScanResult, error) {
 	enrichFiles(result.XDocsFiles, documentsByDirectory)
 
 	covered := map[string]bool{}
-	if info, err := os.Stat(rootPath); err == nil && info.Mode().IsRegular() && !policy.ignored(rootPath, false) {
+	if info, err := os.Lstat(rootPath); err == nil && info.Mode().IsRegular() && !policy.ignored(rootPath, false) {
 		covered[cfg.CWD] = true
 	}
 	for _, file := range result.XDocsFiles {
@@ -106,13 +127,21 @@ func ScanProject(cfg config.Config) (ScanResult, error) {
 }
 
 func IsDescriptor(path string) bool {
-	return strings.HasSuffix(strings.ToLower(filepath.Base(path)), descriptorSuffix)
+	name := strings.ToLower(filepath.Base(path))
+	return strings.HasSuffix(name, descriptorSuffix) && name != descriptorSuffix && name != ".docs.md"
+}
+
+// IsDescriptorCandidate includes malformed legacy names so scanning and tree
+// output can report them instead of silently treating them as ordinary notes.
+func IsDescriptorCandidate(path string) bool {
+	name := strings.ToLower(filepath.Base(path))
+	return IsDescriptor(path) || name == descriptorSuffix || strings.HasSuffix(name, ".docs.md")
 }
 
 func IsPlainMarkdown(path string) bool {
 	name := filepath.Base(path)
 	lower := strings.ToLower(name)
-	return strings.HasSuffix(lower, ".md") && !strings.EqualFold(name, rootFilename) && !IsDescriptor(path)
+	return strings.HasSuffix(lower, ".md") && !strings.EqualFold(name, rootFilename) && !IsDescriptorCandidate(path)
 }
 
 func excluded(name string, values []string) bool {
@@ -127,7 +156,7 @@ func excluded(name string, values []string) bool {
 func enrichFiles(files []File, documents map[string][]MarkdownDocument) {
 	byDirectory := map[string][]int{}
 	for index := range files {
-		if !IsDescriptor(files[index].Path) {
+		if !IsDescriptorCandidate(files[index].Path) {
 			continue
 		}
 		byDirectory[files[index].Directory] = append(byDirectory[files[index].Directory], index)
@@ -143,7 +172,7 @@ func enrichFiles(files []File, documents map[string][]MarkdownDocument) {
 	}
 	for index := range files {
 		file := &files[index]
-		if !IsDescriptor(file.Path) {
+		if !IsDescriptorCandidate(file.Path) {
 			continue
 		}
 		file.Documents = append([]MarkdownDocument(nil), documents[file.Directory]...)

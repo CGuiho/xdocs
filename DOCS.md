@@ -16,13 +16,16 @@ keywords:
   - agent resources
 ---
 
+#### &copy; 2026 [GUIHO](https://guiho.co) as represented by [Cristóvão GUIHO](https://guiho.co/cguiho) All Rights Reserved.
+
 # xdocs Documentation
 
 ## Purpose
 
 xdocs gives humans and agents a deterministic map of a repository through one
-root `XDOCS.md`, one named `*.xdocs.md` descriptor per documented module, and
-declared companion Markdown documents.
+root `XDOCS.md`, one named `*.xdocs.md` descriptor per documented directory, and
+declared companion Markdown documents. Discovery is read-only and complete;
+descriptor and ordinary Markdown writes require explicit project policy.
 
 The active implementation is a native Go CLI. The historical TypeScript tree
 is retained as migration reference only and is not used by the executable,
@@ -83,6 +86,10 @@ multiple YAML documents, and then validates:
 - `schema` is `1`;
 - the only descriptor extension is `.xdocs.md`;
 - `ai.mode` defaults to `auto` and accepts only `auto` or `prompt`;
+- `documentation.directories` defaults to an empty list and contains only
+  repository-relative literal directory paths;
+- `documentation.frontmatter` defaults to an empty list and each rule contains
+  a repository-relative `pattern` and `kind` of `file` or `directory`;
 - `ignore.gitignore` defaults to `true`;
 - each `ignore.rules` entry has a non-empty, syntactically valid,
   repository-relative forward-slash glob, `kind` set to `file` or `directory`,
@@ -92,9 +99,23 @@ multiple YAML documents, and then validates:
 
 Global state and update cache live under `~/.guiho/xdocs/`.
 
-In `auto` mode, agents make relevant documentation changes in the same work
-unit. In `prompt` mode, agents announce the needed documentation changes and
-wait for confirmation.
+In `auto` mode, agents make already-authorized documentation changes in the
+same work unit. In `prompt` mode, agents announce those changes and wait for
+confirmation. `ai.mode` controls timing only and never expands authorization.
+
+`documentation.directories` grants descriptor maintenance for each listed
+directory and its non-excluded descendants. `.` grants the complete
+non-excluded project; `[]` grants none. `xdocs init` writes the empty defaults
+and does not populate this allowlist. Discovery, metadata reads, tree output,
+and health checks remain available for every non-excluded directory regardless
+of the allowlist.
+
+`documentation.frontmatter` grants ordinary Markdown frontmatter only when a
+rule's `pattern` and `kind` match a document and the document is below an
+authorized directory. A matching legacy `ignore.rules` entry with
+`frontmatter: false` is an explicit denial and always wins. A plain Markdown
+file can therefore remain listed in its descriptor's `documents` map without
+frontmatter; missing headers are valid unless both opt-ins match.
 
 The default ignore contract is:
 
@@ -155,16 +176,23 @@ Descriptors require:
 - `tags`, `keywords`, and `flags`: string arrays;
 - optional `status`.
 
-The root `XDOCS.md` has no frontmatter. A bare `.xdocs.md` filename is invalid.
-Multiple descriptors in one directory are invalid. Every plain sibling
-Markdown document not excluded by `.gitignore` must be declared, and every
-declared non-excluded document must exist.
+The root `XDOCS.md` has no frontmatter and is the single special project index.
+A new directory descriptor should use the directory name, such as
+`technologies/technologies.xdocs.md`. A bare `.xdocs.md` filename and legacy
+`.docs.md` files are invalid. Multiple named descriptors in one directory are
+invalid. The descriptor body carries useful directory context; xdocs does not
+create a separate summary or detail file for it. Every plain sibling Markdown
+document not excluded by `.gitignore` must be declared, and every declared
+non-excluded document must exist.
 
 Companion documents require `name`, `purpose`, `description`, `created`
-(`YYYY-MM-DD`), `owner`, `flags`, `tags`, and `keywords` unless a matching
-ignore rule sets `frontmatter: false`. `owner` must equal the owning descriptor
-subject when frontmatter is required. Opted-out documents remain associated
-with that descriptor subject without xdocs modifying their content.
+(`YYYY-MM-DD`), `owner`, `flags`, `tags`, and `keywords` only when an explicit
+`documentation.frontmatter` rule and an authorized directory match. The
+`owner` must equal the owning descriptor subject when frontmatter is required.
+Missing frontmatter is valid otherwise. The default legacy `ignore.rules`
+denials protect `AGENTS.md`, `README.md`, and `CLAUDE.md`; XDocs leaves those and
+other ordinary Markdown bodies and headers unchanged unless the project has
+explicitly authorized the exact scope.
 
 ## Command catalog
 
@@ -173,22 +201,32 @@ with that descriptor subject without xdocs modifying their content.
 - `init [--local]` creates missing root files and installs the embedded skill.
 - `scan` reports non-excluded descriptor and companion-document coverage and,
   in verbose output, identifies documents whose frontmatter is not required.
-- `doctor [path]` validates descriptors, required companion metadata, tree
-  links, and documented files. `--warnings-as-errors` promotes warnings.
+- `doctor [path]` validates descriptors, authorized companion metadata, tree
+  links, and documented files. `--existing-frontmatter` audits malformed
+  headers that already exist on otherwise non-required Markdown without
+  requiring ownership or writing repairs. `--warnings-as-errors` promotes
+  warnings.
 
 ### Documentation views
 
-- `generate [path]` renders a project or module document.
+- `generate [path]` renders a project or module report.
 - `merge [path]` combines descriptors with source markers.
-- `tree` renders containment hierarchy as text, Markdown, or JSON.
+- `tree` renders the complete deepest containment hierarchy as text, Markdown,
+  or JSON, including the special root index and diagnostically available
+  descriptor paths.
 - `list [path]` lists documented files and companion documents.
 
 ### Agent context
 
-- `meta [path]` reads frontmatter only. `--documents` includes required
-  companion frontmatter and tracks opted-out documents with
-  `frontmatterRequired: false`; `--owner`, `--tag`, and `--keyword` filter
-  before full reads.
+- `meta [path]` reads frontmatter only. `--documents` reads companion
+  frontmatter when it is required and tracks ordinary Markdown with
+  `frontmatterRequired: false`; `--existing-frontmatter` implies
+  `--documents`, audits every discovered ordinary Markdown file in scope
+  (including unlisted and descriptorless files), and returns those audited
+  documents in the top-level `documents` JSON array and matching text/Markdown
+  sections. Missing headers remain valid; existing headers are checked for
+  generic YAML object structure without imposing the companion owner schema.
+  `--owner`, `--tag`, and `--keyword` filter before full reads.
 - `context <query> [path]` tokenizes a query, applies stable weighted ranking,
   and returns the smallest useful descriptor/file/document reading set.
   `--explain` includes match reasons.
@@ -204,7 +242,8 @@ paths. `--local` chooses project scope. Instruction apply/update/remove is
 idempotent, preserves unmanaged content and line endings, and refuses malformed
 managed markers. The plain-invocation bootstrap uses the same embedded sources
 and mutation services; explicit agent commands remain available for deliberate
-management.
+management. These setup operations do not grant permission to edit the
+documentation corpus or add frontmatter to agent instruction files.
 
 ### Upgrade and uninstall
 
@@ -217,6 +256,14 @@ Release discovery accepts only `xdocs/vX.Y.Z`. The list is SemVer-sorted before
 pagination, defaults to eight entries, and retains full machine-readable
 metadata in JSON. Direct upgrade uses the linker-embedded build target so ARMv6
 and ARMv7 remain distinct.
+
+All scan, meta, context, and doctor operations are read-only. Without
+`--output`, tree discovery is also read-only. `generate`, `merge`, and `tree`
+write nothing unless the user supplies one exact `--output` path. That path authorizes only the requested report; it cannot
+authorize descriptor or companion metadata changes, and a descriptor-shaped
+destination is rejected. Output validation runs before replacement so a rejected
+destination retains its original bytes. No command creates extra summary,
+companion, or index files as a side effect.
 
 ## Help and output
 

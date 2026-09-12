@@ -27,15 +27,37 @@ This project uses **xdocs** for structured, machine-readable documentation.
 Load the ` + "`guiho-s-xdocs`" + ` agent skill when working with structured
 documentation, ` + "`XDOCS.md`" + ` indexes, named ` + "`*.xdocs.md`" + ` descriptors,
 companion documents, repository scanning, metadata discovery, or validation.
+Use exactly one named descriptor per directory, such as
+` + "`technologies/technologies.xdocs.md`" + `. The bare ` + "`.xdocs.md`" + ` and legacy
+` + "`.docs.md`" + ` names are invalid; the root ` + "`XDOCS.md`" + ` index is a special setup
+file, not a second per-directory descriptor.
 
 The project configuration is ` + "`xdocs.yaml`" + `. Respect ` + "`ai.mode`" + `:
-` + "`prompt`" + ` requires confirmation before documentation writes, while
-` + "`auto`" + ` permits immediate descriptor maintenance. Also respect
-` + "`ignore.gitignore`" + ` and every ` + "`ignore.rules`" + ` entry: excluded paths are
-outside the xdocs corpus, while ` + "`frontmatter: false`" + ` keeps matching documents
-tracked without adding or requiring YAML frontmatter. Use ` + "`xdocs scan`" + `,
-` + "`xdocs meta`" + `, ` + "`xdocs context`" + `, ` + "`xdocs tree`" + `, and
-` + "`xdocs doctor`" + ` to discover and validate documentation.
+` + "`prompt`" + ` asks before already-authorized documentation writes, while
+` + "`auto`" + ` performs them immediately. Neither mode grants permission.
+` + "`documentation.directories`" + ` lists repository-relative directories whose
+non-excluded subtrees may receive descriptor writes; ` + "`.`" + ` grants the whole
+project and an empty list grants none. ` + "`documentation.frontmatter`" + ` contains
+explicit ` + "`{pattern, kind}`" + ` rules for ordinary Markdown metadata, and those
+rules work only inside an authorized directory. A legacy ` + "`ignore.rules`" + ` entry
+with ` + "`frontmatter: false`" + ` always denies frontmatter and wins over an opt-in.
+Keep ordinary Markdown listed in descriptor ` + "`documents`" + ` metadata without
+adding headers unless both explicit grants match. Respect
+` + "`ignore.gitignore`" + ` and every ` + "`ignore.rules`" + ` entry.
+
+Read-only ` + "`xdocs scan`" + `, ` + "`xdocs meta`" + `, ` + "`xdocs context`" + `,
+and ` + "`xdocs doctor`" + ` operations, plus ` + "`xdocs tree`" + ` without
+` + "`--output`" + `, discover independently of the write allowlist. ` + "`xdocs tree`" + ` walks every non-excluded directory to arbitrary depth,
+retains every named descriptor and the special root index, and reports malformed
+or orphaned metadata without hiding paths. ` + "`meta --existing-frontmatter`" + ` and
+` + "`doctor --existing-frontmatter`" + ` audit existing ordinary Markdown headers
+without requiring missing headers or writing repairs. ` + "`generate`" + `,
+` + "`merge`" + `, and ` + "`tree`" + ` print reports to stdout unless one exact
+` + "`--output`" + ` path is requested; that report path does not authorize any other
+document writes and a generated report is never a descriptor.
+
+The explicit ` + "`xdocs init`" + ` root-index creation and agent-resource bootstrap
+are setup exceptions. They do not authorize arbitrary Markdown metadata edits.
 `
 
 type Service struct {

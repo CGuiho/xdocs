@@ -14,12 +14,14 @@ import (
 )
 
 type pathPolicy struct {
-	root             string
-	useGitignore     bool
-	gitignoreRules   []gitignoreRule
-	frontmatterRules []configuredIgnoreRule
-	loaded           map[string]bool
-	ignoreCase       bool
+	root               string
+	useGitignore       bool
+	gitignoreRules     []gitignoreRule
+	frontmatterRules   []configuredIgnoreRule
+	documentationDirs  []string
+	documentationRules []configuredDocumentationRule
+	loaded             map[string]bool
+	ignoreCase         bool
 }
 
 type gitignoreRule struct {
@@ -36,17 +38,30 @@ type configuredIgnoreRule struct {
 	pattern  *regexp.Regexp
 }
 
+type configuredDocumentationRule struct {
+	kind     string
+	hasSlash bool
+	pattern  *regexp.Regexp
+}
+
 func newPathPolicy(cfg config.Config, target string) (*pathPolicy, error) {
 	policy := &pathPolicy{
-		root:             filepath.Clean(cfg.CWD),
-		useGitignore:     cfg.Gitignore,
-		gitignoreRules:   []gitignoreRule{},
-		frontmatterRules: []configuredIgnoreRule{},
-		loaded:           map[string]bool{},
-		ignoreCase:       runtime.GOOS == "windows",
+		root:               filepath.Clean(cfg.CWD),
+		useGitignore:       cfg.Gitignore,
+		gitignoreRules:     []gitignoreRule{},
+		frontmatterRules:   []configuredIgnoreRule{},
+		documentationDirs:  append([]string(nil), cfg.Documentation.Directories...),
+		documentationRules: []configuredDocumentationRule{},
+		loaded:             map[string]bool{},
+		ignoreCase:         runtime.GOOS == "windows",
 	}
 	for _, rule := range cfg.IgnoreRules {
 		policy.frontmatterRules = append(policy.frontmatterRules, configuredIgnoreRule{
+			kind: rule.Kind, hasSlash: strings.Contains(rule.Pattern, "/"), pattern: compileGlob(rule.Pattern, policy.ignoreCase),
+		})
+	}
+	for _, rule := range cfg.Documentation.Frontmatter {
+		policy.documentationRules = append(policy.documentationRules, configuredDocumentationRule{
 			kind: rule.Kind, hasSlash: strings.Contains(rule.Pattern, "/"), pattern: compileGlob(rule.Pattern, policy.ignoreCase),
 		})
 	}
@@ -214,6 +229,8 @@ func relativeToBase(relative, base string) (string, bool) {
 
 func (policy *pathPolicy) frontmatterRequired(pathname string) bool {
 	relative := slashRelative(policy.root, pathname)
+	// Legacy ignore rules are explicit denials and always win over the new
+	// opt-in policy.
 	for _, rule := range policy.frontmatterRules {
 		if rule.kind == "file" {
 			if matchConfiguredPattern(rule, relative) {
@@ -233,10 +250,74 @@ func (policy *pathPolicy) frontmatterRequired(pathname string) bool {
 			directory = next
 		}
 	}
-	return true
+	if !policy.documentationDirectoryAuthorized(path.Dir(relative)) {
+		return false
+	}
+	for _, rule := range policy.documentationRules {
+		if rule.kind == "file" {
+			if matchConfiguredDocumentationPattern(rule, relative) {
+				return true
+			}
+			continue
+		}
+		directory := path.Dir(relative)
+		for directory != "." && directory != "/" && directory != "" {
+			if matchConfiguredDocumentationPattern(rule, directory) {
+				return true
+			}
+			next := path.Dir(directory)
+			if next == directory {
+				break
+			}
+			directory = next
+		}
+	}
+	return false
+}
+
+func (policy *pathPolicy) documentationDirectoryAuthorized(directory string) bool {
+	directory = path.Clean(directory)
+	if directory == ".." || strings.HasPrefix(directory, "../") || path.IsAbs(directory) || windowsDrivePath(directory) {
+		return false
+	}
+	for _, allowed := range policy.documentationDirs {
+		allowed = path.Clean(allowed)
+		if allowed == "." || pathEqual(allowed, directory, policy.ignoreCase) || pathPrefix(allowed, directory, policy.ignoreCase) {
+			return true
+		}
+	}
+	return false
+}
+
+func windowsDrivePath(value string) bool {
+	return len(value) >= 2 && ((value[0] >= 'a' && value[0] <= 'z') || (value[0] >= 'A' && value[0] <= 'Z')) && value[1] == ':'
+}
+
+func pathEqual(left, right string, ignoreCase bool) bool {
+	if ignoreCase {
+		return strings.EqualFold(left, right)
+	}
+	return left == right
+}
+
+func pathPrefix(prefix, value string, ignoreCase bool) bool {
+	if len(value) <= len(prefix) {
+		return false
+	}
+	if ignoreCase {
+		return strings.HasPrefix(strings.ToLower(value), strings.ToLower(prefix)+"/")
+	}
+	return strings.HasPrefix(value, prefix+"/")
 }
 
 func matchConfiguredPattern(rule configuredIgnoreRule, relative string) bool {
+	if rule.hasSlash {
+		return rule.pattern.MatchString(relative)
+	}
+	return rule.pattern.MatchString(path.Base(relative))
+}
+
+func matchConfiguredDocumentationPattern(rule configuredDocumentationRule, relative string) bool {
 	if rule.hasSlash {
 		return rule.pattern.MatchString(relative)
 	}

@@ -24,13 +24,17 @@ func Doctor(cfg config.Config, options DoctorOptions) (DoctorResult, error) {
 		return DoctorResult{}, err
 	}
 	meta, err := ScanMetadata(cfg, MetaOptions{
-		TargetPath:       options.TargetPath,
-		IncludeDocuments: options.IncludeDocuments,
+		TargetPath:          options.TargetPath,
+		IncludeDocuments:    options.IncludeDocuments,
+		ExistingFrontmatter: options.ExistingFrontmatter,
 	})
 	if err != nil {
 		return DoctorResult{}, err
 	}
 	issues := []DoctorIssue{}
+	for _, message := range scan.Errors {
+		issues = append(issues, DoctorIssue{Severity: "error", Code: "discovery", Message: message})
+	}
 	for _, file := range scan.XDocsFiles {
 		if !inScope(file.Path, target) {
 			continue
@@ -66,6 +70,16 @@ func Doctor(cfg config.Config, options DoctorOptions) (DoctorResult, error) {
 			if info, err := os.Stat(filepath.Join(descriptor.Directory, name)); err != nil || !info.Mode().IsRegular() {
 				issues = append(issues, DoctorIssue{Severity: "error", Code: "file-missing", Path: &path, Message: fmt.Sprintf(`Missing documented file: "%s" is listed in metadata but does not exist beside the descriptor.`, name)})
 			}
+		}
+	}
+	for _, document := range meta.Documents {
+		documentPath := document.RelativePath
+		severity := "warning"
+		if options.WarningsAsErrors {
+			severity = "error"
+		}
+		for _, message := range document.Errors {
+			issues = append(issues, DoctorIssue{Severity: severity, Code: "document-metadata", Path: &documentPath, Message: message})
 		}
 	}
 	validation := ValidateTree(scan.XDocsFiles)
