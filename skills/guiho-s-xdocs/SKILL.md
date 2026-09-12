@@ -12,9 +12,9 @@ keywords:
   - guiho-s-xdocs
   - xdocs metadata
   - documentation workflow
-version: "0.11.0"
+version: "0.12.0"
 metadata:
-  version: "0.11.0"
+  version: "0.12.0"
 ---
 
 #### &copy; 2026 [GUIHO](https://guiho.co) as represented by [Cristóvão GUIHO](https://guiho.co/cguiho) All Rights Reserved.
