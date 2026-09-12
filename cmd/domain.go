@@ -326,6 +326,11 @@ func newTreeCommand(options *commonOptions) *cobra.Command {
 			for _, message := range scan.Errors {
 				fmt.Fprintln(command.ErrOrStderr(), "error: "+message)
 			}
+			for _, file := range scan.XDocsFiles {
+				for _, message := range file.Errors {
+					fmt.Fprintf(command.ErrOrStderr(), "error: %s: %s\n", file.RelativePath, message)
+				}
+			}
 			validation := domain.ValidateTree(scan.XDocsFiles)
 			for _, message := range validation.Warnings {
 				fmt.Fprintln(command.ErrOrStderr(), "warning: "+message)
@@ -560,6 +565,25 @@ func renderMeta(command *cobra.Command, format string, result domain.MetaResult)
 				fmt.Fprintln(out)
 			}
 		}
+		if len(result.Documents) > 0 {
+			fmt.Fprintln(out, "## Audited Documents")
+			fmt.Fprintln(out)
+			for _, document := range result.Documents {
+				status := "invalid"
+				if document.Valid {
+					status = "valid"
+				}
+				fmt.Fprintf(out, "- `%s` (%s", document.RelativePath, status)
+				if !document.FrontmatterRequired {
+					fmt.Fprint(out, ", frontmatter: not required")
+				}
+				fmt.Fprintln(out, ")")
+				for _, message := range document.Errors {
+					fmt.Fprintln(out, "  - "+message)
+				}
+			}
+			fmt.Fprintln(out)
+		}
 		if len(result.Errors) > 0 {
 			fmt.Fprintln(out, "\n## Errors")
 			for _, message := range result.Errors {
@@ -593,6 +617,23 @@ func renderMeta(command *cobra.Command, format string, result domain.MetaResult)
 					fmt.Fprint(out, " frontmatter=not-required")
 				}
 				fmt.Fprintln(out)
+			}
+		}
+	}
+	if len(result.Documents) > 0 {
+		fmt.Fprintln(out, "\naudited documents:")
+		for _, document := range result.Documents {
+			status := "invalid"
+			if document.Valid {
+				status = "valid"
+			}
+			fmt.Fprintf(out, "  %s [%s]", document.RelativePath, status)
+			if !document.FrontmatterRequired {
+				fmt.Fprint(out, " frontmatter=not-required")
+			}
+			fmt.Fprintln(out)
+			for _, message := range document.Errors {
+				fmt.Fprintln(out, "    error: "+message)
 			}
 		}
 	}
@@ -673,6 +714,7 @@ type metaJSONResult struct {
 	Strict              bool                 `json:"strict"`
 	Filters             domain.Filters       `json:"filters"`
 	Descriptors         []metaJSONDescriptor `json:"descriptors"`
+	Documents           []metaJSONDocument   `json:"documents"`
 	Errors              []string             `json:"errors"`
 }
 
@@ -681,7 +723,7 @@ func metaJSON(result domain.MetaResult) metaJSONResult {
 		Root: result.Root, TargetPath: result.TargetPath,
 		IncludeDocuments: result.IncludeDocuments, ExistingFrontmatter: result.ExistingFrontmatter,
 		Strict: result.Strict, Filters: result.Filters,
-		Descriptors: []metaJSONDescriptor{}, Errors: append([]string{}, result.Errors...),
+		Descriptors: []metaJSONDescriptor{}, Documents: []metaJSONDocument{}, Errors: append([]string{}, result.Errors...),
 	}
 	for _, descriptor := range result.Descriptors {
 		entry := metaJSONDescriptor{
@@ -707,6 +749,19 @@ func metaJSON(result domain.MetaResult) metaJSONResult {
 			entry.Documents = append(entry.Documents, item)
 		}
 		projected.Descriptors = append(projected.Descriptors, entry)
+	}
+	for _, document := range result.Documents {
+		item := metaJSONDocument{
+			Path: document.Path, RelativePath: document.RelativePath, Directory: document.Directory,
+			Name: document.Name, FrontmatterRequired: document.FrontmatterRequired,
+			Valid: document.Valid, Frontmatter: document.Frontmatter,
+			Errors: append([]string{}, document.Errors...),
+		}
+		if document.Owner != "" {
+			owner := document.Owner
+			item.Owner = &owner
+		}
+		projected.Documents = append(projected.Documents, item)
 	}
 	return projected
 }

@@ -81,7 +81,8 @@ func TestWriteReportAllowsExplicitlyAuthorizedGenericFrontmatter(t *testing.T) {
 	if err := os.Mkdir(filepath.Join(root, "notes"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := WriteReport(cfg, "notes/report.md", []byte("---\nname: report\n---\nbody\n")); err != nil {
+	valid := "---\nname: report\npurpose: Explain the report.\ndescription: Report metadata.\ncreated: 2026-09-12\nowner: xdocs\nflags: []\ntags: []\nkeywords: []\n---\nbody\n"
+	if err := WriteReport(cfg, "notes/report.md", []byte(valid)); err != nil {
 		t.Fatal(err)
 	}
 	content, err := os.ReadFile(filepath.Join(root, "notes", "report.md"))
@@ -90,6 +91,26 @@ func TestWriteReportAllowsExplicitlyAuthorizedGenericFrontmatter(t *testing.T) {
 	}
 	if !strings.HasPrefix(string(content), "---\nname: report") {
 		t.Fatalf("authorized report was not written: %q", content)
+	}
+	if err := WriteReport(cfg, "notes/report.md", []byte("---\nname: [invalid]\npurpose: Explain the report.\ndescription: Report metadata.\ncreated: 2026-09-12\nowner: xdocs\nflags: []\ntags: []\nkeywords: []\n---\nchanged\n")); err == nil {
+		t.Fatal("authorized report with invalid companion field type was accepted")
+	}
+	unchanged, err := os.ReadFile(filepath.Join(root, "notes", "report.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(unchanged) != valid {
+		t.Fatalf("invalid authorized report changed destination: %q", unchanged)
+	}
+	if err := WriteReport(cfg, "notes/report.md", []byte(" \n---\nname: report\npurpose: Explain the report.\ndescription: Report metadata.\ncreated: 2026-09-12\nowner: xdocs\nflags: []\ntags: []\nkeywords: []\n---\nchanged\n")); err == nil {
+		t.Fatal("report with a non-leading frontmatter opener was accepted")
+	}
+	unchanged, err = os.ReadFile(filepath.Join(root, "notes", "report.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(unchanged) != valid {
+		t.Fatalf("non-leading frontmatter rejection changed destination: %q", unchanged)
 	}
 }
 

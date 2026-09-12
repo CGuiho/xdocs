@@ -220,8 +220,12 @@ explicitly authorized the exact scope.
 
 - `meta [path]` reads frontmatter only. `--documents` reads companion
   frontmatter when it is required and tracks ordinary Markdown with
-  `frontmatterRequired: false`; `--existing-frontmatter` additionally reads
-  and validates headers that already exist on otherwise non-required documents.
+  `frontmatterRequired: false`; `--existing-frontmatter` implies
+  `--documents`, audits every discovered ordinary Markdown file in scope
+  (including unlisted and descriptorless files), and returns those audited
+  documents in the top-level `documents` JSON array and matching text/Markdown
+  sections. Missing headers remain valid; existing headers are checked for
+  generic YAML object structure without imposing the companion owner schema.
   `--owner`, `--tag`, and `--keyword` filter before full reads.
 - `context <query> [path]` tokenizes a query, applies stable weighted ranking,
   and returns the smallest useful descriptor/file/document reading set.

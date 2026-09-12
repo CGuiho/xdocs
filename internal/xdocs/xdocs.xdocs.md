@@ -9,14 +9,15 @@ files:
   metadata.go: Exact YAML frontmatter extraction and typed descriptor/document decoding with read-only existing-header auditing.
   discovery.go: Exclusion-aware complete descriptor and companion-document discovery, including invalid descriptor candidates and traversal diagnostics.
   output.go: Preflighted, project-bounded, atomic single-file report output.
-  tree.go: Synchronized parent-child, single-root, duplicate, orphan, and cycle validation with deterministic tree construction.
+  tree.go: Directory-containment tree construction that retains every descriptor candidate, plus separate metadata relationship validation.
   meta.go: Metadata-only scoped reads and filters.
   context.go: Ranked minimal reading-set recommendations.
   doctor.go: Descriptor, companion, tree, and documented-file health checks.
   render.go: Deterministic text, Markdown, and JSON domain rendering.
   xdocs_test.go: Discovery, metadata, context, tree, doctor, and existing-header audit regression tests.
   ignore_test.go: Gitignore, negation, authorization, file/directory rule, tracking, context, and doctor regression tests.
-  output_test.go: Atomic report output, descriptor rejection, exclusion, missing-parent, and symlink safety tests.
+  tree_test.go: Deep filesystem tree coverage, malformed and duplicate descriptor retention, context, indentation, and JSON-cycle regressions.
+  output_test.go: Atomic report output, descriptor rejection, strict frontmatter schema, exclusion, missing-parent, and symlink safety tests.
 documents: {}
 tags:
   - structured-documentation

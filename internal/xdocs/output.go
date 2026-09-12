@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/CGuiho/xdocs/internal/config"
-	"go.yaml.in/yaml/v3"
 )
 
 // WriteReport writes exactly one explicitly requested report destination. It
@@ -60,7 +59,7 @@ func WriteReport(cfg config.Config, destination string, content []byte) error {
 }
 
 func validateReportContent(cfg config.Config, target string, content []byte) error {
-	_, _, ok, present := ExtractFrontmatterDetailed(string(content))
+	raw, _, ok, present := ExtractFrontmatterDetailed(string(content))
 	if !present {
 		return nil
 	}
@@ -74,13 +73,15 @@ func validateReportContent(cfg config.Config, target string, content []byte) err
 	if !policy.frontmatterRequired(target) {
 		return fmt.Errorf("refusing to write Markdown frontmatter without explicit documentation.frontmatter authorization: %s", filepath.ToSlash(slashRelative(cfg.CWD, target)))
 	}
-	frontmatter, _, _, _ := ExtractFrontmatterDetailed(string(content))
-	var object map[string]any
-	if err := yaml.Unmarshal([]byte(frontmatter), &object); err != nil {
+	frontmatter, err := decodeFrontmatterObject(raw)
+	if err != nil {
 		return fmt.Errorf("refusing to write invalid report frontmatter: %w", err)
 	}
-	if object == nil {
+	if frontmatter == nil {
 		return fmt.Errorf("refusing to write report frontmatter: expected a YAML object")
+	}
+	if errors := validateCompanionFrontmatter(frontmatter, ""); len(errors) > 0 {
+		return fmt.Errorf("refusing to write invalid companion frontmatter: %s", strings.Join(errors, "; "))
 	}
 	return nil
 }

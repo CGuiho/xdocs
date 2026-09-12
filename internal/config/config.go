@@ -424,6 +424,12 @@ func validateDocumentationYAML(content []byte) error {
 		return nil
 	}
 	for index := 0; index+1 < len(root.Content); index += 2 {
+		key := root.Content[index]
+		if key.Value == "<<" || key.Tag == "!!merge" || key.Alias != nil {
+			return apperror.New(apperror.Configuration, "xdocs configuration must not use root YAML merge keys or aliases")
+		}
+	}
+	for index := 0; index+1 < len(root.Content); index += 2 {
 		if root.Content[index].Value != "documentation" {
 			continue
 		}
@@ -433,6 +439,9 @@ func validateDocumentationYAML(content []byte) error {
 }
 
 func validateDocumentationNode(node *yaml.Node) error {
+	if err := rejectDocumentationAliases(node); err != nil {
+		return err
+	}
 	if node.Kind != yaml.MappingNode {
 		return apperror.New(apperror.Configuration, "documentation must be a YAML object")
 	}
@@ -463,6 +472,21 @@ func validateDocumentationNode(node *yaml.Node) error {
 					}
 				}
 			}
+		}
+	}
+	return nil
+}
+
+func rejectDocumentationAliases(node *yaml.Node) error {
+	if node == nil {
+		return nil
+	}
+	if node.Anchor != "" || node.Alias != nil || node.Tag == "!!merge" || node.Value == "<<" {
+		return apperror.New(apperror.Configuration, "documentation policy must not use YAML anchors, aliases, or merge keys")
+	}
+	for _, child := range node.Content {
+		if err := rejectDocumentationAliases(child); err != nil {
+			return err
 		}
 	}
 	return nil

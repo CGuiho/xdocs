@@ -2,77 +2,151 @@ package xdocs
 
 import (
 	"fmt"
+	"path/filepath"
 	"sort"
 	"strings"
 )
 
+// BuildTree builds a display tree from directory containment. Descriptor
+// metadata relationships remain a doctor concern; using them here would hide
+// malformed, orphaned, or duplicate descriptors from the navigable tree.
 func BuildTree(files []File) *TreeNode {
-	nodes := map[string]*TreeNode{}
+	root := &TreeNode{
+		Subject:     "(root)",
+		Description: "Project XDocs tree.",
+		Kind:        "project",
+		Valid:       true,
+		Children:    []*TreeNode{},
+	}
+
+	type entry struct {
+		file  File
+		node  *TreeNode
+		dir   string
+		depth int
+	}
+	entries := make([]entry, 0, len(files))
 	for _, file := range files {
-		if file.Metadata == nil {
-			continue
+		kind := "descriptor"
+		valid := file.Valid
+		if !IsDescriptorCandidate(file.Path) {
+			if !strings.EqualFold(file.RelativePath, rootFilename) {
+				continue
+			}
+			kind = "index"
+			// XDOCS.md is a special navigable index. It has no descriptor
+			// frontmatter, so File.Valid does not describe its display state.
+			valid = true
 		}
 		path := file.RelativePath
-		nodes[file.Metadata.Subject] = &TreeNode{
-			Subject:     file.Metadata.Subject,
-			Description: file.Metadata.Description,
-			Path:        &path,
-			Children:    []*TreeNode{},
+		subject := filepath.Base(file.RelativePath)
+		description := ""
+		errors := append([]string(nil), file.Errors...)
+		if file.Metadata != nil {
+			subject = file.Metadata.Subject
+			description = file.Metadata.Description
+		} else if len(errors) > 0 {
+			description = errors[0]
 		}
-	}
-	var root *TreeNode
-	for _, file := range files {
-		if file.Metadata == nil {
-			continue
+		if subject == "" {
+			subject = file.RelativePath
 		}
-		node := nodes[file.Metadata.Subject]
-		if file.Metadata.Parent == nil {
-			if root == nil {
-				root = node
-			}
-			continue
-		}
-		if parent := nodes[*file.Metadata.Parent]; parent != nil && node != nil {
-			addChild(parent, node)
-		}
-	}
-	for _, file := range files {
-		if file.Metadata == nil {
-			continue
-		}
-		parent := nodes[file.Metadata.Subject]
-		for _, childName := range file.Metadata.Children {
-			if child := nodes[childName]; child != nil {
-				addChild(parent, child)
+		if description == "" {
+			if kind == "index" {
+				description = "Repository root index."
+			} else {
+				description = "Descriptor metadata is invalid or unavailable."
 			}
 		}
-	}
-	for _, node := range nodes {
-		sort.Slice(node.Children, func(i, j int) bool { return node.Children[i].Subject < node.Children[j].Subject })
-	}
-	if root != nil {
-		return root
-	}
-	root = &TreeNode{Subject: "(root)", Description: "No root xdocs descriptor found.", Children: []*TreeNode{}}
-	children := map[string]bool{}
-	for _, file := range files {
-		if file.Metadata == nil {
-			continue
+		node := &TreeNode{
+			Subject: subject, Description: description, Path: &path,
+			Kind: kind, Valid: valid, Errors: errors, Children: []*TreeNode{},
 		}
-		for _, child := range file.Metadata.Children {
-			children[child] = true
-		}
-		if file.Metadata.Parent != nil {
-			children[file.Metadata.Subject] = true
-		}
+		directory := filepath.Clean(file.Directory)
+		entries = append(entries, entry{file: file, node: node, dir: directory, depth: pathDepth(directory)})
 	}
-	for subject, node := range nodes {
-		if !children[subject] {
-			root.Children = append(root.Children, node)
+	sort.SliceStable(entries, func(i, j int) bool {
+		return entries[i].file.RelativePath < entries[j].file.RelativePath
+	})
+
+	// Only named descriptors can contain descendant descriptors. The root
+	// index is retained as a project child and is never treated as a descriptor.
+	descriptorEntries := make([]int, 0, len(entries))
+	for index, item := range entries {
+		if item.node.Kind == "descriptor" {
+			descriptorEntries = append(descriptorEntries, index)
 		}
 	}
-	sort.Slice(root.Children, func(i, j int) bool { return root.Children[i].Subject < root.Children[j].Subject })
+	for index := range entries {
+		item := &entries[index]
+		parent := -1
+		bestDepth := -1
+		if item.node.Kind == "descriptor" {
+			for _, candidateIndex := range descriptorEntries {
+				if candidateIndex == index {
+					continue
+				}
+				candidate := entries[candidateIndex]
+				if candidate.depth >= item.depth || !directoryContains(candidate.dir, item.dir) {
+					continue
+				}
+				if candidate.depth > bestDepth {
+					parent = candidateIndex
+					bestDepth = candidate.depth
+				}
+			}
+		}
+		if parent >= 0 {
+			addChild(entries[parent].node, item.node)
+		} else {
+			addChild(root, item.node)
+		}
+	}
+	for _, item := range entries {
+		sort.SliceStable(item.node.Children, func(i, j int) bool {
+			left, right := item.node.Children[i], item.node.Children[j]
+			leftPath, rightPath := "", ""
+			if left.Path != nil {
+				leftPath = *left.Path
+			}
+			if right.Path != nil {
+				rightPath = *right.Path
+			}
+			if leftPath != rightPath {
+				return leftPath < rightPath
+			}
+			return left.Subject < right.Subject
+		})
+	}
+	sort.SliceStable(root.Children, func(i, j int) bool {
+		left, right := root.Children[i], root.Children[j]
+		leftPath, rightPath := "", ""
+		if left.Path != nil {
+			leftPath = *left.Path
+		}
+		if right.Path != nil {
+			rightPath = *right.Path
+		}
+		return leftPath < rightPath
+	})
 	return root
+}
+
+func pathDepth(value string) int {
+	value = filepath.Clean(value)
+	if value == "." || value == string(filepath.Separator) {
+		return 0
+	}
+	parts := strings.Split(filepath.ToSlash(value), "/")
+	if len(parts) == 1 && parts[0] == "." {
+		return 0
+	}
+	return len(parts)
+}
+
+func directoryContains(parent, child string) bool {
+	relative, err := filepath.Rel(parent, child)
+	return err == nil && relative != "." && relative != ".." && !strings.HasPrefix(relative, ".."+string(filepath.Separator)) && !filepath.IsAbs(relative)
 }
 
 func addChild(parent, child *TreeNode) {
@@ -125,22 +199,22 @@ func ValidateTree(files []File) TreeValidation {
 			}
 		}
 		seenChildren := map[string]bool{}
-		for _, child := range file.Metadata.Children {
-			if seenChildren[child] {
-				result.Errors = append(result.Errors, fmt.Sprintf(`Duplicate child: "%s" lists "%s" more than once in %s`, file.Metadata.Subject, child, file.RelativePath))
+		for _, childName := range file.Metadata.Children {
+			if seenChildren[childName] {
+				result.Errors = append(result.Errors, fmt.Sprintf(`Duplicate child: "%s" lists "%s" more than once in %s`, file.Metadata.Subject, childName, file.RelativePath))
 				continue
 			}
-			seenChildren[child] = true
-			childFile := subjects[child]
+			seenChildren[childName] = true
+			childFile := subjects[childName]
 			if childFile == nil {
-				result.Errors = append(result.Errors, fmt.Sprintf(`Missing child: "%s" references non-existent child "%s" in %s`, file.Metadata.Subject, child, file.RelativePath))
+				result.Errors = append(result.Errors, fmt.Sprintf(`Missing child: "%s" references non-existent child "%s" in %s`, file.Metadata.Subject, childName, file.RelativePath))
 				continue
 			}
 			if childFile.Metadata.Parent == nil || *childFile.Metadata.Parent != file.Metadata.Subject {
 				result.Errors = append(result.Errors, fmt.Sprintf(
 					`Parent-child mismatch: "%s" lists child "%s", whose parent does not point back.`,
 					file.Metadata.Subject,
-					child,
+					childName,
 				))
 			}
 		}
@@ -195,17 +269,37 @@ func RenderTree(root *TreeNode) string {
 			return
 		}
 		seen[node] = true
-		if prefix == "" {
-			lines = append(lines, node.Subject)
-		} else {
-			lines = append(lines, prefix+"|- "+node.Subject)
-		}
+		lines = append(lines, treeLabel(node, prefix == "", prefix))
 		for _, child := range node.Children {
-			visit(child, prefix+"|  ")
+			childPrefix := prefix + "|  "
+			if prefix != "" {
+				childPrefix = prefix + "  "
+			}
+			visit(child, childPrefix)
 		}
 	}
 	visit(root, "")
 	return strings.Join(lines, "\n")
+}
+
+func treeLabel(node *TreeNode, root bool, prefix string) string {
+	label := node.Subject
+	if node.Path != nil {
+		label += " [" + *node.Path + "]"
+	}
+	if !node.Valid && node.Kind != "index" {
+		label += " [invalid]"
+	}
+	if node.Description != "" {
+		label += ": " + node.Description
+	}
+	if root {
+		return label
+	}
+	if len(prefix) > 1 {
+		prefix = prefix[:1] + strings.ReplaceAll(prefix[1:], "|", " ")
+	}
+	return prefix + "|- " + label
 }
 
 func RenderTreeMarkdown(root *TreeNode) string {
@@ -217,7 +311,14 @@ func RenderTreeMarkdown(root *TreeNode) string {
 			return
 		}
 		seen[node] = true
-		lines = append(lines, fmt.Sprintf("%s- **%s**: %s", strings.Repeat("  ", depth), node.Subject, node.Description))
+		label := "**" + node.Subject + "**"
+		if node.Path != nil {
+			label += " (`" + *node.Path + "`)"
+		}
+		if !node.Valid {
+			label += " [invalid]"
+		}
+		lines = append(lines, fmt.Sprintf("%s- %s: %s", strings.Repeat("  ", depth), label, node.Description))
 		for _, child := range node.Children {
 			visit(child, depth+1)
 		}

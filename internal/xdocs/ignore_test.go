@@ -148,6 +148,11 @@ func TestPathPolicyRequiresExplicitDocumentationAuthorization(t *testing.T) {
 	if rootPolicy.frontmatterRequired(filepath.Join(root, "..", "outside.md")) {
 		t.Fatal("root documentation grant escaped the repository")
 	}
+	for _, outside := range []string{"../outside", "/absolute/outside", "C:/outside"} {
+		if rootPolicy.documentationDirectoryAuthorized(outside) {
+			t.Fatalf("root documentation grant accepted outside directory %q", outside)
+		}
+	}
 }
 
 func TestPathPolicyDoesNotEnterIgnoredOrExcludedTarget(t *testing.T) {

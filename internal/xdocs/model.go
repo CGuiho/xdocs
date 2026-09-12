@@ -108,6 +108,7 @@ type MetaResult struct {
 	Strict              bool             `json:"strict"`
 	Filters             Filters          `json:"filters"`
 	Descriptors         []MetaDescriptor `json:"descriptors"`
+	Documents           []MetaDocument   `json:"documents"`
 	Errors              []string         `json:"errors"`
 }
 

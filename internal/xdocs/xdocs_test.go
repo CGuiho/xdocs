@@ -163,6 +163,57 @@ flags: []
 	}
 }
 
+func TestExistingFrontmatterAuditIncludesUnlistedAndDescriptorlessDocuments(t *testing.T) {
+	root := t.TempDir()
+	files := map[string]string{
+		"unlisted.md": "---\nname: [unterminated\n",
+		"valid.md":    "---\nsource: historical\nowner: historical-owner\n---\nbody\n",
+		"missing.md":  "# No header\n",
+	}
+	for name, content := range files {
+		if err := os.WriteFile(filepath.Join(root, name), []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	cfg, err := config.Defaults(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := ScanMetadata(cfg, MetaOptions{ExistingFrontmatter: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.IncludeDocuments || !result.ExistingFrontmatter {
+		t.Fatalf("existing-header audit did not imply document reads: %#v", result)
+	}
+	if len(result.Documents) != len(files) {
+		t.Fatalf("audited documents = %d, want %d: %#v", len(result.Documents), len(files), result.Documents)
+	}
+	byPath := map[string]MetaDocument{}
+	for _, document := range result.Documents {
+		byPath[document.RelativePath] = document
+	}
+	if byPath["missing.md"].Valid == false {
+		t.Fatalf("missing header was not valid in read-only audit: %#v", byPath["missing.md"])
+	}
+	if byPath["valid.md"].Valid == false || byPath["valid.md"].Frontmatter["source"] != "historical" {
+		t.Fatalf("valid generic header was not audited: %#v", byPath["valid.md"])
+	}
+	if byPath["unlisted.md"].Valid || len(byPath["unlisted.md"].Errors) == 0 {
+		t.Fatalf("malformed descriptorless header was not reported: %#v", byPath["unlisted.md"])
+	}
+	if !strings.Contains(strings.Join(result.Errors, "\n"), "unlisted.md") {
+		t.Fatalf("audit errors omitted descriptorless malformed path: %#v", result.Errors)
+	}
+	filtered, err := ScanMetadata(cfg, MetaOptions{ExistingFrontmatter: true, Filters: Filters{Owner: "historical-owner"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(filtered.Documents) != 1 || filtered.Documents[0].RelativePath != "valid.md" {
+		t.Fatalf("standalone audit owner filter ignored raw owner: %#v", filtered.Documents)
+	}
+}
+
 func TestContextRejectsEmptyQuery(t *testing.T) {
 	cfg := config.Config{CWD: t.TempDir(), Extensions: []string{".xdocs.md"}, Exclude: []string{}}
 	if _, err := FindContext(cfg, " ", ContextOptions{}); err == nil {
@@ -181,6 +232,87 @@ keywords: []
 flags: []`
 	if metadata, _, errors := parseMetadata(raw); metadata != nil || !strings.Contains(strings.Join(errors, "\n"), "frontmatter.parent") {
 		t.Fatalf("missing parent was not rejected: %#v %#v", metadata, errors)
+	}
+}
+
+func TestFrontmatterDelimitersMustOccupyWholeLines(t *testing.T) {
+	for _, content := range []string{
+		"---suffix\nsubject: example\n---\n",
+		"---\nsubject: example\n---suffix\n",
+		"---\nsubject: example\n",
+		" \n---\nsubject: example\n---\n",
+		"\ufeff---\nsubject: example\n---\n",
+	} {
+		if _, _, ok := ExtractFrontmatter(content); ok {
+			t.Fatalf("malformed frontmatter delimiter accepted: %q", content)
+		}
+	}
+	frontmatter, body, ok := ExtractFrontmatter("---\nsubject: example\n---\nbody\n")
+	if !ok || frontmatter != "subject: example" || body != "body" {
+		t.Fatalf("valid frontmatter was not extracted exactly: %q %q %t", frontmatter, body, ok)
+	}
+}
+
+func TestDescriptorRejectsScalarCoercionAndWrongCollections(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, "module.xdocs.md")
+	content := `---
+subject: 123
+description: true
+parent: 42
+children: [7]
+files:
+  service.go: false
+documents: []
+tags: [true]
+keywords: [9]
+flags: {}
+---
+`
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	file := ParseFile(path, root)
+	if file.Valid || !strings.Contains(strings.Join(file.Errors, "\n"), "frontmatter.subject") {
+		t.Fatalf("scalar descriptor fields were accepted: %#v", file)
+	}
+	cfg, err := config.Defaults(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	meta, err := ScanMetadata(cfg, MetaOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(meta.Descriptors) != 1 || meta.Descriptors[0].Valid {
+		t.Fatalf("metadata scan accepted wrong descriptor types: %#v", meta.Descriptors)
+	}
+	doctor, err := Doctor(cfg, DoctorOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doctor.Valid || doctor.Summary.Errors == 0 {
+		t.Fatalf("doctor missed wrong descriptor types: %#v", doctor)
+	}
+	content = `---
+<<: &metadata
+  subject: 123
+  description: true
+  parent: null
+  children: []
+  files: {}
+  documents: {}
+  tags: []
+  keywords: []
+  flags: []
+---
+`
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	file = ParseFile(path, root)
+	if file.Valid || !strings.Contains(strings.Join(file.Errors, "\n"), "anchors") {
+		t.Fatalf("descriptor YAML merge bypassed strict validation: %#v", file)
 	}
 }
 

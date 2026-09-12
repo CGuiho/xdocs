@@ -72,6 +72,16 @@ func Doctor(cfg config.Config, options DoctorOptions) (DoctorResult, error) {
 			}
 		}
 	}
+	for _, document := range meta.Documents {
+		documentPath := document.RelativePath
+		severity := "warning"
+		if options.WarningsAsErrors {
+			severity = "error"
+		}
+		for _, message := range document.Errors {
+			issues = append(issues, DoctorIssue{Severity: severity, Code: "document-metadata", Path: &documentPath, Message: message})
+		}
+	}
 	validation := ValidateTree(scan.XDocsFiles)
 	for _, message := range validation.Errors {
 		issues = append(issues, DoctorIssue{Severity: "error", Code: "tree-invalid", Message: message})

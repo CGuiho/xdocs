@@ -12,6 +12,7 @@ import (
 )
 
 func ScanMetadata(cfg config.Config, options MetaOptions) (MetaResult, error) {
+	includeDocuments := options.IncludeDocuments || options.ExistingFrontmatter
 	target := cfg.CWD
 	if options.TargetPath != "" {
 		target = options.TargetPath
@@ -31,11 +32,12 @@ func ScanMetadata(cfg config.Config, options MetaOptions) (MetaResult, error) {
 	result := MetaResult{
 		Root:                cfg.CWD,
 		TargetPath:          displayTarget(cfg.CWD, target),
-		IncludeDocuments:    options.IncludeDocuments,
+		IncludeDocuments:    includeDocuments,
 		ExistingFrontmatter: options.ExistingFrontmatter,
 		Strict:              options.Strict,
 		Filters:             options.Filters,
 		Descriptors:         []MetaDescriptor{},
+		Documents:           []MetaDocument{},
 		Errors:              []string{},
 	}
 	if scanExcludedPath(cfg.CWD, target, cfg.Exclude) {
@@ -86,8 +88,16 @@ func ScanMetadata(cfg config.Config, options MetaOptions) (MetaResult, error) {
 		return MetaResult{}, err
 	}
 	sort.Slice(result.Descriptors, func(i, j int) bool { return result.Descriptors[i].RelativePath < result.Descriptors[j].RelativePath })
-	enrichMeta(result.Descriptors, documents, options.IncludeDocuments, options.ExistingFrontmatter, cfg.CWD)
-	result.Descriptors = filterDescriptors(result.Descriptors, options.Filters, options.IncludeDocuments)
+	enrichMeta(result.Descriptors, documents, includeDocuments, options.ExistingFrontmatter, cfg.CWD)
+	if options.ExistingFrontmatter {
+		for _, document := range allMarkdownDocuments(documents) {
+			result.Documents = append(result.Documents, parseDocument(document.Path, cfg.CWD, "", document.FrontmatterRequired, true))
+		}
+	}
+	result.Descriptors = filterDescriptors(result.Descriptors, options.Filters, includeDocuments)
+	if options.ExistingFrontmatter {
+		result.Documents = filterMetaDocuments(result.Documents, options.Filters)
+	}
 	for _, descriptor := range result.Descriptors {
 		for _, message := range descriptor.Errors {
 			result.Errors = append(result.Errors, descriptor.RelativePath+": "+message)
@@ -98,7 +108,34 @@ func ScanMetadata(cfg config.Config, options MetaOptions) (MetaResult, error) {
 			}
 		}
 	}
+	for _, document := range result.Documents {
+		for _, message := range document.Errors {
+			result.Errors = append(result.Errors, document.RelativePath+": "+message)
+		}
+	}
 	return result, nil
+}
+
+func allMarkdownDocuments(documents map[string][]MarkdownDocument) []MarkdownDocument {
+	result := []MarkdownDocument{}
+	for _, values := range documents {
+		result = append(result, values...)
+	}
+	sort.Slice(result, func(i, j int) bool { return result[i].RelativePath < result[j].RelativePath })
+	return result
+}
+
+func filterMetaDocuments(documents []MetaDocument, filters Filters) []MetaDocument {
+	if filters.Owner == "" && filters.Tag == "" && filters.Keyword == "" {
+		return documents
+	}
+	result := []MetaDocument{}
+	for _, document := range documents {
+		if documentMatches(document, filters) {
+			result = append(result, document)
+		}
+	}
+	return result
 }
 
 func parseMetaDescriptor(path, root string) MetaDescriptor {

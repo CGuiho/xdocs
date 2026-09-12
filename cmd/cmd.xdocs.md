@@ -13,6 +13,7 @@ files:
   uninstall_windows.go: Windows deferred executable removal behavior.
   root_test.go: Root bootstrap, ignore defaults, frontmatter-policy JSON, exclusion, idempotence, marker safety, banner, version, catalog, depth, upgrade-completion, and recovery tests.
   resources_test.go: Deterministic embedded-resource fixtures for command tests.
+  tree_output_test.go: Text, Markdown, and JSON complete-tree visibility and default diagnostic tests.
 documents: {}
 tags:
   - cobra

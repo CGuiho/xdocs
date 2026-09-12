@@ -277,7 +277,7 @@ func (policy *pathPolicy) frontmatterRequired(pathname string) bool {
 
 func (policy *pathPolicy) documentationDirectoryAuthorized(directory string) bool {
 	directory = path.Clean(directory)
-	if directory == ".." || strings.HasPrefix(directory, "../") {
+	if directory == ".." || strings.HasPrefix(directory, "../") || path.IsAbs(directory) || windowsDrivePath(directory) {
 		return false
 	}
 	for _, allowed := range policy.documentationDirs {
@@ -287,6 +287,10 @@ func (policy *pathPolicy) documentationDirectoryAuthorized(directory string) boo
 		}
 	}
 	return false
+}
+
+func windowsDrivePath(value string) bool {
+	return len(value) >= 2 && ((value[0] >= 'a' && value[0] <= 'z') || (value[0] >= 'A' && value[0] <= 'Z')) && value[1] == ':'
 }
 
 func pathEqual(left, right string, ignoreCase bool) bool {

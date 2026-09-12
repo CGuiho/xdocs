@@ -132,6 +132,37 @@ func TestDocumentationPolicyRejectsMalformedEntries(t *testing.T) {
 	}
 }
 
+func TestDocumentationPolicyRejectsYAMLMergeAndAliases(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, Filename)
+	content := `schema: 1
+documentation:
+  <<: &grant
+    directories:
+      - .
+  frontmatter: []
+`
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Load(root, "", true); err == nil {
+		t.Fatal("documentation YAML merge key unexpectedly granted authorization")
+	}
+	content = `schema: 1
+<<: &grant
+  documentation:
+    directories:
+      - .
+    frontmatter: []
+`
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Load(root, "", true); err == nil {
+		t.Fatal("root YAML merge key unexpectedly granted documentation authorization")
+	}
+}
+
 func TestIgnoreDefaultsAndGeneratedConfiguration(t *testing.T) {
 	root := t.TempDir()
 	defaults, err := Defaults(root)

@@ -1,6 +1,7 @@
 package xdocs
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -85,12 +86,17 @@ func ScanProject(cfg config.Config) (ScanResult, error) {
 		}
 		rootStatErr = os.ErrInvalid
 	}
+	if rootStatErr != nil && !errors.Is(rootStatErr, os.ErrNotExist) && !errors.Is(rootStatErr, os.ErrInvalid) {
+		result.Errors = append(result.Errors, fmt.Sprintf("Unable to inspect %s: %v", rootFilename, rootStatErr))
+	}
 	if rootStatErr == nil && !policy.ignored(rootPath, false) {
 		if content, readErr := os.ReadFile(rootPath); readErr == nil {
 			result.XDocsFiles = append(result.XDocsFiles, File{
 				Path: rootPath, RelativePath: rootFilename, Directory: cfg.CWD,
 				Documents: []MarkdownDocument{}, Body: string(content), Valid: false, Errors: []string{},
 			})
+		} else {
+			result.Errors = append(result.Errors, fmt.Sprintf("Unable to read %s: %v", rootFilename, readErr))
 		}
 	}
 	sort.Slice(result.XDocsFiles, func(i, j int) bool { return result.XDocsFiles[i].RelativePath < result.XDocsFiles[j].RelativePath })

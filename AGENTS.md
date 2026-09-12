@@ -86,7 +86,9 @@ architecture, planning, execution, review, validation, and release work.
 - `xdocs scan` walks the project tree while respecting `scan.exclude`, root and nested `.gitignore` files when enabled, and explicit descriptor candidates; it reports complete named `*.xdocs.md` coverage plus same-directory Markdown companion-document coverage without granting write permission.
 - `xdocs generate [path]` generates documentation for a specific directory or the entire project.
 - `xdocs merge [path]` merges xdocs descriptors from a directory into a single consolidated document.
-- `xdocs tree` builds and displays the project hierarchy from xdocs metadata.
+- `xdocs tree` walks the complete non-excluded filesystem and displays every
+  descriptor by directory containment; metadata relationships are diagnosed
+  separately by `doctor`.
 - `xdocs list [path]` lists files in a scope with descriptions from xdocs metadata.
 - `xdocs meta [path]` scans top-down and reads only YAML frontmatter from named `*.xdocs.md` descriptors; `--documents` reports ordinary companions with explicit `frontmatterRequired: false` unless `documentation.frontmatter` opts them in within `documentation.directories`; `--existing-frontmatter` audits existing headers read-only, while `--owner`, `--tag`, and `--keyword` filter metadata before agents read full files.
 - `xdocs context <query> [path]` recommends a minimal reading set for a task from descriptor, file, and companion-document metadata; use `--documents`, `--files`, `--limit`, and `--explain` for agent workflows.
@@ -124,7 +126,10 @@ architecture, planning, execution, review, validation, and release work.
 
 - xdocs descriptors use Markdown with YAML frontmatter and must be named `*.xdocs.md`; `.docs.md` and `.xdocs.md` by themselves are invalid candidates. Same-directory non-excluded plain `*.md` files are companion documents listed in the descriptor's `documents` metadata. Ordinary Markdown frontmatter is not required or written unless a matching `documentation.frontmatter` rule is explicitly authorized inside `documentation.directories`; legacy `ignore.rules` denials always win. The root file is always `XDOCS.md` (uppercase, no prefix, no frontmatter). Use `xdocs meta [path] --documents --format json` when an agent needs descriptor and companion-document policy without reading full Markdown bodies.
 - Metadata fields: `subject`, `description`, `parent`, `children`, `files`, `documents`, `tags`, `keywords`, `flags`, and optional `status`.
-- The tree is a parent-child containment hierarchy, not a dependency graph. Built from `subject`/`parent`/`children` fields.
+- The displayed tree is a directory-containment hierarchy, not a dependency
+  graph. It uses the nearest ancestor descriptor so malformed, orphaned, and
+  duplicate metadata cannot hide a discovered file; `doctor` validates
+  `subject`/`parent`/`children` relationships separately.
 - Configuration lives in `xdocs.yaml`. Sections: `extensions`, `ai`, `documentation`, `ignore`, `scan`, and `project`. `documentation.directories` defaults to `[]` and grants descriptor maintenance only within listed repository-relative directories and descendants; `documentation.frontmatter` defaults to `[]` and grants companion metadata only for matching files or directories inside those grants. `ignore.gitignore` defaults to `true`; strict `ignore.rules` objects use `pattern`, `kind`, and `frontmatter: false`.
 - Agent resource operations are not configuration-driven. The plain root
   bootstrap and `init` setup are the only implicit/setup boundaries; other
