@@ -118,6 +118,51 @@ flags: []
 	}
 }
 
+func TestExistingFrontmatterAuditFindsMalformedHeadersWithoutRequiringHeaders(t *testing.T) {
+	root := t.TempDir()
+	descriptor := `---
+subject: example
+description: Example.
+parent: null
+children: []
+files: {}
+documents:
+  notes.md: Notes.
+  broken.md: Broken notes.
+tags: []
+keywords: []
+flags: []
+---
+`
+	if err := os.WriteFile(filepath.Join(root, "example.xdocs.md"), []byte(descriptor), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "notes.md"), []byte("# Notes\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "broken.md"), []byte("---\nname: [unterminated\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := config.Defaults(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	withoutAudit, err := ScanMetadata(cfg, MetaOptions{IncludeDocuments: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(withoutAudit.Errors) != 0 {
+		t.Fatalf("ordinary Markdown unexpectedly required frontmatter: %#v", withoutAudit.Errors)
+	}
+	withAudit, err := ScanMetadata(cfg, MetaOptions{IncludeDocuments: true, ExistingFrontmatter: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(withAudit.Errors) == 0 || !strings.Contains(strings.Join(withAudit.Errors, "\n"), "broken.md") {
+		t.Fatalf("existing-header audit missed malformed frontmatter: %#v", withAudit)
+	}
+}
+
 func TestContextRejectsEmptyQuery(t *testing.T) {
 	cfg := config.Config{CWD: t.TempDir(), Extensions: []string{".xdocs.md"}, Exclude: []string{}}
 	if _, err := FindContext(cfg, " ", ContextOptions{}); err == nil {

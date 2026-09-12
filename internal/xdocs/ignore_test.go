@@ -107,6 +107,49 @@ func TestPathPolicyMatchesFileAndDirectoryFrontmatterRules(t *testing.T) {
 	}
 }
 
+func TestPathPolicyRequiresExplicitDocumentationAuthorization(t *testing.T) {
+	root := t.TempDir()
+	policy, err := newPathPolicy(config.Config{
+		CWD: root,
+		Documentation: config.DocumentationConfig{
+			Directories: []string{"technologies"},
+			Frontmatter: []config.DocumentationRule{{Pattern: "technologies/approved-notes.md", Kind: "file"}},
+		},
+		IgnoreRules: []config.IgnoreRule{{Pattern: "README.md", Kind: "file", Frontmatter: false}},
+	}, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tests := []struct {
+		path string
+		want bool
+	}{
+		{filepath.Join(root, "technologies", "approved-notes.md"), true},
+		{filepath.Join(root, "technologies", "other.md"), false},
+		{filepath.Join(root, "other", "approved-notes.md"), false},
+		{filepath.Join(root, "technologies", "README.md"), false},
+	}
+	for _, test := range tests {
+		if got := policy.frontmatterRequired(test.path); got != test.want {
+			t.Errorf("frontmatterRequired(%s) = %t, want %t", test.path, got, test.want)
+		}
+	}
+
+	rootPolicy, err := newPathPolicy(config.Config{
+		CWD: root,
+		Documentation: config.DocumentationConfig{
+			Directories: []string{"."},
+			Frontmatter: []config.DocumentationRule{{Pattern: "**/*.md", Kind: "file"}},
+		},
+	}, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rootPolicy.frontmatterRequired(filepath.Join(root, "..", "outside.md")) {
+		t.Fatal("root documentation grant escaped the repository")
+	}
+}
+
 func TestPathPolicyDoesNotEnterIgnoredOrExcludedTarget(t *testing.T) {
 	for _, test := range []struct {
 		name       string
