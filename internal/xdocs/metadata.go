@@ -356,7 +356,7 @@ func parseDocument(path, root, expectedOwner string, frontmatterRequired, inspec
 func validateCompanionFrontmatter(frontmatter Frontmatter, expectedOwner string) []string {
 	var errors []string
 	for _, field := range []string{"name", "purpose", "description", "created", "owner"} {
-		if stringValue(frontmatter, field) == "" {
+		if strings.TrimSpace(stringValue(frontmatter, field)) == "" {
 			errors = append(errors, fmt.Sprintf(`Missing or invalid "%s" field. Expected a non-empty string.`, field))
 		}
 	}

@@ -214,6 +214,62 @@ func TestExistingFrontmatterAuditIncludesUnlistedAndDescriptorlessDocuments(t *t
 	}
 }
 
+func TestRequiredCompanionWhitespaceFieldsFailMetadataAndDoctor(t *testing.T) {
+	root := t.TempDir()
+	descriptor := `---
+subject: example
+description: Example descriptor.
+parent: null
+children: []
+files: {}
+documents:
+  guide.md: Guide.
+tags: []
+keywords: []
+flags: []
+---
+`
+	companion := `---
+name: "   "
+purpose: "   "
+description: "   "
+created: 2026-09-12
+owner: "   "
+flags: []
+tags: []
+keywords: []
+---
+`
+	if err := os.WriteFile(filepath.Join(root, "example.xdocs.md"), []byte(descriptor), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "guide.md"), []byte(companion), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := config.Defaults(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg.Documentation = config.DocumentationConfig{
+		Directories: []string{"."},
+		Frontmatter: []config.DocumentationRule{{Pattern: "guide.md", Kind: "file"}},
+	}
+	meta, err := ScanMetadata(cfg, MetaOptions{IncludeDocuments: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(meta.Descriptors) != 1 || len(meta.Descriptors[0].Documents) != 1 || meta.Descriptors[0].Documents[0].Valid {
+		t.Fatalf("whitespace-only companion fields were accepted: %#v", meta)
+	}
+	doctor, err := Doctor(cfg, DoctorOptions{IncludeDocuments: true, WarningsAsErrors: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doctor.Valid || doctor.Summary.Errors == 0 {
+		t.Fatalf("doctor did not report whitespace-only companion fields: %#v", doctor)
+	}
+}
+
 func TestContextRejectsEmptyQuery(t *testing.T) {
 	cfg := config.Config{CWD: t.TempDir(), Extensions: []string{".xdocs.md"}, Exclude: []string{}}
 	if _, err := FindContext(cfg, " ", ContextOptions{}); err == nil {

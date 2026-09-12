@@ -112,6 +112,17 @@ func TestWriteReportAllowsExplicitlyAuthorizedGenericFrontmatter(t *testing.T) {
 	if string(unchanged) != valid {
 		t.Fatalf("non-leading frontmatter rejection changed destination: %q", unchanged)
 	}
+	whitespace := "---\nname: \"   \"\npurpose: \"   \"\ndescription: \"   \"\ncreated: 2026-09-12\nowner: \"   \"\nflags: []\ntags: []\nkeywords: []\n---\nchanged\n"
+	if err := WriteReport(cfg, "notes/report.md", []byte(whitespace)); err == nil {
+		t.Fatal("report with whitespace-only required companion fields was accepted")
+	}
+	unchanged, err = os.ReadFile(filepath.Join(root, "notes", "report.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(unchanged) != valid {
+		t.Fatalf("whitespace-only companion rejection changed destination: %q", unchanged)
+	}
 }
 
 func TestWriteReportRejectsGitignoredAndSymlinkDestinations(t *testing.T) {
