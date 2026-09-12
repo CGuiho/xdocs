@@ -31,6 +31,21 @@ The active implementation is a native Go CLI. The historical TypeScript tree
 is retained as migration reference only and is not used by the executable,
 installers, CI, versioning, or releases.
 
+## Upgrading to 0.12.0
+
+This minor release contains breaking authorization and report-output changes.
+Existing configurations remain loadable, but omitted documentation grants now
+mean no descriptor maintenance or companion metadata requirement. Explicitly
+list permitted subtrees in `documentation.directories`; grant ordinary Markdown
+headers separately with `documentation.frontmatter`. Existing legacy denials
+still take precedence. Do not add grants merely to make validation pass.
+
+Keep context in one named descriptor per directory. `tree` now uses filesystem
+containment and includes all discovered descriptors; use `doctor` for semantic
+parent/child validation. Report output cannot target descriptor filenames and
+must pass destination and content validation. Use `meta --existing-frontmatter`
+or `doctor --existing-frontmatter` to audit historical headers without repairs.
+
 ## Runtime architecture
 
 - Go module: `github.com/CGuiho/xdocs`
@@ -369,9 +384,9 @@ go mod tidy
 go test ./...
 go vet ./...
 go run ./devops/build-binaries.go \
-  --version 0.11.0 \
+  --version 0.12.0 \
   --commit "$(git rev-parse HEAD)" \
-  --build-date "2026-08-23T00:00:00Z"
+  --build-date "2026-09-12T00:00:00Z"
 ```
 
 Cross-compilation proves buildability, not foreign runtime behavior. Native CI
