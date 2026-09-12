@@ -31,7 +31,7 @@ All Rights Reserved.
 | Status | Count |
 | --- | ---: |
 | todo | 1 |
-| in progress | 1 |
+| in progress | 2 |
 | testing | 0 |
 | stopped | 0 |
 | completed | 7 |
@@ -152,6 +152,14 @@ All Rights Reserved.
 - Plan review: revised to address all recorded findings; awaiting fresh
   `guiho-a-0047-plan-reviewer` exact-tree verdict before implementation.
 - Audit: [docs/reviews/implementation/guiho-cli-convention-0001-compliance-review.md](docs/reviews/implementation/guiho-cli-convention-0001-compliance-review.md)
+
+### 10. Enforce Explicit Documentation Authorization And Complete Trees
+
+- Status: in progress
+- Created: `2026-09-12`
+- Updated: `2026-09-12`
+- Outcome: Require explicit documentation directory and companion-frontmatter opt-ins, preserve ordinary Markdown, guard report destinations, and display every discovered named descriptor through arbitrary depth.
+- Plan: [docs/plans/explicit-documentation-authorization.md](docs/plans/explicit-documentation-authorization.md)
 
 ## Completion Archive
 

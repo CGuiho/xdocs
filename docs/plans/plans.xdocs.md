@@ -12,6 +12,7 @@ documents:
   upgrade-reliability-implementation.md: Executable plan for complete release discovery, immediate verified self-upgrade, recovery guidance, installer hardening, and validation.
   xdocs-0.7.0-welcome-update-pagination.md: Approved execution plan for issues 15 and 16, Mirror YAML migration, release validation, and public acceptance.
   xdocs-go-rewrite.md: Step-by-step native Go rewrite plan covering architecture, Cobra, YAML, domain parity, agents, updates, upgrades, installers, CI, documentation, validation, and release.
+  explicit-documentation-authorization.md: Execution plan for explicit documentation permissions, read-only ordinary Markdown handling, guarded report output, and complete descriptor trees.
 tags:
   - plans
   - implementation
@@ -33,6 +34,8 @@ keywords:
   - read-only Mirror plan
   - upgrade reliability
   - Go rewrite
+  - explicit documentation authorization
+  - complete descriptor tree
   - Git-only versioning
 flags: []
 status: stable

@@ -83,14 +83,14 @@ architecture, planning, execution, review, validation, and release work.
   idempotently bootstraps both global skill targets and the current
   repository's bounded instruction block; other agent-resource changes use
   explicit `xdocs agent` actions.
-- `xdocs scan` walks the project tree while respecting `scan.exclude`, root and nested `.gitignore` files when enabled, and explicit frontmatter opt-outs; it reports named `*.xdocs.md` descriptor coverage plus same-directory Markdown companion-document coverage.
+- `xdocs scan` walks the project tree while respecting `scan.exclude`, root and nested `.gitignore` files when enabled, and explicit descriptor candidates; it reports complete named `*.xdocs.md` coverage plus same-directory Markdown companion-document coverage without granting write permission.
 - `xdocs generate [path]` generates documentation for a specific directory or the entire project.
 - `xdocs merge [path]` merges xdocs descriptors from a directory into a single consolidated document.
 - `xdocs tree` builds and displays the project hierarchy from xdocs metadata.
 - `xdocs list [path]` lists files in a scope with descriptions from xdocs metadata.
-- `xdocs meta [path]` scans top-down and reads only YAML frontmatter from named `*.xdocs.md` descriptors; `--documents` also reads required companion `.md` frontmatter and reports configured opt-outs with `frontmatterRequired: false`, while `--owner`, `--tag`, and `--keyword` filter metadata before agents read full files.
+- `xdocs meta [path]` scans top-down and reads only YAML frontmatter from named `*.xdocs.md` descriptors; `--documents` reports ordinary companions with explicit `frontmatterRequired: false` unless `documentation.frontmatter` opts them in within `documentation.directories`; `--existing-frontmatter` audits existing headers read-only, while `--owner`, `--tag`, and `--keyword` filter metadata before agents read full files.
 - `xdocs context <query> [path]` recommends a minimal reading set for a task from descriptor, file, and companion-document metadata; use `--documents`, `--files`, `--limit`, and `--explain` for agent workflows.
-- `xdocs doctor [path]` runs CI-friendly health checks for descriptor validity, required companion-document metadata, tree integrity, and documented file existence.
+- `xdocs doctor [path]` runs CI-friendly health checks for descriptor validity, explicitly required companion-document metadata, tree integrity, and documented file existence; `--existing-frontmatter` audits legacy headers without authorizing writes.
 - `xdocs agent skill install|uninstall|update|list|show`, `agent instruction apply|remove|update|show`, and `agent prompt list|show` implement explicit RFC 0034 agent integration.
 - Skill mutations default global, use `--local` for project scope, and always target both `.agents/skills` and `.claude/skills`.
 - A bare xdocs invocation bootstraps shared agent resources, then prints the
@@ -122,10 +122,10 @@ architecture, planning, execution, review, validation, and release work.
 
 ## Key Concepts
 
-- xdocs descriptors use Markdown with YAML frontmatter and must be named `*.xdocs.md`; `.docs.md` is not supported and `.xdocs.md` by itself is invalid. Same-directory non-excluded plain `*.md` files are companion documents listed in the descriptor's `documents` metadata. Companion frontmatter is required unless a matching `ignore.rules` file or directory rule sets `frontmatter: false`; those documents remain tracked and must not be modified to add frontmatter. The root file is always `XDOCS.md` (uppercase, no prefix, no frontmatter). Use `xdocs meta [path] --documents --format json` when an agent needs descriptor and companion-document policy without reading full Markdown bodies.
+- xdocs descriptors use Markdown with YAML frontmatter and must be named `*.xdocs.md`; `.docs.md` and `.xdocs.md` by themselves are invalid candidates. Same-directory non-excluded plain `*.md` files are companion documents listed in the descriptor's `documents` metadata. Ordinary Markdown frontmatter is not required or written unless a matching `documentation.frontmatter` rule is explicitly authorized inside `documentation.directories`; legacy `ignore.rules` denials always win. The root file is always `XDOCS.md` (uppercase, no prefix, no frontmatter). Use `xdocs meta [path] --documents --format json` when an agent needs descriptor and companion-document policy without reading full Markdown bodies.
 - Metadata fields: `subject`, `description`, `parent`, `children`, `files`, `documents`, `tags`, `keywords`, `flags`, and optional `status`.
 - The tree is a parent-child containment hierarchy, not a dependency graph. Built from `subject`/`parent`/`children` fields.
-- Configuration lives in `xdocs.yaml`. Sections: `extensions`, `ai`, `ignore`, `scan`, and `project`. `ignore.gitignore` defaults to `true`; strict `ignore.rules` objects use `pattern`, `kind`, and `frontmatter: false`.
+- Configuration lives in `xdocs.yaml`. Sections: `extensions`, `ai`, `documentation`, `ignore`, `scan`, and `project`. `documentation.directories` defaults to `[]` and grants descriptor maintenance only within listed repository-relative directories and descendants; `documentation.frontmatter` defaults to `[]` and grants companion metadata only for matching files or directories inside those grants. `ignore.gitignore` defaults to `true`; strict `ignore.rules` objects use `pattern`, `kind`, and `frontmatter: false`.
 - Agent resource operations are not configuration-driven. The plain root
   bootstrap and `init` setup are the only implicit/setup boundaries; other
   mutations are explicit.
@@ -217,7 +217,8 @@ companion documents, repository scanning, metadata discovery, or validation.
 
 The project configuration is `xdocs.yaml`. Respect `ai.mode`:
 `prompt` requires confirmation before documentation writes, while
-`auto` permits immediate descriptor maintenance. Also respect
+`auto` permits immediate descriptor maintenance only inside explicitly
+authorized documentation directories. Also respect
 `ignore.gitignore` and every `ignore.rules` entry: excluded paths are
 outside the xdocs corpus, while `frontmatter: false` keeps matching documents
 tracked without adding or requiring YAML frontmatter. Use `xdocs scan`,

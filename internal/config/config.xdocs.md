@@ -1,11 +1,11 @@
 ---
 subject: xdocs-internal-config
-description: Strict xdocs.yaml discovery, decoding, defaults, ignore rules, and semantic validation.
+description: Strict xdocs.yaml discovery, decoding, defaults, opt-in documentation authorization, ignore rules, and semantic validation.
 parent: xdocs-internal
 children: []
 files:
-  config.go: Configuration precedence, known-field YAML decoding, single-document enforcement, defaults, Git-aware ignore/frontmatter rules, and validation.
-  config_test.go: Precedence, unknown-field, multiple-document, extension, AI mode, ignore-rule, and exclusion tests.
+  config.go: Configuration precedence, known-field YAML decoding, single-document enforcement, opt-in documentation directories and frontmatter rules, defaults, Git-aware ignore policy, and semantic validation.
+  config_test.go: Precedence, unknown-field, multiple-document, extension, AI mode, documentation-policy, ignore-rule, and exclusion tests.
 documents: {}
 tags:
   - configuration
@@ -16,6 +16,7 @@ keywords:
   - known fields
   - gitignore
   - frontmatter opt-out
+  - documentation authorization
 flags: []
 status: stable
 ---

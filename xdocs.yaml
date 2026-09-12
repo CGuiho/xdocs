@@ -4,6 +4,9 @@ extensions:
     - .xdocs.md
 ai:
   mode: auto
+documentation:
+  directories: []
+  frontmatter: []
 ignore:
   gitignore: true
   rules:
