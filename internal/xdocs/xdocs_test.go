@@ -51,7 +51,9 @@ keywords: [login]
 	if err := os.WriteFile(filepath.Join(module, "service.go"), []byte("package module\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	cfg := config.Config{Schema: 1, CWD: root, Extensions: []string{".xdocs.md"}, AIMode: "auto", Exclude: []string{".git"}, Project: "example"}
+	cfg := config.Config{Schema: 1, CWD: root, Extensions: []string{".xdocs.md"}, AIMode: "auto", Exclude: []string{".git"}, Project: "example", Documentation: config.DocumentationConfig{
+		Directories: []string{"."}, Frontmatter: []config.DocumentationRule{{Pattern: "**/*.md", Kind: "file"}},
+	}}
 	scan, err := ScanProject(cfg)
 	if err != nil {
 		t.Fatal(err)

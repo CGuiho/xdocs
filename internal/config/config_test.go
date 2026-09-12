@@ -57,6 +57,75 @@ func TestAIModeDefaultsToAuto(t *testing.T) {
 	}
 }
 
+func TestDocumentationPolicyDefaultsToEmptyAndIsGenerated(t *testing.T) {
+	root := t.TempDir()
+	defaults, err := Defaults(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(defaults.Documentation.Directories) != 0 || len(defaults.Documentation.Frontmatter) != 0 {
+		t.Fatalf("documentation defaults unexpectedly grant permission: %#v", defaults.Documentation)
+	}
+	content := DefaultContent(root)
+	if !strings.Contains(content, "documentation:\n  directories: []\n  frontmatter: []\n") {
+		t.Fatalf("generated configuration omitted explicit documentation opt-ins:\n%s", content)
+	}
+
+	path := filepath.Join(root, Filename)
+	if err := os.WriteFile(path, []byte(`schema: 1
+documentation:
+  directories:
+    - .
+    - technologies
+  frontmatter:
+    - pattern: technologies/approved-notes.md
+      kind: file
+    - pattern: technologies/notes
+      kind: directory
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := Load(root, "", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(cfg.Documentation.Directories) != 2 || cfg.Documentation.Directories[1] != "technologies" {
+		t.Fatalf("documentation directories not loaded: %#v", cfg.Documentation)
+	}
+	if len(cfg.Documentation.Frontmatter) != 2 || cfg.Documentation.Frontmatter[0].Kind != "file" {
+		t.Fatalf("documentation frontmatter rules not loaded: %#v", cfg.Documentation)
+	}
+}
+
+func TestDocumentationPolicyRejectsMalformedEntries(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, Filename)
+	tests := []string{
+		"directories:\n    - ''\n",
+		"directories:\n    - /absolute\n",
+		"directories:\n    - ../outside\n",
+		"directories:\n    - ./technologies\n",
+		"directories:\n    - technologies/\n",
+		"directories:\n    - tech*\n",
+		"directories:\n    - technologies\n    - technologies\n",
+		"frontmatter:\n    - pattern: ''\n      kind: file\n",
+		"frontmatter:\n    - pattern: /notes.md\n      kind: file\n",
+		"frontmatter:\n    - pattern: ../notes.md\n      kind: file\n",
+		"frontmatter:\n    - pattern: notes.md/\n      kind: file\n",
+		"frontmatter:\n    - pattern: notes.md\n      kind: document\n",
+		"frontmatter:\n    - pattern: notes/[abc\n      kind: file\n",
+	}
+	for _, body := range tests {
+		content := "schema: 1\ndocumentation:\n  " + strings.ReplaceAll(body, "\n", "\n  ")
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := Load(root, "", true); err == nil {
+			t.Fatalf("malformed documentation policy accepted:\n%s", content)
+		}
+	}
+}
+
 func TestIgnoreDefaultsAndGeneratedConfiguration(t *testing.T) {
 	root := t.TempDir()
 	defaults, err := Defaults(root)

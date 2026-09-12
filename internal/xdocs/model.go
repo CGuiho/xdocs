@@ -43,12 +43,16 @@ type ScanResult struct {
 	XDocsFiles             []File             `json:"xdocsFiles"`
 	MarkdownDocuments      []MarkdownDocument `json:"markdownDocuments"`
 	UncoveredPaths         []string           `json:"uncoveredPaths"`
+	Errors                 []string           `json:"errors"`
 }
 
 type TreeNode struct {
 	Subject     string      `json:"subject"`
 	Description string      `json:"description"`
 	Path        *string     `json:"path"`
+	Kind        string      `json:"kind"`
+	Valid       bool        `json:"valid"`
+	Errors      []string    `json:"errors,omitempty"`
 	Children    []*TreeNode `json:"children"`
 }
 
@@ -89,20 +93,22 @@ type MetaDescriptor struct {
 }
 
 type MetaOptions struct {
-	TargetPath       string
-	IncludeDocuments bool
-	Strict           bool
-	Filters          Filters
+	TargetPath          string
+	IncludeDocuments    bool
+	ExistingFrontmatter bool
+	Strict              bool
+	Filters             Filters
 }
 
 type MetaResult struct {
-	Root             string           `json:"root"`
-	TargetPath       string           `json:"targetPath"`
-	IncludeDocuments bool             `json:"includeDocuments"`
-	Strict           bool             `json:"strict"`
-	Filters          Filters          `json:"filters"`
-	Descriptors      []MetaDescriptor `json:"descriptors"`
-	Errors           []string         `json:"errors"`
+	Root                string           `json:"root"`
+	TargetPath          string           `json:"targetPath"`
+	IncludeDocuments    bool             `json:"includeDocuments"`
+	ExistingFrontmatter bool             `json:"existingFrontmatter"`
+	Strict              bool             `json:"strict"`
+	Filters             Filters          `json:"filters"`
+	Descriptors         []MetaDescriptor `json:"descriptors"`
+	Errors              []string         `json:"errors"`
 }
 
 type ContextOptions struct {
@@ -135,9 +141,10 @@ type ContextResult struct {
 }
 
 type DoctorOptions struct {
-	TargetPath       string
-	IncludeDocuments bool
-	WarningsAsErrors bool
+	TargetPath          string
+	IncludeDocuments    bool
+	ExistingFrontmatter bool
+	WarningsAsErrors    bool
 }
 
 type DoctorIssue struct {

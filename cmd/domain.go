@@ -103,6 +103,9 @@ func newScanCommand(options *commonOptions) *cobra.Command {
 			fmt.Fprintf(out, "covered directories: %d\n", result.CoveredDirectories)
 			fmt.Fprintf(out, "uncovered directories: %d\n", result.UncoveredDirectories)
 			fmt.Fprintf(out, "xdocs descriptors found: %d\n", len(result.XDocsFiles))
+			for _, message := range result.Errors {
+				fmt.Fprintln(command.ErrOrStderr(), "error: "+message)
+			}
 			if len(result.XDocsFiles) > 0 {
 				fmt.Fprintln(out, "\nfiles:")
 				for _, file := range result.XDocsFiles {
@@ -162,6 +165,7 @@ type scanJSONResult struct {
 	XDocsFiles             []scanJSONFile `json:"xdocsFiles"`
 	MarkdownDocuments      []string       `json:"markdownDocuments"`
 	UncoveredPaths         []string       `json:"uncoveredPaths"`
+	Errors                 []string       `json:"errors"`
 }
 
 func scanJSON(result domain.ScanResult) scanJSONResult {
@@ -171,6 +175,7 @@ func scanJSON(result domain.ScanResult) scanJSONResult {
 		CoveredDirectories:     result.CoveredDirectories, UncoveredDirectories: result.UncoveredDirectories,
 		XDocsFiles: []scanJSONFile{}, MarkdownDocuments: []string{},
 		UncoveredPaths: append([]string{}, result.UncoveredPaths...),
+		Errors:         append([]string{}, result.Errors...),
 	}
 	for _, file := range result.XDocsFiles {
 		entry := scanJSONFile{
@@ -219,11 +224,7 @@ func newGenerateCommand(options *commonOptions) *cobra.Command {
 				return err
 			}
 			if output != "" {
-				path := output
-				if !filepath.IsAbs(path) {
-					path = filepath.Join(options.cwd, path)
-				}
-				if err := writeFile(path, []byte(content), 0o644); err != nil {
+				if err := domain.WriteReport(cfg, output, []byte(content)); err != nil {
 					return err
 				}
 				if options.format == "json" {
@@ -280,11 +281,7 @@ func newMergeCommand(options *commonOptions) *cobra.Command {
 				return nil
 			}
 			if output != "" {
-				path := output
-				if !filepath.IsAbs(path) {
-					path = filepath.Join(options.cwd, path)
-				}
-				if err := writeFile(path, []byte(content), 0o644); err != nil {
+				if err := domain.WriteReport(cfg, output, []byte(content)); err != nil {
 					return err
 				}
 				if options.format == "json" {
@@ -326,14 +323,15 @@ func newTreeCommand(options *commonOptions) *cobra.Command {
 				return err
 			}
 			tree := domain.BuildTree(scan.XDocsFiles)
-			if options.verbose {
-				validation := domain.ValidateTree(scan.XDocsFiles)
-				for _, message := range validation.Warnings {
-					fmt.Fprintln(command.ErrOrStderr(), "warning: "+message)
-				}
-				for _, message := range validation.Errors {
-					fmt.Fprintln(command.ErrOrStderr(), "error: "+message)
-				}
+			for _, message := range scan.Errors {
+				fmt.Fprintln(command.ErrOrStderr(), "error: "+message)
+			}
+			validation := domain.ValidateTree(scan.XDocsFiles)
+			for _, message := range validation.Warnings {
+				fmt.Fprintln(command.ErrOrStderr(), "warning: "+message)
+			}
+			for _, message := range validation.Errors {
+				fmt.Fprintln(command.ErrOrStderr(), "error: "+message)
 			}
 			var content string
 			switch options.format {
@@ -349,11 +347,7 @@ func newTreeCommand(options *commonOptions) *cobra.Command {
 				content = domain.RenderTree(tree) + "\n"
 			}
 			if output != "" {
-				path := output
-				if !filepath.IsAbs(path) {
-					path = filepath.Join(options.cwd, path)
-				}
-				if err := writeFile(path, []byte(content), 0o644); err != nil {
+				if err := domain.WriteReport(cfg, output, []byte(content)); err != nil {
 					return err
 				}
 				fmt.Fprintf(command.OutOrStdout(), "tree: %s\n", output)
@@ -405,7 +399,7 @@ func newListCommand(options *commonOptions) *cobra.Command {
 }
 
 func newMetaCommand(options *commonOptions) *cobra.Command {
-	var includeDocuments, strict bool
+	var includeDocuments, existingFrontmatter, strict bool
 	var owner, tag, keyword string
 	command := &cobra.Command{
 		Use:   "meta [path]",
@@ -421,7 +415,7 @@ func newMetaCommand(options *commonOptions) *cobra.Command {
 				target = args[0]
 			}
 			result, err := domain.ScanMetadata(cfg, domain.MetaOptions{
-				TargetPath: target, IncludeDocuments: includeDocuments, Strict: strict,
+				TargetPath: target, IncludeDocuments: includeDocuments, ExistingFrontmatter: existingFrontmatter, Strict: strict,
 				Filters: domain.Filters{Owner: owner, Tag: tag, Keyword: keyword},
 			})
 			if err != nil {
@@ -435,6 +429,7 @@ func newMetaCommand(options *commonOptions) *cobra.Command {
 	}
 	flags := command.Flags()
 	flags.BoolVar(&includeDocuments, "documents", false, "Include companion document frontmatter")
+	flags.BoolVar(&existingFrontmatter, "existing-frontmatter", false, "Audit existing companion frontmatter without requiring it")
 	flags.BoolVar(&strict, "strict", false, "Fail when metadata is invalid")
 	flags.StringVar(&owner, "owner", "", "Filter by descriptor subject or document owner")
 	flags.StringVar(&tag, "tag", "", "Filter by tag")
@@ -481,7 +476,7 @@ func newContextCommand(options *commonOptions) *cobra.Command {
 }
 
 func newDoctorCommand(options *commonOptions) *cobra.Command {
-	var noDocuments, warningsAsErrors bool
+	var noDocuments, existingFrontmatter, warningsAsErrors bool
 	command := &cobra.Command{
 		Use:   "doctor [path]",
 		Short: "Run strict xdocs health checks.",
@@ -496,7 +491,7 @@ func newDoctorCommand(options *commonOptions) *cobra.Command {
 				target = args[0]
 			}
 			result, err := domain.Doctor(cfg, domain.DoctorOptions{
-				TargetPath: target, IncludeDocuments: !noDocuments, WarningsAsErrors: warningsAsErrors,
+				TargetPath: target, IncludeDocuments: !noDocuments, ExistingFrontmatter: existingFrontmatter, WarningsAsErrors: warningsAsErrors,
 			})
 			if err != nil {
 				return err
@@ -511,6 +506,7 @@ func newDoctorCommand(options *commonOptions) *cobra.Command {
 		},
 	}
 	command.Flags().BoolVar(&noDocuments, "no-documents", false, "Skip companion-document validation")
+	command.Flags().BoolVar(&existingFrontmatter, "existing-frontmatter", false, "Audit existing companion frontmatter without requiring it")
 	command.Flags().BoolVar(&warningsAsErrors, "warnings-as-errors", false, "Treat warnings as errors")
 	return command
 }
@@ -670,19 +666,21 @@ type metaJSONDescriptor struct {
 }
 
 type metaJSONResult struct {
-	Root             string               `json:"root"`
-	TargetPath       string               `json:"targetPath"`
-	IncludeDocuments bool                 `json:"includeDocuments"`
-	Strict           bool                 `json:"strict"`
-	Filters          domain.Filters       `json:"filters"`
-	Descriptors      []metaJSONDescriptor `json:"descriptors"`
-	Errors           []string             `json:"errors"`
+	Root                string               `json:"root"`
+	TargetPath          string               `json:"targetPath"`
+	IncludeDocuments    bool                 `json:"includeDocuments"`
+	ExistingFrontmatter bool                 `json:"existingFrontmatter"`
+	Strict              bool                 `json:"strict"`
+	Filters             domain.Filters       `json:"filters"`
+	Descriptors         []metaJSONDescriptor `json:"descriptors"`
+	Errors              []string             `json:"errors"`
 }
 
 func metaJSON(result domain.MetaResult) metaJSONResult {
 	projected := metaJSONResult{
 		Root: result.Root, TargetPath: result.TargetPath,
-		IncludeDocuments: result.IncludeDocuments, Strict: result.Strict, Filters: result.Filters,
+		IncludeDocuments: result.IncludeDocuments, ExistingFrontmatter: result.ExistingFrontmatter,
+		Strict: result.Strict, Filters: result.Filters,
 		Descriptors: []metaJSONDescriptor{}, Errors: append([]string{}, result.Errors...),
 	}
 	for _, descriptor := range result.Descriptors {

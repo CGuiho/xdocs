@@ -81,6 +81,10 @@ func TestPathPolicyMatchesFileAndDirectoryFrontmatterRules(t *testing.T) {
 			{Pattern: "README.md", Kind: "file", Frontmatter: false},
 			{Pattern: "docs/private", Kind: "directory", Frontmatter: false},
 		},
+		Documentation: config.DocumentationConfig{
+			Directories: []string{"docs"},
+			Frontmatter: []config.DocumentationRule{{Pattern: "docs/public", Kind: "directory"}},
+		},
 	}, root)
 	if err != nil {
 		t.Fatal(err)
@@ -94,6 +98,7 @@ func TestPathPolicyMatchesFileAndDirectoryFrontmatterRules(t *testing.T) {
 		{filepath.Join(root, "docs", "private", "notes.md"), false},
 		{filepath.Join(root, "docs", "private", "nested", "notes.md"), false},
 		{filepath.Join(root, "docs", "public", "notes.md"), true},
+		{filepath.Join(root, "docs", "other", "notes.md"), false},
 	}
 	for _, test := range tests {
 		if got := policy.frontmatterRequired(test.path); got != test.required {
@@ -384,6 +389,9 @@ keywords: [visible]
 		t.Fatal(err)
 	}
 	cfg.Project = "example"
+	cfg.Documentation = config.DocumentationConfig{
+		Directories: []string{"."}, Frontmatter: []config.DocumentationRule{{Pattern: "**/*.md", Kind: "file"}},
+	}
 
 	scan, err := ScanProject(cfg)
 	if err != nil {

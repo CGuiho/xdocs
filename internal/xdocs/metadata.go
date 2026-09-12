@@ -32,11 +32,17 @@ func ParseFile(path, root string) File {
 	}
 	if strings.EqualFold(filepath.Base(path), ".xdocs.md") {
 		result.Errors = append(result.Errors, `Invalid xdocs descriptor filename. Use a named file such as "authentication.xdocs.md"; ".xdocs.md" is only the extension.`)
+	} else if strings.HasSuffix(strings.ToLower(filepath.Base(path)), ".docs.md") {
+		result.Errors = append(result.Errors, `Invalid xdocs descriptor filename. Use a named file such as "authentication.xdocs.md"; ".docs.md" is not a supported descriptor.`)
 	}
-	frontmatter, body, ok := ExtractFrontmatter(string(content))
+	frontmatter, body, ok, present := ExtractFrontmatterDetailed(string(content))
 	result.Body = body
 	if !ok {
-		result.Errors = append(result.Errors, "Missing YAML frontmatter.")
+		if present {
+			result.Errors = append(result.Errors, "Malformed YAML frontmatter: missing a closing delimiter.")
+		} else {
+			result.Errors = append(result.Errors, "Missing YAML frontmatter.")
+		}
 		return result
 	}
 	metadata, _, errors := parseMetadata(frontmatter)
@@ -47,43 +53,74 @@ func ParseFile(path, root string) File {
 }
 
 func ExtractFrontmatter(content string) (string, string, bool) {
+	frontmatter, body, ok, _ := ExtractFrontmatterDetailed(content)
+	return frontmatter, body, ok
+}
+
+func ExtractFrontmatterDetailed(content string) (string, string, bool, bool) {
 	trimmed := strings.TrimLeft(content, " \t\r\n")
 	if !strings.HasPrefix(trimmed, "---") {
-		return "", content, false
+		return "", content, false, false
 	}
+	present := true
 	remaining := trimmed[3:]
 	if strings.HasPrefix(remaining, "\r\n") {
 		remaining = remaining[2:]
 	} else if strings.HasPrefix(remaining, "\n") {
 		remaining = remaining[1:]
+	} else {
+		return "", content, false, present
 	}
-	index := strings.Index(remaining, "\n---")
+	index := -1
+	closingLength := 0
+	for offset := 0; offset < len(remaining); {
+		lineEnd := strings.IndexByte(remaining[offset:], '\n')
+		line := remaining[offset:]
+		if lineEnd >= 0 {
+			line = remaining[offset : offset+lineEnd]
+		}
+		line = strings.TrimSuffix(line, "\r")
+		if line == "---" {
+			index = offset
+			closingLength = len(line)
+			break
+		}
+		if lineEnd < 0 {
+			break
+		}
+		offset += lineEnd + 1
+	}
 	if index < 0 {
-		return "", content, false
+		return "", content, false, present
 	}
 	frontmatter := strings.TrimSpace(remaining[:index])
-	bodyStart := index + len("\n---")
+	bodyStart := index + closingLength
 	if bodyStart < len(remaining) && remaining[bodyStart] == '\r' {
 		bodyStart++
 	}
 	if bodyStart < len(remaining) && remaining[bodyStart] == '\n' {
 		bodyStart++
 	}
-	return frontmatter, strings.TrimSpace(remaining[bodyStart:]), true
+	return frontmatter, strings.TrimSpace(remaining[bodyStart:]), true, present
 }
 
 func ReadFrontmatter(path string) (string, bool, error) {
+	frontmatter, ok, _, err := readFrontmatterDetailed(path)
+	return frontmatter, ok, err
+}
+
+func readFrontmatterDetailed(path string) (string, bool, bool, error) {
 	file, err := os.Open(path)
 	if err != nil {
-		return "", false, err
+		return "", false, false, err
 	}
 	defer file.Close()
 	content, err := io.ReadAll(io.LimitReader(file, frontmatterMaxBytes))
 	if err != nil {
-		return "", false, err
+		return "", false, false, err
 	}
-	frontmatter, _, ok := ExtractFrontmatter(string(content))
-	return frontmatter, ok, nil
+	frontmatter, _, ok, present := ExtractFrontmatterDetailed(string(content))
+	return frontmatter, ok, present, nil
 }
 
 func parseMetadata(raw string) (*Metadata, Frontmatter, []string) {
@@ -99,6 +136,7 @@ func parseMetadata(raw string) (*Metadata, Frontmatter, []string) {
 	}
 	var metadata Metadata
 	decoder := yaml.NewDecoder(bytes.NewBufferString(raw))
+	decoder.KnownFields(true)
 	if err := decoder.Decode(&metadata); err != nil {
 		return nil, object, []string{fmt.Sprintf("Invalid YAML frontmatter: %v", err)}
 	}
@@ -138,22 +176,30 @@ func validateMetadata(metadata Metadata) []string {
 	return errors
 }
 
-func parseDocument(path, root, expectedOwner string, frontmatterRequired bool) MetaDocument {
+func parseDocument(path, root, expectedOwner string, frontmatterRequired, inspectExisting bool) MetaDocument {
 	result := MetaDocument{
 		Path: path, RelativePath: slashRelative(root, path), Directory: filepath.Dir(path),
 		Name: filepath.Base(path), Owner: expectedOwner, FrontmatterRequired: frontmatterRequired,
 		Errors: []string{},
 	}
-	if !frontmatterRequired {
+	if !frontmatterRequired && !inspectExisting {
 		result.Valid = true
 		return result
 	}
-	raw, ok, err := ReadFrontmatter(path)
+	raw, ok, present, err := readFrontmatterDetailed(path)
 	if err != nil {
 		result.Errors = append(result.Errors, fmt.Sprintf("Read frontmatter: %v", err))
 		return result
 	}
 	if !ok {
+		if present {
+			result.Errors = append(result.Errors, "Malformed YAML frontmatter: missing a closing delimiter.")
+			return result
+		}
+		if !frontmatterRequired {
+			result.Valid = true
+			return result
+		}
 		result.Errors = append(result.Errors, "Missing YAML frontmatter.")
 		return result
 	}
@@ -163,6 +209,14 @@ func parseDocument(path, root, expectedOwner string, frontmatterRequired bool) M
 		return result
 	}
 	result.Frontmatter = frontmatter
+	if !frontmatterRequired {
+		if frontmatter == nil {
+			result.Errors = append(result.Errors, "Frontmatter must be a YAML object.")
+			return result
+		}
+		result.Valid = true
+		return result
+	}
 	result.Owner = stringValue(frontmatter, "owner")
 	for _, field := range []string{"name", "purpose", "description", "created", "owner"} {
 		if stringValue(frontmatter, field) == "" {

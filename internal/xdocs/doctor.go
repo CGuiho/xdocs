@@ -24,13 +24,17 @@ func Doctor(cfg config.Config, options DoctorOptions) (DoctorResult, error) {
 		return DoctorResult{}, err
 	}
 	meta, err := ScanMetadata(cfg, MetaOptions{
-		TargetPath:       options.TargetPath,
-		IncludeDocuments: options.IncludeDocuments,
+		TargetPath:          options.TargetPath,
+		IncludeDocuments:    options.IncludeDocuments,
+		ExistingFrontmatter: options.ExistingFrontmatter,
 	})
 	if err != nil {
 		return DoctorResult{}, err
 	}
 	issues := []DoctorIssue{}
+	for _, message := range scan.Errors {
+		issues = append(issues, DoctorIssue{Severity: "error", Code: "discovery", Message: message})
+	}
 	for _, file := range scan.XDocsFiles {
 		if !inScope(file.Path, target) {
 			continue
