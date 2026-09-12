@@ -101,6 +101,12 @@ func TestDocumentationPolicyRejectsMalformedEntries(t *testing.T) {
 	root := t.TempDir()
 	path := filepath.Join(root, Filename)
 	tests := []string{
+		"directories: 3\n",
+		"directories: null\n",
+		"frontmatter: {}\n",
+		"frontmatter:\n    - pattern: 3\n      kind: file\n",
+		"frontmatter:\n    - pattern: notes.md\n      kind: 3\n",
+		"frontmatter:\n    - pattern: notes.md\n      kind: file\n      extra: true\n",
 		"directories:\n    - ''\n",
 		"directories:\n    - /absolute\n",
 		"directories:\n    - ../outside\n",
