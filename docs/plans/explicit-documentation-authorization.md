@@ -74,7 +74,8 @@ general SWE convention file is empty, so it supplies no additional rules.
    nearest ancestor descriptors, using a synthetic project root when needed.
    Keep metadata relationship validation in doctor; tree emits clear
    diagnostics by default without hiding nodes or producing cyclic JSON.
-   Respect root/nested gitignore and scan exclusions, including file patterns.
+   Include the existing special root `XDOCS.md` index as a distinguishable path
+   entry. Respect root/nested gitignore and scan exclusions, including file patterns.
 7. `scan`, `meta`, `context`, `doctor`, and `tree` without `--output` never
    mutate files. `generate` and `merge` remain report-producing commands,
    printing to stdout unless an explicit output destination is supplied.
@@ -88,7 +89,12 @@ general SWE convention file is empty, so it supplies no additional rules.
    ordinary Markdown frontmatter destinations require explicit policy.
    Reject symlink escapes/targets and excluded writes. Preflight before
    truncation; use safe atomic replacement. No silent frontmatter repair.
-   Doctor reports existing invalid metadata; actual repair remains explicit.
+   Doctor reports existing invalid descriptor/authorized metadata. Add an
+   explicit read-only `doctor --existing-frontmatter` audit for malformed
+   historical headers on otherwise unauthorized ordinary Markdown: missing
+   headers remain valid, existing headers get YAML syntax/structure validation,
+   and no xdocs owner schema or write authorization is imposed. Actual repair
+   remains explicit.
 9. Keep existing explicit init/root-index and agent-resource setup boundaries
    intact; they do not authorize arbitrary Markdown metadata maintenance.
    Existing `XDOCS.md` is the special root index, not a second per-directory
