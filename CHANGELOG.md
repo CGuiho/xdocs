@@ -16,6 +16,16 @@ keywords:
 
 # GUIHO XDocs Changelog
 
+## 0.12.0 - 2026-09-12
+
+- **Breaking:** Require explicit `documentation.directories` grants for descriptor maintenance and separate `documentation.frontmatter` grants for ordinary Markdown metadata. Both default to empty; `ai.mode: auto` does not grant permission, and legacy frontmatter denials still win.
+- Keep directory context in one named descriptor such as `technologies/technologies.xdocs.md`. Diagnose duplicate, bare, and legacy descriptor names without creating extra overview documents or repairing user files.
+- Display every discovered descriptor through the full filesystem tree, including deep, orphaned, duplicate, and invalid entries, with paths, context, and diagnostics. Include the root `XDOCS.md` index; validate semantic relationships separately in doctor.
+- **Breaking:** Guard explicit report destinations with validation and atomic replacement. Reject descriptor-shaped destinations, symlinks, excluded paths, malformed frontmatter, and unauthorized companion metadata before changing existing bytes. Report commands otherwise write to stdout.
+- Add read-only `meta --existing-frontmatter` and `doctor --existing-frontmatter` audits, including ordinary documents in directories without descriptors; absent headers remain valid without explicit metadata grants.
+- Reject invalid YAML scalar types, authorization aliases and merges, ambiguous headers, and whitespace-only required companion fields consistently across metadata, doctor, and report writes.
+- Align embedded skills, prompts, managed instructions, and documentation with explicit authorization and complete discovery.
+
 ## 0.11.0 - 2026-08-23
 
 - Replace the plain `Hello Windows - xdocs v<version>` greeting with a beautiful borderless hello window that matches the RunX and Genius siblings while using the five-tone earth palette (`#7F5539`, `#A68A64`, `#EDE0D4`, `#656D4A`, `#414833`).
