@@ -60,10 +60,11 @@ CANDIDATE="${INSTALL_DIR}/.xdocs-new-$$"
 BINARY_BACKUP="${INSTALL_DIR}/.xdocs-backup-$$"
 AGENT_TARGET="${HOME}/.agents/skills/guiho-s-xdocs"
 CLAUDE_TARGET="${HOME}/.claude/skills/guiho-s-xdocs"
-AGENT_NEW="${AGENT_TARGET}.new-$$"
-CLAUDE_NEW="${CLAUDE_TARGET}.new-$$"
-AGENT_BACKUP="${AGENT_TARGET}.backup-$$"
-CLAUDE_BACKUP="${CLAUDE_TARGET}.backup-$$"
+# Keep transaction directories outside skill discovery roots.
+AGENT_NEW="${HOME}/.agents/.xdocs-skill-new-$$"
+CLAUDE_NEW="${HOME}/.claude/.xdocs-skill-new-$$"
+AGENT_BACKUP="${HOME}/.agents/.xdocs-skill-backup-$$"
+CLAUDE_BACKUP="${HOME}/.claude/.xdocs-skill-backup-$$"
 BINARY_SWAPPED=0
 AGENT_SWAPPED=0
 CLAUDE_SWAPPED=0
