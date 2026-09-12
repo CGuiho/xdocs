@@ -1,7 +1,7 @@
 ---
 name: xdocs-repository-agent-instructions
 purpose: Define mandatory engineering, documentation, validation, and release behavior for agents working in the xdocs repository.
-description: Repository-local instructions for the GUIHO SWE agent, Go CLI Engineer skill, XDocs metadata, and Git-native Mirror releases.
+description: Repository-local instructions for the GUIHO repository conventions, Go CLI Engineer skill, XDocs metadata, and Git-native Mirror releases.
 created: 2026-06-01
 owner: xdocs-package
 flags: []
@@ -10,28 +10,45 @@ tags:
   - repository-instructions
   - cli-engineering
 keywords:
-  - GUIHO SWE agent
+  - GUIHO repository conventions
   - CLI Engineer skill
   - xdocs workflow
 ---
 
+#### &copy; 2026 [GUIHO](https://guiho.co) as represented by [Cristóvão GUIHO](https://guiho.co/cguiho) All Rights Reserved.
+
 # Repository Notes
 
-## Agent
+## Required GUIHO Conventions
 
-Always read this: /c/GUIHO/superiority/agents/guiho-a-0001-swe.AGENTS.md (C:\GUIHO\superiority\agents\guiho-a-0001-swe.AGENTS.md)
-Stop if you can not find it.
+Before working in this repository, read the GUIHO root repository's `AGENTS.md`
+and the conventions under its `conventions/` directory that apply to the task.
+The conventions in Cristóvão GUIHO's [cguiho/guiho repository](https://github.com/cguiho/guiho)
+are the shared engineering authority.
+
+Locate that repository using the current platform:
+
+- Linux: `/root/SWE/GUIHO`.
+- Windows: `/c/SWE/GUIHO` (`C:\SWE\GUIHO`).
+- GitHub fallback: [cguiho/guiho](https://github.com/cguiho/guiho).
+
+Prefer the local checkout. Paths are case-sensitive on Linux; if the preferred
+path is absent, discover the actual checkout casing (for example,
+`/root/swe/guiho` on this machine). If no local checkout is available, read the
+conventions from GitHub.
+
+Read `conventions/guiho-convention-0000-swe.md` for general engineering work
+and `conventions/guiho-convention-0001-cli.md` for xdocs CLI work, plus any
+other conventions applicable to the task. Follow these conventions for
+architecture, planning, execution, review, validation, and release work.
 
 ## Required CLI Engineering
 
-- Use `guiho-a-0001-swe` as the coordinating GUIHO Software Engineer/SWE agent
-  for xdocs CLI architecture, planning, execution, review, validation, and
-  release work.
 - Load and follow the `guiho-s-0035-cli-engineer-go` agent skill whenever creating,
   upgrading, refactoring, reviewing, testing, packaging, installing, or
   releasing the xdocs CLI.
-- `guiho-s-0035-cli-engineer-go` is a skill, not an agent. It supplements the SWE
-  agent and does not replace its lifecycle controller.
+- `guiho-s-0035-cli-engineer-go` is a skill, not an agent. It supplements the
+  applicable GUIHO repository conventions.
 - Use Go 1.26.5, Cobra, `go.yaml.in/yaml/v3`, typed structs, explicit semantic
   validation, standard-library runtime services, `go:embed`, and
   `CGO_ENABLED=0`.
@@ -157,7 +174,7 @@ from `CHANGELOG.md`; never pass the full changelog to release creation.
 | Project Family | guiho |
 | Repository Directory | C:\GUIHO\xdocs |
 | Repository Kind | shared package |
-| Parent Project | GUIHO Root (C:\GUIHO\guiho) |
+| Parent Project | GUIHO Root (`cguiho/guiho`; resolve using Required GUIHO Conventions above) |
 | Parent Component | GUIHO Root |
 
 ### Component Purpose
@@ -183,7 +200,8 @@ repository's AGENTS.md GUIHO Project section.
 
 ### Coordination Rules
 
-- This repository is a child of C:\GUIHO\guiho.
+- This repository is a child of the GUIHO root coordination repository
+  (`cguiho/guiho`); resolve its location using Required GUIHO Conventions above.
 - Keep component-specific implementation tasks in the local TODO file.
 - Keep cross-component planning and parent delegation in the parent TODO file.
 - Read this component's existing local instructions before editing source code.
