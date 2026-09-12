@@ -104,10 +104,12 @@ try {
   foreach ($Root in @("$HOME\.agents\skills", "$HOME\.claude\skills")) {
     New-Item -ItemType Directory -Force -Path $Root | Out-Null
     $Target = Join-Path $Root "guiho-s-xdocs"
+    # Keep transaction directories outside skill discovery roots.
+    $TransactionRoot = Split-Path -Parent $Root
     $Stage = [pscustomobject]@{
       Target = $Target
-      New = "$Target.new-$([guid]::NewGuid().ToString('N'))"
-      Backup = "$Target.backup-$([guid]::NewGuid().ToString('N'))"
+      New = Join-Path $TransactionRoot (".xdocs-skill-new-" + [guid]::NewGuid().ToString('N'))
+      Backup = Join-Path $TransactionRoot (".xdocs-skill-backup-" + [guid]::NewGuid().ToString('N'))
       HadOld = Test-Path -LiteralPath $Target
       Swapped = $false
     }
