@@ -31,8 +31,8 @@ All Rights Reserved.
 | Status | Count |
 | --- | ---: |
 | todo | 1 |
-| in progress | 2 |
-| testing | 0 |
+| in progress | 1 |
+| testing | 1 |
 | stopped | 0 |
 | completed | 7 |
 
@@ -155,11 +155,15 @@ All Rights Reserved.
 
 ### 10. Enforce Explicit Documentation Authorization And Complete Trees
 
-- Status: in progress
+- Status: testing
 - Created: `2026-09-12`
 - Updated: `2026-09-12`
 - Outcome: Require explicit documentation directory and companion-frontmatter opt-ins, preserve ordinary Markdown, guard report destinations, and display every discovered named descriptor through arbitrary depth.
 - Plan: [docs/plans/explicit-documentation-authorization.md](docs/plans/explicit-documentation-authorization.md)
+
+- Review: [docs/reviews/implementation/explicit-documentation-authorization-review.md](docs/reviews/implementation/explicit-documentation-authorization-review.md)
+- External: [CGuiho/xdocs#21](https://github.com/CGuiho/xdocs/issues/21)
+- Acceptance: Implementation reviewed and branch pushed; user testing pending.
 
 ## Completion Archive
 

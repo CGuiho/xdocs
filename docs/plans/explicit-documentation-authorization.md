@@ -4,7 +4,7 @@ purpose: Plan issue 21 implementation without unsolicited Markdown changes.
 description: Scoped requirements, architecture, execution units, and acceptance checks for opt-in documentation and complete descriptor discovery.
 created: 2026-09-12
 owner: xdocs-plans
-flags: [execution-authorized]
+flags: [execution-complete, reviewed, human-review-pending]
 tags: [planning, authorization, tree]
 keywords: [issue 21, named descriptors, frontmatter, Luna, Sol]
 ---
@@ -182,11 +182,11 @@ never force or bypass a rejection. Do not publish a release.
 
 ## Tracking, findings, and acceptance
 
-- [ ] U1 typed opt-in policy and read behavior implemented and reviewed.
-- [ ] U2 complete deep tree implemented and reviewed.
-- [ ] U3 guarded output implemented and reviewed.
-- [ ] U4 embedded guidance and documentation consistent and reviewed.
-- [ ] U5 full checks, integrated review, and GitHub push verified.
+- [x] U1 typed opt-in policy and read behavior implemented and reviewed.
+- [x] U2 complete deep tree implemented and reviewed.
+- [x] U3 guarded output implemented and reviewed.
+- [x] U4 embedded guidance and documentation consistent and reviewed.
+- [x] U5 full checks, integrated review, and GitHub push verified.
 
 Use this plan's checklist for executor progress and add one concise task to the
 existing TODO index. Reuse existing documentation directories instead of
@@ -200,3 +200,7 @@ Hard stops: potential unrecoverable data loss, secret access, or required
 production mutation. Resolve routine implementation choices conservatively,
 record them, and continue. No schema or output policy may silently expand
 the user's authorization.
+
+Implementation and GitHub branch delivery are complete. Human acceptance remains
+pending. See the [implementation review](../reviews/implementation/explicit-documentation-authorization-review.md)
+for requirement mapping, review findings, and validation evidence.
