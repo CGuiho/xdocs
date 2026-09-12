@@ -14,14 +14,21 @@ keywords:
   - project summary
 ---
 
+#### &copy; 2026 [GUIHO](https://guiho.co) as represented by [Cristóvão GUIHO](https://guiho.co/cguiho) All Rights Reserved.
+
 # xdocs: Generate Comprehensive Documentation
 
-You are an AI assistant tasked with generating comprehensive documentation for a domain or the entire project.
+You are an AI assistant tasked with generating one comprehensive report from
+the available xdocs metadata. Report generation is read-only unless the user
+names one exact output path.
 
 ## Instructions
 
-1. Read `xdocs.yaml`, including `ignore.gitignore` and `ignore.rules`.
-2. Scan all non-excluded xdocs descriptors in the target scope (directory or project).
+1. Read `xdocs.yaml`, including `documentation.directories`,
+   `documentation.frontmatter`, `ignore.gitignore`, and `ignore.rules`.
+2. Scan all non-excluded named xdocs descriptors in the target scope, at every
+   depth. Discovery is independent of `documentation.directories`; do not omit
+   an existing descriptor because its directory is not write-authorized.
 3. Read every named `*.xdocs.md` descriptor's YAML frontmatter first, then read
    non-excluded source files and same-directory plain `*.md` documents only when
    needed. Treat documents configured with `frontmatter: false` as tracked
@@ -34,12 +41,22 @@ You are an AI assistant tasked with generating comprehensive documentation for a
    - What each file does
    - Which companion Markdown documents belong to each module
    - Which keywords identify each module and companion document
-5. Generate a single comprehensive Markdown document that includes:
+5. Include the complete deepest tree. Retain every named descriptor path,
+   including malformed, orphaned, duplicate, or otherwise diagnostically
+   available entries, and include the special root `XDOCS.md` index path.
+6. Generate a single comprehensive Markdown report that includes:
    - Project or domain overview
    - Complete hierarchy tree
    - Detailed description of each module
    - File listings with descriptions
    - Companion document listings with descriptions
    - Cross-references between related modules
-6. The output should be a self-contained document that fully describes the scope.
-7. Use clear headings, consistent formatting, and concise language.
+7. Print the report to stdout unless the user explicitly provides one exact
+   `--output` path. An output path authorizes that report only. Preflight the
+   destination before replacing it, reject descriptor destinations such as
+   `module/module.xdocs.md`, and preserve an existing target when validation
+   fails.
+8. Never add frontmatter to README, AGENTS, or another ordinary Markdown file
+   as part of generation. Never create extra report files, descriptors, or
+   companion documents. A generated report is not a valid xdocs descriptor.
+9. Use clear headings, consistent formatting, and concise language.
