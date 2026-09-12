@@ -56,8 +56,9 @@ setup operation, separate from documentation-corpus writes.
      when it has no frontmatter, without adding headers by default
    - Keep directory context in the descriptor body; do not create extra
      summary, overview, detail, or report files
-   - Use `xdocs tree` as a read-only complete tree of every non-excluded
-     descriptor at every depth, including the root `XDOCS.md` path
+   - Use `xdocs tree` without `--output` as the read-only complete tree of
+     every non-excluded descriptor at every depth, including the root
+     `XDOCS.md` path
    - Print `generate`, `merge`, and `tree` reports to stdout unless one exact
      `--output` path is requested; a report is never a descriptor
    - List every same-directory plain `*.md` companion document in the descriptor's `documents` metadata map

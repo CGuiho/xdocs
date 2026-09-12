@@ -128,7 +128,12 @@ rule and an authorized `documentation.directories` entry match, and no legacy
 
 ```yaml
 ---
+name: Companion Notes
+purpose: Explain the companion document.
+description: Context for the owning directory.
+created: 2026-09-12
 owner: descriptor-subject
+flags: []
 tags: []
 keywords: []
 ---
@@ -151,11 +156,12 @@ because they are discovered or listed. An explicit project policy is required.
 
 3. Read only the recommended descriptors, implementation files, and companion
    documents.
-4. Before any write, verify that the target directory is covered by
+4. Before any xdocs documentation write, verify that the target directory is covered by
    `documentation.directories` and that the target Markdown frontmatter is
    covered by `documentation.frontmatter` when applicable. A read-only scan,
    tree, metadata, context, or doctor result never grants write permission.
-5. Make the implementation/documentation change only within that authorization.
+5. Make only the documentation write within that authorization. Unrelated
+   implementation changes follow their own task and repository authorization.
 6. Update the owning descriptor without touching Git-ignored paths or adding
    frontmatter to denied or non-opted-in documents:
    - add/remove/rename `files` entries;
@@ -171,13 +177,15 @@ because they are discovered or listed. An explicit project policy is required.
    xdocs doctor <scope>
    ```
 
-7. Widen validation only when the change affects repository-wide integrity.
+8. Widen validation only when the change affects repository-wide integrity.
 
-`xdocs tree` is a read-only complete discovery view. It walks every
+`xdocs tree` performs a read-only complete discovery when no `--output` is
+provided. It walks every
 non-excluded directory to arbitrary depth, retains every named descriptor and
 the special `XDOCS.md` path, and reports malformed, orphaned, duplicate, or
 cyclic metadata without silently dropping a node. Its discovery is independent
-of the descriptor write allowlist.
+of the descriptor write allowlist. With one exact `--output` path, it writes
+only that requested report after output validation.
 
 `generate`, `merge`, and `tree` print their report to stdout unless the user
 provides one exact `--output` path. A report destination authorizes that single

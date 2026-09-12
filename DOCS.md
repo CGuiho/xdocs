@@ -218,11 +218,11 @@ explicitly authorized the exact scope.
 
 ### Agent context
 
-- `meta [path]` reads frontmatter only. `--documents` includes companion
-  frontmatter when it is required or already present and tracks ordinary
-  Markdown with `frontmatterRequired: false`; `--existing-frontmatter` audits
-  only existing headers. `--owner`, `--tag`, and `--keyword` filter before full
-  reads.
+- `meta [path]` reads frontmatter only. `--documents` reads companion
+  frontmatter when it is required and tracks ordinary Markdown with
+  `frontmatterRequired: false`; `--existing-frontmatter` additionally reads
+  and validates headers that already exist on otherwise non-required documents.
+  `--owner`, `--tag`, and `--keyword` filter before full reads.
 - `context <query> [path]` tokenizes a query, applies stable weighted ranking,
   and returns the smallest useful descriptor/file/document reading set.
   `--explain` includes match reasons.
@@ -253,9 +253,9 @@ pagination, defaults to eight entries, and retains full machine-readable
 metadata in JSON. Direct upgrade uses the linker-embedded build target so ARMv6
 and ARMv7 remain distinct.
 
-All scan, meta, context, doctor, and tree operations are read-only. `generate`,
-`merge`, and `tree` write nothing unless the user supplies one exact
-`--output` path. That path authorizes only the requested report; it cannot
+All scan, meta, context, and doctor operations are read-only. Without
+`--output`, tree discovery is also read-only. `generate`, `merge`, and `tree`
+write nothing unless the user supplies one exact `--output` path. That path authorizes only the requested report; it cannot
 authorize descriptor or companion metadata changes, and a descriptor-shaped
 destination is rejected. Output validation runs before replacement so a rejected
 destination retains its original bytes. No command creates extra summary,

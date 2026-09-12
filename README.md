@@ -207,10 +207,10 @@ Every scope supports `-h`/`--help`, `--help-tree`,
 `--help-tree-depth <positive-integer>`, and `--help-docs`. Only the root
 supports `-v`/`--version`. Use `--format text|json|markdown` for stable output.
 
-`scan`, `meta`, `context`, `doctor`, and `tree` are read-only. `tree` walks all
-non-excluded directories to arbitrary depth, includes every discovered named
-descriptor and the special `XDOCS.md` path, and reports malformed or orphaned
-metadata without hiding a node. `meta --existing-frontmatter` and
+`scan`, `meta`, `context`, and `doctor` are read-only. Without `--output`,
+`tree` is also read-only: it walks all non-excluded directories to arbitrary
+depth, includes every discovered named descriptor and the special `XDOCS.md`
+path, and reports malformed or orphaned metadata without hiding a node. `meta --existing-frontmatter` and
 `doctor --existing-frontmatter` audit existing ordinary Markdown headers only:
 missing headers remain valid, malformed existing headers are reported, and no
 repair or ownership is inferred.

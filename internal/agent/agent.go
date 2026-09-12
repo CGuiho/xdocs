@@ -46,8 +46,8 @@ adding headers unless both explicit grants match. Respect
 ` + "`ignore.gitignore`" + ` and every ` + "`ignore.rules`" + ` entry.
 
 Read-only ` + "`xdocs scan`" + `, ` + "`xdocs meta`" + `, ` + "`xdocs context`" + `,
-` + "`xdocs tree`" + `, and ` + "`xdocs doctor`" + ` discovery is independent of the write
-allowlist. ` + "`xdocs tree`" + ` walks every non-excluded directory to arbitrary depth,
+and ` + "`xdocs doctor`" + ` operations, plus ` + "`xdocs tree`" + ` without
+` + "`--output`" + `, discover independently of the write allowlist. ` + "`xdocs tree`" + ` walks every non-excluded directory to arbitrary depth,
 retains every named descriptor and the special root index, and reports malformed
 or orphaned metadata without hiding paths. ` + "`meta --existing-frontmatter`" + ` and
 ` + "`doctor --existing-frontmatter`" + ` audit existing ordinary Markdown headers
