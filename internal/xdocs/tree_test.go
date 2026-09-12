@@ -286,7 +286,7 @@ flags: []
 		t.Errorf("scanned malformed descriptor parent = %q, want visible descriptor", got)
 	}
 	broken := treeTestRenderedLine(text, "visible/deep/broken.xdocs.md")
-	if broken == "" || !strings.Contains(broken, "Missing YAML frontmatter") {
+	if broken == "" || !strings.Contains(broken, "Malformed YAML frontmatter") {
 		t.Errorf("scanned tree lost malformed descriptor diagnostic: %q\n%s", broken, text)
 	}
 	if rootIndex := treeTestRenderedLine(text, "XDOCS.md"); rootIndex == "" || strings.Contains(rootIndex, "[invalid]") {
