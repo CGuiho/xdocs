@@ -22,6 +22,12 @@ func TestWriteReportPreflightsReservedAndUnsafeDestinations(t *testing.T) {
 	if err := WriteReport(cfg, "existing.md", []byte("after\n")); err != nil {
 		t.Fatal(err)
 	}
+	if err := WriteReport(cfg, "existing.md", []byte("---\nname: [broken\n")); err == nil {
+		t.Fatal("unterminated report frontmatter was accepted")
+	}
+	if err := WriteReport(cfg, "existing.md", []byte("---\nname: report\n---\nbody\n")); err == nil {
+		t.Fatal("unauthorized report frontmatter was accepted")
+	}
 	content, err := os.ReadFile(filepath.Join(root, "existing.md"))
 	if err != nil {
 		t.Fatal(err)
@@ -59,6 +65,31 @@ func TestWriteReportPreflightsReservedAndUnsafeDestinations(t *testing.T) {
 	cfg.Exclude = []string{"excluded"}
 	if err := WriteReport(cfg, "excluded/report.md", []byte("report\n")); err == nil {
 		t.Fatal("excluded output destination was accepted")
+	}
+}
+
+func TestWriteReportAllowsExplicitlyAuthorizedGenericFrontmatter(t *testing.T) {
+	root := t.TempDir()
+	cfg, err := config.Defaults(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg.Documentation = config.DocumentationConfig{
+		Directories: []string{"notes"},
+		Frontmatter: []config.DocumentationRule{{Pattern: "notes/report.md", Kind: "file"}},
+	}
+	if err := os.Mkdir(filepath.Join(root, "notes"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := WriteReport(cfg, "notes/report.md", []byte("---\nname: report\n---\nbody\n")); err != nil {
+		t.Fatal(err)
+	}
+	content, err := os.ReadFile(filepath.Join(root, "notes", "report.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(string(content), "---\nname: report") {
+		t.Fatalf("authorized report was not written: %q", content)
 	}
 }
 

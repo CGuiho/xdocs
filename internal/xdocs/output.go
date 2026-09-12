@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/CGuiho/xdocs/internal/config"
+	"go.yaml.in/yaml/v3"
 )
 
 // WriteReport writes exactly one explicitly requested report destination. It
@@ -15,6 +16,9 @@ import (
 func WriteReport(cfg config.Config, destination string, content []byte) error {
 	target, existing, err := preflightReportPath(cfg, destination)
 	if err != nil {
+		return err
+	}
+	if err := validateReportContent(cfg, target, content); err != nil {
 		return err
 	}
 	mode := os.FileMode(0o644)
@@ -52,6 +56,32 @@ func WriteReport(cfg config.Config, destination string, content []byte) error {
 		return fmt.Errorf("atomically replace output %s: %w", filepath.ToSlash(target), err)
 	}
 	removeTemporary = false
+	return nil
+}
+
+func validateReportContent(cfg config.Config, target string, content []byte) error {
+	_, _, ok, present := ExtractFrontmatterDetailed(string(content))
+	if !present {
+		return nil
+	}
+	if !ok {
+		return fmt.Errorf("refusing to write malformed report frontmatter: missing a closing delimiter")
+	}
+	policy, err := newPathPolicy(cfg, filepath.Dir(target))
+	if err != nil {
+		return err
+	}
+	if !policy.frontmatterRequired(target) {
+		return fmt.Errorf("refusing to write Markdown frontmatter without explicit documentation.frontmatter authorization: %s", filepath.ToSlash(slashRelative(cfg.CWD, target)))
+	}
+	frontmatter, _, _, _ := ExtractFrontmatterDetailed(string(content))
+	var object map[string]any
+	if err := yaml.Unmarshal([]byte(frontmatter), &object); err != nil {
+		return fmt.Errorf("refusing to write invalid report frontmatter: %w", err)
+	}
+	if object == nil {
+		return fmt.Errorf("refusing to write report frontmatter: expected a YAML object")
+	}
 	return nil
 }
 
