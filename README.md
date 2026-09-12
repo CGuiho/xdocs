@@ -3,9 +3,10 @@
 # GUIHO XDocs
 
 XDocs is a native Go CLI for structured repository documentation. It discovers
-named `*.xdocs.md` descriptors, validates companion Markdown metadata, renders
-containment trees, recommends minimal reading sets, and reports documentation
-health issues.
+every non-excluded named `*.xdocs.md` descriptor at every depth, renders a
+complete containment tree, recommends minimal reading sets, and reports
+documentation health issues. Descriptor and ordinary Markdown writes are
+explicitly opt-in per project directory.
 
 The shipping runtime uses Go 1.26.5, Cobra, strict YAML structs, embedded agent
 resources, local cached update notices, safe self-upgrades, and exactly eleven
@@ -52,6 +53,9 @@ xdocs doctor
 
 `xdocs init` creates `xdocs.yaml` and `XDOCS.md`, then installs the skill
 globally by default. Use `xdocs init --local` for project-local skill targets.
+The generated configuration starts with no documentation write grants, so
+initialization does not authorize descriptor or ordinary Markdown metadata
+changes.
 
 ## Configuration
 
@@ -68,6 +72,9 @@ extensions:
     - .xdocs.md
 ai:
   mode: auto
+documentation:
+  directories: []
+  frontmatter: []
 ignore:
   gitignore: true
   rules:
@@ -94,9 +101,24 @@ project:
   name: example
 ```
 
-`ai.mode` defaults to `auto`. The supported modes are `auto`, which makes
-relevant documentation changes in the same work unit, and `prompt`, which
-announces needed documentation changes and waits for confirmation.
+`ai.mode` defaults to `auto`. `auto` performs documentation changes that are
+already authorized by `documentation`; `prompt` announces those changes and
+waits for confirmation. The mode controls timing only and never grants write
+permission.
+
+`documentation.directories` is a list of repository-relative literal directory
+paths. Each entry authorizes descriptor maintenance in that directory and its
+non-excluded descendants. `.` authorizes the whole non-excluded project. An
+empty list authorizes no descriptor writes. XDocs does not populate this list
+during `init`.
+
+`documentation.frontmatter` is a list of explicit rules with `pattern` and
+`kind` (`file` or `directory`). A rule authorizes ordinary Markdown frontmatter
+only when the document is also below an authorized documentation directory.
+Legacy `ignore.rules` entries with `frontmatter: false` always deny the
+frontmatter write and take precedence. Discovery can still list those
+documents in a descriptor's `documents` map, and missing frontmatter is valid
+unless both opt-ins match.
 
 `ignore.gitignore` defaults to `true`, so Git-ignored files and directories do
 not enter xdocs discovery, metadata, context, or health checks. Each strict
@@ -129,7 +151,8 @@ entries fail explicitly.
 
 ## Descriptor model
 
-Each documented module directory has exactly one named descriptor:
+Each documented module directory has exactly one named descriptor. Name a new
+descriptor after its directory, such as `technologies/technologies.xdocs.md`:
 
 ```yaml
 ---
@@ -149,10 +172,17 @@ flags: []
 ---
 ```
 
-Every non-excluded plain sibling Markdown file must be declared in `documents`.
-Unless a matching ignore rule sets `frontmatter: false`, it must have
-frontmatter containing `name`, `purpose`, `description`, `created`, `owner`,
-`flags`, `tags`, and `keywords`.
+The descriptor body carries the directory's useful overview, details, and
+usage context. Do not create a separate summary or detail Markdown file for
+that context. The bare `.xdocs.md` name and legacy `.docs.md` files are invalid
+descriptors. The root `XDOCS.md` is the single special project index.
+
+Every non-excluded plain sibling Markdown file must be declared in `documents`,
+whether or not it has frontmatter. Ordinary Markdown needs the standard
+frontmatter fields only when an explicit `documentation.frontmatter` rule and
+an authorized directory match. The default legacy denials protect `README.md`,
+`AGENTS.md`, and `CLAUDE.md`; do not add frontmatter to those or other user
+documents merely because XDocs discovers them.
 
 ## Commands
 
@@ -162,9 +192,9 @@ frontmatter containing `name`, `purpose`, `description`, `created`, `owner`,
 - `xdocs merge [path] [--output <path>]`
 - `xdocs tree [--output <path>]`
 - `xdocs list [path]`
-- `xdocs meta [path] [--documents] [--strict]`
+- `xdocs meta [path] [--documents] [--existing-frontmatter] [--strict]`
 - `xdocs context <query> [path] [--documents] [--files]`
-- `xdocs doctor [path] [--no-documents] [--warnings-as-errors]`
+- `xdocs doctor [path] [--no-documents] [--existing-frontmatter] [--warnings-as-errors]`
 - `xdocs agent skill install|uninstall|update|list|show`
 - `xdocs agent instruction apply|remove|update|show`
 - `xdocs agent prompt list|show`
@@ -176,6 +206,20 @@ frontmatter containing `name`, `purpose`, `description`, `created`, `owner`,
 Every scope supports `-h`/`--help`, `--help-tree`,
 `--help-tree-depth <positive-integer>`, and `--help-docs`. Only the root
 supports `-v`/`--version`. Use `--format text|json|markdown` for stable output.
+
+`scan`, `meta`, `context`, `doctor`, and `tree` are read-only. `tree` walks all
+non-excluded directories to arbitrary depth, includes every discovered named
+descriptor and the special `XDOCS.md` path, and reports malformed or orphaned
+metadata without hiding a node. `meta --existing-frontmatter` and
+`doctor --existing-frontmatter` audit existing ordinary Markdown headers only:
+missing headers remain valid, malformed existing headers are reported, and no
+repair or ownership is inferred.
+
+`generate`, `merge`, and `tree` print reports to stdout unless one exact
+`--output` path is supplied. That path authorizes only the requested report;
+it does not authorize metadata edits or additional files. Descriptor-shaped
+destinations are rejected, and a rejected destination is left byte-for-byte
+unchanged.
 
 ## Agents
 
@@ -194,6 +238,11 @@ write replacements atomically. The plain root invocation is the shared
 bootstrap boundary; help, version, data commands, explicit agent management,
 upgrade, and uninstall do not run bootstrap. Bootstrap never scans or changes
 `XDOCS.md`, descriptors, or companion documents.
+
+The managed instruction block teaches agents to inspect the documentation
+allowlist before writing. Applying it never adds frontmatter to `AGENTS.md` or
+other ordinary Markdown and does not grant corpus write permission. The
+explicit `init` root-index and agent bootstrap behavior is a setup exception.
 
 ## Updates and upgrades
 
