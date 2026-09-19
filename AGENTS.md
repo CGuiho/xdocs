@@ -264,8 +264,8 @@ tmux-session: xdocs  # orchestrator session on su-57; convention = this project'
 ### Coordination
 
 - GitHub repository: https://github.com/CGuiho/xdocs.git
-- GitHub Project: pending — CG binds one per project; it is the source of truth for new items (`todo.md` mirrors executable state; every item carries its issue URL)
-- To-do file: `todo.md` (repo root)
+- GitHub Project: https://github.com/users/CGuiho/projects/2 — main GUIHO project; XDocs is governed there. It is the source of truth for new items (`TODO.md` mirrors executable state; every item carries its issue URL)
+- To-do file: `TODO.md` (repo root)
 - Reserved port: pending — reserve in `apps.md` (`CGuiho/guiho`)
 
 ### Workers
