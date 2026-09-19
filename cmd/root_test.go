@@ -31,7 +31,7 @@ func executeWithRoots(t *testing.T, cwd, home string, args ...string) (string, s
 	}, BuildInfo{Version: "0.8.0", Target: "xdocs-windows-amd64"})
 	root.SetArgs(args)
 	err := root.Execute()
-	if err == errHelpRendered {
+	if err == errHelpRendered || err == errVersionRendered {
 		err = nil
 	}
 	return out.String(), stderr.String(), err
@@ -211,6 +211,105 @@ func TestInitOutputOmitsLegacyRootIndex(t *testing.T) {
 	}
 	if _, exists := result["root"]; exists || strings.Contains(out, "XDOCS.md") {
 		t.Fatalf("init output still reports the legacy root index: %s", out)
+	}
+}
+
+func TestUserFacingInvocationsRemoveLegacyRootIndex(t *testing.T) {
+	for _, args := range [][]string{
+		{},
+		{"--help"},
+		{"--help-tree"},
+		{"--help-tree-depth", "1"},
+		{"--help-docs"},
+		{"--version"},
+		{"scan"},
+	} {
+		root := t.TempDir()
+		if err := os.WriteFile(filepath.Join(root, "XDOCS.md"), []byte("# legacy\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if _, _, err := executeWithRoots(t, root, t.TempDir(), args...); err != nil {
+			t.Fatalf("%v failed: %v", args, err)
+		}
+		if _, err := os.Lstat(filepath.Join(root, "XDOCS.md")); !os.IsNotExist(err) {
+			t.Fatalf("%v left the legacy root index behind: %v", args, err)
+		}
+	}
+}
+
+func TestLegacyRootCleanupHonorsCwd(t *testing.T) {
+	processCWD := t.TempDir()
+	target := t.TempDir()
+	if err := os.WriteFile(filepath.Join(processCWD, "XDOCS.md"), []byte("process"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(target, "XDOCS.md"), []byte("target"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := executeWithRoots(t, processCWD, t.TempDir(), "--cwd", target, "--help"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Lstat(filepath.Join(target, "XDOCS.md")); !os.IsNotExist(err) {
+		t.Fatalf("effective --cwd legacy root index was not removed: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(processCWD, "XDOCS.md")); err != nil {
+		t.Fatalf("process cwd legacy root index was unexpectedly changed: %v", err)
+	}
+}
+
+func TestLegacyRootCleanupIsIdempotentWhenAbsent(t *testing.T) {
+	root := t.TempDir()
+	for range 2 {
+		if _, _, err := executeWithRoots(t, root, t.TempDir(), "--help"); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func TestLegacyRootCleanupRemovesSymlinkWithoutFollowingTarget(t *testing.T) {
+	root := t.TempDir()
+	target := filepath.Join(root, "target.md")
+	link := filepath.Join(root, "XDOCS.md")
+	if err := os.WriteFile(target, []byte("target"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(target, link); err != nil {
+		t.Skipf("symbolic links unavailable: %v", err)
+	}
+	if _, _, err := executeWithRoots(t, root, t.TempDir(), "--help"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Lstat(link); !os.IsNotExist(err) {
+		t.Fatalf("legacy symlink was not removed: %v", err)
+	}
+	if _, err := os.Stat(target); err != nil {
+		t.Fatalf("symlink target was unexpectedly removed: %v", err)
+	}
+}
+
+func TestLegacyRootCleanupRefusesDirectory(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, "XDOCS.md")
+	if err := os.Mkdir(path, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	// Cobra's --help exit renders before PersistentPreRunE can fail, so the
+	// directory guard is asserted through a data command that reaches it.
+	_, _, err := executeWithRoots(t, root, t.TempDir(), "scan")
+	if ExitCode(err) != 5 {
+		t.Fatalf("directory cleanup returned %v with exit code %d, want mutation category 5", err, ExitCode(err))
+	}
+	if info, statErr := os.Stat(path); statErr != nil || !info.IsDir() {
+		t.Fatalf("directory named XDOCS.md was changed: info=%v err=%v", info, statErr)
+	}
+	// Help rendering still removes regular-file legacies (covered above) but
+	// never recursively deletes a directory.
+	_, _, err = executeWithRoots(t, root, t.TempDir(), "--help")
+	if err != nil {
+		t.Fatalf("help with directory legacy failed: %v", err)
+	}
+	if info, statErr := os.Stat(path); statErr != nil || !info.IsDir() {
+		t.Fatalf("help changed directory named XDOCS.md: info=%v err=%v", info, statErr)
 	}
 }
 
