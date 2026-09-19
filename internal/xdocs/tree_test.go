@@ -16,7 +16,6 @@ func TestBuildTreeContainsEveryDiscoveredDescriptorByDirectory(t *testing.T) {
 	root := t.TempDir()
 	missingParent := "missing-parent"
 	files := []File{
-		treeTestFile(root, "XDOCS.md", true, nil),
 		treeTestFile(root, "technologies/technologies.xdocs.md", true, treeTestMetadata("technologies", "Technology directory context.", nil)),
 		treeTestFile(root, "technologies/cloud/cloud.xdocs.md", true, treeTestMetadata("cloud", "Cloud directory context.", treeStringPointer("technologies"))),
 		treeTestFile(root, "technologies/cloud/observability/observability.xdocs.md", true, treeTestMetadata("observability", "Observability directory context.", treeStringPointer("cloud"))),
@@ -53,7 +52,6 @@ func TestBuildTreeContainsEveryDiscoveredDescriptorByDirectory(t *testing.T) {
 
 	parentByPath := treeTestParentPaths(tree)
 	wantParents := map[string]string{
-		"XDOCS.md":                                                  "(root)",
 		"technologies/technologies.xdocs.md":                        "(root)",
 		"technologies/cloud/cloud.xdocs.md":                         "technologies/technologies.xdocs.md",
 		"technologies/cloud/observability/observability.xdocs.md":   "technologies/cloud/cloud.xdocs.md",
@@ -68,17 +66,6 @@ func TestBuildTreeContainsEveryDiscoveredDescriptorByDirectory(t *testing.T) {
 		if got := parentByPath[path]; got != wantParent {
 			t.Errorf("parent of %q = %q, want %q", path, got, wantParent)
 		}
-	}
-
-	index := byPath["XDOCS.md"][0]
-	if index.Kind != "index" {
-		t.Errorf("root index kind = %q, want index", index.Kind)
-	}
-	if index.Subject != "XDOCS.md" {
-		t.Errorf("root index subject = %q, want XDOCS.md", index.Subject)
-	}
-	if !index.Valid {
-		t.Error("special root index should be a valid navigable tree entry")
 	}
 
 	invalid := byPath["technologies/cloud/broken/broken.xdocs.md"][0]
@@ -158,7 +145,6 @@ func TestTreeRenderersAreDeterministicAndExposeAllPathsAndContext(t *testing.T) 
 		treeTestFile(root, "zeta/zeta.xdocs.md", true, treeTestMetadata("zeta", "Zeta context.", nil)),
 		treeTestFile(root, "alpha/alpha.xdocs.md", true, treeTestMetadata("alpha", "Alpha context.", nil)),
 		treeTestFile(root, "alpha/deep/broken.xdocs.md", false, nil, "Missing YAML frontmatter."),
-		treeTestFile(root, "XDOCS.md", true, nil),
 	}
 	reversed := append([]File(nil), files...)
 	for left, right := 0, len(reversed)-1; left < right; left, right = left+1, right-1 {
@@ -181,7 +167,7 @@ func TestTreeRenderersAreDeterministicAndExposeAllPathsAndContext(t *testing.T) 
 		t.Fatalf("tree renderers are input-order dependent:\ntext:\n%s\n---\n%s\nmarkdown:\n%s\n---\n%s\njson:\n%s\n---\n%s", textFirst, textSecond, markdownFirst, markdownSecond, jsonFirstBytes, jsonSecondBytes)
 	}
 
-	for _, path := range []string{"XDOCS.md", "alpha/alpha.xdocs.md", "alpha/deep/broken.xdocs.md", "zeta/zeta.xdocs.md"} {
+	for _, path := range []string{"alpha/alpha.xdocs.md", "alpha/deep/broken.xdocs.md", "zeta/zeta.xdocs.md"} {
 		for format, output := range map[string]string{"text": textFirst, "markdown": markdownFirst, "json": string(jsonFirstBytes)} {
 			if !strings.Contains(output, path) {
 				t.Errorf("%s tree omitted path %q:\n%s", format, path, output)
@@ -202,7 +188,6 @@ func TestTreeRenderersAreDeterministicAndExposeAllPathsAndContext(t *testing.T) 
 	}
 
 	for path, wantPrefix := range map[string]string{
-		"XDOCS.md":                   "|  |- ",
 		"alpha/alpha.xdocs.md":       "|  |- ",
 		"alpha/deep/broken.xdocs.md": "|    |- ",
 		"zeta/zeta.xdocs.md":         "|  |- ",
@@ -226,7 +211,6 @@ func TestScanTreeRetainsMalformedDescriptorsAndExcludesIgnoredDescriptors(t *tes
 	if err := os.MkdirAll(filepath.Join(root, "ignored"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	writeTreeTestDiskFile(t, root, "XDOCS.md", "# Root\n")
 	writeTreeTestDiskFile(t, root, ".gitignore", "ignored/\n")
 	writeTreeTestDiskFile(t, root, "visible/visible.xdocs.md", `---
 subject: visible
@@ -268,13 +252,13 @@ flags: []
 		paths = append(paths, file.RelativePath)
 	}
 	sort.Strings(paths)
-	if !reflect.DeepEqual(paths, []string{"XDOCS.md", "visible/deep/broken.xdocs.md", "visible/visible.xdocs.md"}) {
+	if !reflect.DeepEqual(paths, []string{"visible/deep/broken.xdocs.md", "visible/visible.xdocs.md"}) {
 		t.Fatalf("scan descriptor paths = %#v", paths)
 	}
 
 	tree := BuildTree(scan.XDocsFiles)
 	text := RenderTree(tree)
-	for _, path := range []string{"XDOCS.md", "visible/visible.xdocs.md", "visible/deep/broken.xdocs.md"} {
+	for _, path := range []string{"visible/visible.xdocs.md", "visible/deep/broken.xdocs.md"} {
 		if !strings.Contains(text, path) {
 			t.Errorf("scanned tree omitted %q:\n%s", path, text)
 		}
@@ -288,9 +272,6 @@ flags: []
 	broken := treeTestRenderedLine(text, "visible/deep/broken.xdocs.md")
 	if broken == "" || !strings.Contains(broken, "Malformed YAML frontmatter") {
 		t.Errorf("scanned tree lost malformed descriptor diagnostic: %q\n%s", broken, text)
-	}
-	if rootIndex := treeTestRenderedLine(text, "XDOCS.md"); rootIndex == "" || strings.Contains(rootIndex, "[invalid]") {
-		t.Errorf("scanned root index should be valid and distinguishable: %q", rootIndex)
 	}
 }
 

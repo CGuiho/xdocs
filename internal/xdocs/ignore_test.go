@@ -308,7 +308,7 @@ flags: []
 	}
 }
 
-func TestIgnoredRootIndexDoesNotCoverRoot(t *testing.T) {
+func TestIgnoredLegacyRootMarkdownDoesNotCoverRoot(t *testing.T) {
 	root := t.TempDir()
 	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte("XDOCS.md\n"), 0o644); err != nil {
 		t.Fatal(err)
@@ -324,8 +324,32 @@ func TestIgnoredRootIndexDoesNotCoverRoot(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(scan.XDocsFiles) != 0 || scan.CoveredDirectories != 0 || scan.UncoveredDirectories != 1 {
-		t.Fatalf("ignored root index affected coverage: %#v", scan)
+	if len(scan.XDocsFiles) != 0 || len(scan.MarkdownDocuments) != 0 || scan.CoveredDirectories != 0 || scan.UncoveredDirectories != 1 {
+		t.Fatalf("ignored legacy Markdown affected coverage: %#v", scan)
+	}
+}
+
+func TestSurvivingRootIndexIsOrdinaryMarkdownDocument(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "XDOCS.md"), []byte("# Legacy root\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := config.Defaults(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	scan, err := ScanProject(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(scan.XDocsFiles) != 0 {
+		t.Fatalf("legacy root index was still treated as an xdocs descriptor: %#v", scan.XDocsFiles)
+	}
+	if len(scan.MarkdownDocuments) != 1 || scan.MarkdownDocuments[0].RelativePath != "XDOCS.md" {
+		t.Fatalf("legacy root index was not discovered as ordinary Markdown: %#v", scan.MarkdownDocuments)
+	}
+	if scan.CoveredDirectories != 0 || scan.UncoveredDirectories != 1 {
+		t.Fatalf("plain legacy Markdown unexpectedly covered the root: %#v", scan)
 	}
 }
 

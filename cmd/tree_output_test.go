@@ -14,9 +14,6 @@ func TestTreeCommandKeepsInvalidDescriptorsVisibleAndReportsDiagnostics(t *testi
 	if err := os.MkdirAll(deep, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(root, "XDOCS.md"), []byte("# Root\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
 	valid := `---
 subject: deep
 description: Deep descriptor context.
@@ -51,7 +48,7 @@ flags: []
 				t.Fatalf("tree JSON is invalid: %v\n%s", err, out)
 			}
 		}
-		for _, path := range []string{"XDOCS.md", "one/one.xdocs.md", "one/two/two.xdocs.md", "one/two/three/three.xdocs.md"} {
+		for _, path := range []string{"one/one.xdocs.md", "one/two/two.xdocs.md", "one/two/three/three.xdocs.md"} {
 			var count int
 			switch format {
 			case "json":
