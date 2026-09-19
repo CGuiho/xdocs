@@ -81,6 +81,15 @@ func NewRootCommand(deps Dependencies, info BuildInfo) *cobra.Command {
 			if command.Flags().Changed("help-tree-depth") && options.helpDepth < 1 {
 				return apperror.New(apperror.Usage, "--help-tree-depth must be a positive integer")
 			}
+			cwd, err := resolveEffectiveCWD(options, deps)
+			if err != nil {
+				return err
+			}
+			if !internalProtocolCommand(command) {
+				if err := removeLegacyRootIndex(cwd); err != nil {
+					return err
+				}
+			}
 			if options.helpTree || command.Flags().Changed("help-tree-depth") {
 				fmt.Fprint(command.OutOrStdout(), renderCommandTree(command, options.helpDepth))
 				return errHelpRendered
@@ -96,16 +105,7 @@ func NewRootCommand(deps Dependencies, info BuildInfo) *cobra.Command {
 			if err := validateFormat(options.format); err != nil {
 				return err
 			}
-			cwd := options.cwd
-			if cwd == "." && deps.WorkingDirectory != "" {
-				cwd = deps.WorkingDirectory
-			}
-			absolute, err := filepath.Abs(cwd)
-			if err != nil {
-				return apperror.Wrap(apperror.Usage, "resolve --cwd", err)
-			}
-			options.cwd = absolute
-			if command.Name() != "__update-worker" && command.Name() != "__replace-windows" {
+			if !internalProtocolCommand(command) {
 				if completion, found, err := upgrade.ReadAndClearCompletion(); err != nil {
 					fmt.Fprintf(command.ErrOrStderr(), "Warning: could not read the prior XDocs upgrade result: %v\n", err)
 				} else if found {
@@ -188,6 +188,44 @@ func NewRootCommand(deps Dependencies, info BuildInfo) *cobra.Command {
 
 func plainRootInvocation(command *cobra.Command) bool {
 	return command.Flags().NFlag() == 0 && command.PersistentFlags().NFlag() == 0
+}
+
+func resolveEffectiveCWD(options *commonOptions, deps Dependencies) (string, error) {
+	cwd := options.cwd
+	if cwd == "." && deps.WorkingDirectory != "" {
+		cwd = deps.WorkingDirectory
+	}
+	absolute, err := filepath.Abs(cwd)
+	if err != nil {
+		return "", apperror.Wrap(apperror.Usage, "resolve --cwd", err)
+	}
+	options.cwd = absolute
+	return absolute, nil
+}
+
+func internalProtocolCommand(command *cobra.Command) bool {
+	return command.Name() == "__update-worker" || command.Name() == "__replace-windows"
+}
+
+func removeLegacyRootIndex(cwd string) error {
+	path := filepath.Join(cwd, "XDOCS.md")
+	info, err := os.Lstat(path)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil {
+		return apperror.Wrap(apperror.Mutation, "inspect legacy XDOCS.md", err)
+	}
+	if info.IsDir() {
+		return apperror.New(apperror.Mutation, fmt.Sprintf("legacy XDOCS.md path is a directory: %s", path))
+	}
+	if !info.Mode().IsRegular() && info.Mode()&os.ModeSymlink == 0 {
+		return apperror.New(apperror.Mutation, fmt.Sprintf("legacy XDOCS.md path is not a regular file or symbolic link: %s", path))
+	}
+	if err := os.Remove(path); err != nil {
+		return apperror.Wrap(apperror.Mutation, "remove legacy XDOCS.md", err)
+	}
+	return nil
 }
 
 func noArgs(_ *cobra.Command, args []string) error {

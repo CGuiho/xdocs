@@ -1,7 +1,6 @@
 package xdocs
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,10 +10,7 @@ import (
 	"github.com/CGuiho/xdocs/internal/config"
 )
 
-const (
-	descriptorSuffix = ".xdocs.md"
-	rootFilename     = "XDOCS.md"
-)
+const descriptorSuffix = ".xdocs.md"
 
 func ScanProject(cfg config.Config) (ScanResult, error) {
 	result := ScanResult{
@@ -78,27 +74,6 @@ func ScanProject(cfg config.Config) (ScanResult, error) {
 		return ScanResult{}, err
 	}
 
-	rootPath := filepath.Join(cfg.CWD, rootFilename)
-	rootInfo, rootStatErr := os.Lstat(rootPath)
-	if rootStatErr == nil && rootInfo.Mode()&os.ModeSymlink != 0 {
-		if !policy.ignored(rootPath, false) {
-			result.Errors = append(result.Errors, fmt.Sprintf("Skipped symlink during discovery: %s", rootFilename))
-		}
-		rootStatErr = os.ErrInvalid
-	}
-	if rootStatErr != nil && !errors.Is(rootStatErr, os.ErrNotExist) && !errors.Is(rootStatErr, os.ErrInvalid) {
-		result.Errors = append(result.Errors, fmt.Sprintf("Unable to inspect %s: %v", rootFilename, rootStatErr))
-	}
-	if rootStatErr == nil && !policy.ignored(rootPath, false) {
-		if content, readErr := os.ReadFile(rootPath); readErr == nil {
-			result.XDocsFiles = append(result.XDocsFiles, File{
-				Path: rootPath, RelativePath: rootFilename, Directory: cfg.CWD,
-				Documents: []MarkdownDocument{}, Body: string(content), Valid: false, Errors: []string{},
-			})
-		} else {
-			result.Errors = append(result.Errors, fmt.Sprintf("Unable to read %s: %v", rootFilename, readErr))
-		}
-	}
 	sort.Slice(result.XDocsFiles, func(i, j int) bool { return result.XDocsFiles[i].RelativePath < result.XDocsFiles[j].RelativePath })
 	sort.Slice(result.MarkdownDocuments, func(i, j int) bool {
 		return result.MarkdownDocuments[i].RelativePath < result.MarkdownDocuments[j].RelativePath
@@ -106,9 +81,6 @@ func ScanProject(cfg config.Config) (ScanResult, error) {
 	enrichFiles(result.XDocsFiles, documentsByDirectory)
 
 	covered := map[string]bool{}
-	if info, err := os.Lstat(rootPath); err == nil && info.Mode().IsRegular() && !policy.ignored(rootPath, false) {
-		covered[cfg.CWD] = true
-	}
 	for _, file := range result.XDocsFiles {
 		if file.Valid {
 			covered[file.Directory] = true
@@ -139,9 +111,8 @@ func IsDescriptorCandidate(path string) bool {
 }
 
 func IsPlainMarkdown(path string) bool {
-	name := filepath.Base(path)
-	lower := strings.ToLower(name)
-	return strings.HasSuffix(lower, ".md") && !strings.EqualFold(name, rootFilename) && !IsDescriptorCandidate(path)
+	lower := strings.ToLower(filepath.Base(path))
+	return strings.HasSuffix(lower, ".md") && !IsDescriptorCandidate(path)
 }
 
 func excluded(name string, values []string) bool {
@@ -205,8 +176,7 @@ func validateDocumentReferences(file *File) {
 func validPlainMarkdownName(name string) bool {
 	lower := strings.ToLower(name)
 	return filepath.Base(name) == name && !strings.ContainsAny(name, `/\`) &&
-		strings.HasSuffix(lower, ".md") && !strings.EqualFold(name, rootFilename) &&
-		!strings.HasSuffix(lower, descriptorSuffix)
+		strings.HasSuffix(lower, ".md") && !strings.HasSuffix(lower, descriptorSuffix)
 }
 
 func inScope(path, target string) bool {

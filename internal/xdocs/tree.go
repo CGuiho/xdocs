@@ -27,17 +27,11 @@ func BuildTree(files []File) *TreeNode {
 	}
 	entries := make([]entry, 0, len(files))
 	for _, file := range files {
+		if !IsDescriptorCandidate(file.Path) {
+			continue
+		}
 		kind := "descriptor"
 		valid := file.Valid
-		if !IsDescriptorCandidate(file.Path) {
-			if !strings.EqualFold(file.RelativePath, rootFilename) {
-				continue
-			}
-			kind = "index"
-			// XDOCS.md is a special navigable index. It has no descriptor
-			// frontmatter, so File.Valid does not describe its display state.
-			valid = true
-		}
 		path := file.RelativePath
 		subject := filepath.Base(file.RelativePath)
 		description := ""
@@ -52,11 +46,7 @@ func BuildTree(files []File) *TreeNode {
 			subject = file.RelativePath
 		}
 		if description == "" {
-			if kind == "index" {
-				description = "Repository root index."
-			} else {
-				description = "Descriptor metadata is invalid or unavailable."
-			}
+			description = "Descriptor metadata is invalid or unavailable."
 		}
 		node := &TreeNode{
 			Subject: subject, Description: description, Path: &path,
@@ -69,8 +59,8 @@ func BuildTree(files []File) *TreeNode {
 		return entries[i].file.RelativePath < entries[j].file.RelativePath
 	})
 
-	// Only named descriptors can contain descendant descriptors. The root
-	// index is retained as a project child and is never treated as a descriptor.
+	// Every entry is a named descriptor; containment nests descendants under
+	// the nearest ancestor descriptor directory.
 	descriptorEntries := make([]int, 0, len(entries))
 	for index, item := range entries {
 		if item.node.Kind == "descriptor" {
@@ -287,7 +277,7 @@ func treeLabel(node *TreeNode, root bool, prefix string) string {
 	if node.Path != nil {
 		label += " [" + *node.Path + "]"
 	}
-	if !node.Valid && node.Kind != "index" {
+	if !node.Valid {
 		label += " [invalid]"
 	}
 	if node.Description != "" {

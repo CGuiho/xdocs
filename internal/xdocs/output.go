@@ -103,7 +103,9 @@ func preflightReportPath(cfg config.Config, destination string) (string, os.File
 		return "", nil, fmt.Errorf("output destination must remain inside the project: %s", filepath.ToSlash(target))
 	}
 	base := filepath.Base(target)
-	if IsDescriptorCandidate(target) || strings.EqualFold(base, rootFilename) {
+	// A legacy XDOCS.md is not a descriptor, but reports must never recreate
+	// the removed root-index artifact through the report destination.
+	if IsDescriptorCandidate(target) || strings.EqualFold(base, "XDOCS.md") {
 		return "", nil, fmt.Errorf("refusing to write a generated report to reserved descriptor destination %s; descriptor files require complete validated metadata", filepath.ToSlash(relative))
 	}
 	if scanExcludedPath(cfg.CWD, target, cfg.Exclude) {
