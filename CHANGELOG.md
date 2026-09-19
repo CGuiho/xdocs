@@ -16,6 +16,20 @@ keywords:
 
 # GUIHO XDocs Changelog
 
+## Unreleased
+
+- Remove the special `XDOCS.md` root-index concept: `xdocs init` no longer
+  creates or reports a root index, and every valid user-facing invocation
+  silently removes a legacy `XDOCS.md` from the effective project directory
+  before ordinary command behavior.
+- Treat named `*.xdocs.md` descriptors as the only structured documentation
+  metadata. Discovery no longer grants root coverage for a legacy file; a
+  surviving `XDOCS.md` is ordinary plain Markdown, and generated reports
+  refuse it as a destination.
+- Align the managed instruction block, bundled skill, prompts, and
+  documentation with the removal while preserving Cobra help and version
+  behavior.
+
 ## 0.12.0 - 2026-09-12
 
 - **Breaking:** Require explicit `documentation.directories` grants for descriptor maintenance and separate `documentation.frontmatter` grants for ordinary Markdown metadata. Both default to empty; `ai.mode: auto` does not grant permission, and legacy frontmatter denials still win.

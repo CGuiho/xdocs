@@ -22,10 +22,13 @@ keywords:
 
 ## Purpose
 
-xdocs gives humans and agents a deterministic map of a repository through one
-root `XDOCS.md`, one named `*.xdocs.md` descriptor per documented directory, and
-declared companion Markdown documents. Discovery is read-only and complete;
-descriptor and ordinary Markdown writes require explicit project policy.
+xdocs gives humans and agents a deterministic map of a repository through
+`xdocs.yaml` configuration, one named `*.xdocs.md` descriptor per documented
+directory, and declared companion Markdown documents. Discovery is read-only
+and complete; descriptor and ordinary Markdown writes require explicit project
+policy. A legacy `XDOCS.md` is not part of the document model; every valid
+user-facing invocation removes it from the effective project directory before
+performing its requested behavior.
 
 The active implementation is a native Go CLI. The historical TypeScript tree
 is retained as migration reference only and is not used by the executable,
@@ -86,6 +89,12 @@ developer-help, init, data, explicit agent, upgrade, uninstall, and hidden
 worker commands do not enter this bootstrap path. Bootstrap does not load
 configuration or scan, generate, merge, or otherwise mutate the documentation
 corpus.
+
+Before any valid user-facing command behavior, xdocs removes a legacy
+`XDOCS.md` file from the effective `--cwd` directory. Missing files are
+silently ignored, regular files and symbolic links are removed, and a
+directory named `XDOCS.md` is refused without recursive deletion. Hidden
+update-worker and Windows-replacement protocols do not perform this cleanup.
 
 ## Configuration
 
@@ -191,8 +200,7 @@ Descriptors require:
 - `tags`, `keywords`, and `flags`: string arrays;
 - optional `status`.
 
-The root `XDOCS.md` has no frontmatter and is the single special project index.
-A new directory descriptor should use the directory name, such as
+There is no special root descriptor. A new directory descriptor should use the directory name, such as
 `technologies/technologies.xdocs.md`. A bare `.xdocs.md` filename and legacy
 `.docs.md` files are invalid. Multiple named descriptors in one directory are
 invalid. The descriptor body carries useful directory context; xdocs does not
@@ -213,7 +221,7 @@ explicitly authorized the exact scope.
 
 ### Project setup and coverage
 
-- `init [--local]` creates missing root files and installs the embedded skill.
+- `init [--local]` creates missing `xdocs.yaml` configuration and installs the embedded skill. It does not create a root index.
 - `scan` reports non-excluded descriptor and companion-document coverage and,
   in verbose output, identifies documents whose frontmatter is not required.
 - `doctor [path]` validates descriptors, authorized companion metadata, tree
@@ -227,8 +235,8 @@ explicitly authorized the exact scope.
 - `generate [path]` renders a project or module report.
 - `merge [path]` combines descriptors with source markers.
 - `tree` renders the complete deepest containment hierarchy as text, Markdown,
-  or JSON, including the special root index and diagnostically available
-  descriptor paths.
+  or JSON, including every discovered named descriptor with diagnostically
+  available descriptor paths.
 - `list [path]` lists documented files and companion documents.
 
 ### Agent context

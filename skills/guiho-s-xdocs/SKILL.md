@@ -1,7 +1,7 @@
 ---
 name: guiho-s-xdocs
 purpose: Define the canonical agent workflow for xdocs structured documentation.
-description: Use whenever creating, updating, scanning, merging, validating, or navigating xdocs structured documentation, XDOCS.md indexes, named *.xdocs.md descriptors, companion-document metadata, xdocs.yaml, or xdocs agent resources.
+description: Use whenever creating, updating, scanning, merging, validating, or navigating xdocs structured documentation, named *.xdocs.md descriptors, companion-document metadata, xdocs.yaml, legacy XDOCS.md cleanup, or xdocs agent resources.
 created: 2026-06-07
 owner: xdocs-guiho-s-xdocs-skill
 flags: []
@@ -25,7 +25,7 @@ metadata:
 
 Load this skill for:
 
-- `XDOCS.md`;
+- legacy `XDOCS.md` cleanup behavior;
 - named `*.xdocs.md` descriptors;
 - companion Markdown metadata;
 - `xdocs.yaml`;
@@ -88,13 +88,15 @@ exception: it installs or refreshes the skill globally by default; pass
 
 ## Document model
 
-One root `XDOCS.md` is the repository index and has no frontmatter.
-
-Every documented package, application, or module uses exactly one named
-`*.xdocs.md` descriptor in its directory. Use the directory name when naming
-the descriptor, for example `technologies/technologies.xdocs.md`. `.xdocs.md`
-by itself and legacy `.docs.md` files are invalid descriptor names. The single
-root `XDOCS.md` is a special index and is not a per-directory descriptor.
+`xdocs.yaml` configures xdocs behavior. Every documented package, application,
+or module uses exactly one named `*.xdocs.md` descriptor in its directory.
+Use the directory name when naming the descriptor, for example
+`technologies/technologies.xdocs.md`. `.xdocs.md` by itself and legacy
+`.docs.md` files are invalid descriptor names. A legacy `XDOCS.md` file is not
+a descriptor or repository index. Every user-facing xdocs command removes that
+legacy file from the effective project directory before performing its
+requested behavior. Direct package callers may still observe a surviving
+`XDOCS.md` as an ordinary companion Markdown document.
 
 Required descriptor frontmatter:
 
@@ -181,8 +183,7 @@ because they are discovered or listed. An explicit project policy is required.
 
 `xdocs tree` performs a read-only complete discovery when no `--output` is
 provided. It walks every
-non-excluded directory to arbitrary depth, retains every named descriptor and
-the special `XDOCS.md` path, and reports malformed, orphaned, duplicate, or
+non-excluded directory to arbitrary depth, retains every named descriptor, and reports malformed, orphaned, duplicate, or
 cyclic metadata without silently dropping a node. Its discovery is independent
 of the descriptor write allowlist. With one exact `--output` path, it writes
 only that requested report after output validation.
@@ -242,8 +243,9 @@ Human text intentionally projects the complete catalog into the concise
 Markdown and JSON retain complete tags, timestamps, release/asset metadata, and
 pagination; use a structured format whenever those details are required.
 
-A bare invocation first idempotently ensures the embedded skill in both global
-agent locations and the bounded XDocs instruction block in the current
+A bare invocation first removes a legacy `XDOCS.md` from the effective project
+directory, then idempotently ensures the embedded skill in both global agent
+locations and the bounded XDocs instruction block in the current
 repository, then prints the deterministic GUIHO XDocs welcome. It updates both
 `AGENTS.md` and `CLAUDE.md` when both exist, whichever exists otherwise, or
 creates `AGENTS.md`. It preserves unmanaged content and line endings, refuses
@@ -308,8 +310,8 @@ xdocs agent prompt show write
   authorized directory both match; legacy `frontmatter: false` denials win.
 - Never create a bare `.xdocs.md`, a legacy `.docs.md`, an extra overview file,
   or an unrequested report/output file.
-- The explicit `xdocs init` root-index creation and agent-resource bootstrap
-  are setup exceptions. They do not authorize arbitrary Markdown metadata
+- The explicit `xdocs init` agent-resource bootstrap
+  is a setup exception. It does not authorize arbitrary Markdown metadata
   maintenance.
 - Do not read whole repositories when metadata can select a smaller context.
 - Do not run skill or instruction mutations implicitly outside the documented

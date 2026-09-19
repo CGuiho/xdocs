@@ -43,7 +43,7 @@ names one exact output path.
    - Which keywords identify each module and companion document
 5. Include the complete deepest tree. Retain every named descriptor path,
    including malformed, orphaned, duplicate, or otherwise diagnostically
-   available entries, and include the special root `XDOCS.md` index path.
+   available entries.
 6. Generate a single comprehensive Markdown report that includes:
    - Project or domain overview
    - Complete hierarchy tree

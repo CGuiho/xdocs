@@ -36,7 +36,8 @@ setup operation, separate from documentation-corpus writes.
    permits only the bounded instruction block and the explicitly requested
    agent-resource files.
 5. The xdocs section should instruct AI agents to:
-   - Read XDOCS.md and named `*.xdocs.md` descriptor files when entering the project
+   - Treat `xdocs.yaml` as configuration and named `*.xdocs.md` descriptors as the only structured documentation metadata
+   - Know that every valid user-facing xdocs command removes a legacy `XDOCS.md` file from the effective project directory
    - Use one named descriptor per directory, such as
      `technologies/technologies.xdocs.md`; never use bare `.xdocs.md` or
      legacy `.docs.md`
@@ -57,8 +58,7 @@ setup operation, separate from documentation-corpus writes.
    - Keep directory context in the descriptor body; do not create extra
      summary, overview, detail, or report files
    - Use `xdocs tree` without `--output` as the read-only complete tree of
-     every non-excluded descriptor at every depth, including the root
-     `XDOCS.md` path
+      every non-excluded descriptor at every depth
    - Print `generate`, `merge`, and `tree` reports to stdout unless one exact
      `--output` path is requested; a report is never a descriptor
    - List every same-directory plain `*.md` companion document in the descriptor's `documents` metadata map
