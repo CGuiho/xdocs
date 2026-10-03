@@ -26,9 +26,9 @@ xdocs gives humans and agents a deterministic map of a repository through
 `xdocs.yaml` configuration, one named `*.xdocs.md` descriptor per documented
 directory, and declared companion Markdown documents. Discovery is read-only
 and complete; descriptor and ordinary Markdown writes require explicit project
-policy. A legacy `XDOCS.md` is not part of the document model; every valid
-user-facing invocation removes it from the effective project directory before
-performing its requested behavior.
+policy. A legacy `XDOCS.md` is ordinary Markdown, not a descriptor. Commands
+preserve it; a non-excluded legacy file belongs in the owning descriptor's
+`documents` map alongside other ordinary Markdown.
 
 The active implementation is a native Go CLI. The historical TypeScript tree
 is retained as migration reference only and is not used by the executable,
@@ -64,37 +64,35 @@ command tree. `internal/config`, `internal/xdocs`, `internal/agent`,
 `internal/update`, `internal/upgrade`, and `internal/release` own focused
 runtime services.
 
-## Plain-invocation bootstrap
+## Plain-invocation welcome and runtime boundary
 
-A successful invocation with no arguments or flags performs a local,
-filesystem-only agent bootstrap before printing the beautiful borderless hello
+A successful invocation with no arguments or flags prints the borderless hello
 window (two blank lines before and after the window) using the five-tone earth
 palette (`#7F5539`, `#A68A64`, `#EDE0D4`, `#656D4A`, `#414833`):
 
-1. preflight the current repository's selected instruction files and reject
-   malformed, duplicated, noncanonical, or out-of-order XDocs markers;
-2. install or refresh the embedded `guiho-s-xdocs` skill atomically in both
-   `~/.agents/skills/guiho-s-xdocs` and
-   `~/.claude/skills/guiho-s-xdocs`;
-3. reconcile the bounded instruction block in both `AGENTS.md` and `CLAUDE.md`
-   when both exist, the existing one when only one exists, or a newly created
-   `AGENTS.md` when neither exists; and
-4. preserve unmanaged bytes, file mode, and the selected file's LF or CRLF
-   convention.
+1. report and clear a prior upgrade completion journal if present;
+2. read a validated local update notice;
+3. attempt the bounded, single-flight detached update-worker handoff; and
+4. render the welcome.
 
-Already-current skill and instruction files are not rewritten. Marker
-preflight occurs before global skill mutation, so malformed repository state
-returns exit category `5` without a partial bootstrap. Help, version,
-developer-help, init, data, explicit agent, upgrade, uninstall, and hidden
-worker commands do not enter this bootstrap path. Bootstrap does not load
-configuration or scan, generate, merge, or otherwise mutate the documentation
-corpus.
+It does not install or refresh skills, reconcile instruction blocks, load
+project configuration, or change the documentation corpus. Malformed managed
+instruction markers therefore do not block the welcome. Runtime cache, lease
+and journal writes mean this bare welcome is not all-filesystem read-only.
 
-Before any valid user-facing command behavior, xdocs removes a legacy
-`XDOCS.md` file from the effective `--cwd` directory. Missing files are
-silently ignored, regular files and symbolic links are removed, and a
-directory named `XDOCS.md` is refused without recursive deletion. Hidden
-update-worker and Windows-replacement protocols do not perform this cleanup.
+Data commands, ordinary and developer help, version, explicit commands and
+flagged root invocations do not enter that housekeeping path. Missing, corrupt
+or expired caches do not schedule workers for them. No invocation automatically
+deletes a legacy index, regular file, symbolic link or directory named
+`XDOCS.md`. Explicit `init`, `agent` mutations, `upgrade` and `uninstall` retain
+their separately authorized filesystem effects.
+
+The packaged 0.12.0 skill and `prompts/agents.md` still describe the historical
+deletion/bootstrap behavior. This source-only runtime prerequisite has no
+release or artifact version bump; those release-pinned resources need separate
+reconciliation. Current source/help, this document and GUIHO Convention 0011
+define the verified routine boundary; an older installed binary is not proven
+equivalent by this documentation.
 
 ## Configuration
 
@@ -263,9 +261,9 @@ explicitly authorized the exact scope.
 Skill mutations default global and write atomically to both supported tool
 paths. `--local` chooses project scope. Instruction apply/update/remove is
 idempotent, preserves unmanaged content and line endings, and refuses malformed
-managed markers. The plain-invocation bootstrap uses the same embedded sources
-and mutation services; explicit agent commands remain available for deliberate
-management. These setup operations do not grant permission to edit the
+managed markers. A plain invocation does not call those mutation services;
+explicit agent commands provide deliberate management. These setup operations
+do not grant permission to edit the
 documentation corpus or add frontmatter to agent instruction files.
 
 ### Upgrade and uninstall
@@ -280,13 +278,30 @@ pagination, defaults to eight entries, and retains full machine-readable
 metadata in JSON. Direct upgrade uses the linker-embedded build target so ARMv6
 and ARMv7 remain distinct.
 
-All scan, meta, context, and doctor operations are read-only. Without
-`--output`, tree discovery is also read-only. `generate`, `merge`, and `tree`
+All scan, list, meta, context, and doctor operations are read-only, including
+project files, agent projections and runtime cache/journal/lease state. Without
+`--output`, generate, merge and tree discovery are also read-only. `generate`, `merge`, and `tree`
 write nothing unless the user supplies one exact `--output` path. That path authorizes only the requested report; it cannot
 authorize descriptor or companion metadata changes, and a descriptor-shaped
 destination is rejected. Output validation runs before replacement so a rejected
 destination retains its original bytes. No command creates extra summary,
 companion, or index files as a side effect.
+
+For GUIHO suffix-only readiness workflows, do not use `--output`: keep reports
+on stdout. Preserve `documentation.frontmatter: []`, literal directory grants,
+Git-ignore respect and all existing exclusions/denials. Descriptor maintenance
+is the agent's exact task-authorized edit to a named `*.xdocs.md` inside a grant,
+with reciprocal links updated when needed, followed by read-only validation:
+
+```bash
+xdocs meta <scope> --documents --strict --format json
+xdocs tree --format json
+xdocs doctor <scope> --format json
+```
+
+`generate` and `merge` are report renderers, not automatic descriptor writers.
+Discovery never grants writes. The CLI keeps failures read-only too; a bad
+descriptor is reported rather than hidden by deleting a companion legacy index.
 
 ## Help and output
 
@@ -315,7 +330,9 @@ Exit categories are:
 
 ## Update cache
 
-Startup reads only local cache state. A newer-version notice is printed only
+Only the argument- and flag-free welcome reads local cache state. Routine
+data/help/version and other explicit commands do not read notices, schedule
+background workers or clear upgrade completion journals. A newer-version notice is printed only
 when the cache is valid and contains a genuinely newer version. A hidden,
 detached, recursion-protected worker performs a finite-time release request and
 atomically replaces the cache. Leases coalesce concurrent starts and stale
@@ -342,7 +359,8 @@ roll back on failure. Windows upgrades copy a helper, wait for the current
 process to exit, replace, verify, restore on failure, and clean up.
 Concurrent upgrades are rejected by a token-owned lock. A detached Windows
 helper writes an atomic result journal containing verification, rollback, and
-recovery information; the next ordinary command reports and clears it.
+recovery information; the next argument- and flag-free welcome reports and
+clears it. Data/help/version leave that journal intact.
 
 ## Build and release
 
