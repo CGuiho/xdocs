@@ -3,7 +3,7 @@ name: Suffix-Only Runtime Prerequisite
 purpose: Define the separately authorized XDocs runtime boundary needed for readiness
 description: Tracks issue 25, filesystem preservation, source validation and the independent build-review gate.
 created: 2026-10-03
-flags: [in-progress]
+flags: [testing]
 tags: [xdocs, runtime, agent-readiness]
 keywords: [suffix-only, XDOCS.md, housekeeping, stdout]
 ---
@@ -15,7 +15,7 @@ keywords: [suffix-only, XDOCS.md, housekeeping, stdout]
 ## Todo Index
 
 - Task: `12. Preserve Non-Descriptor Files During Routine Workflows`
-- Status: in progress
+- Status: testing
 - Index: [TODO.md](../../TODO.md)
 - GitHub project item: [Issue #25](https://github.com/CGuiho/xdocs/issues/25)
 - GitHub component: `xdocs`
@@ -62,3 +62,29 @@ No local MEMORY/rules or current configuration JSON Schema exists; strict typed
 Go decoding/semantic validation is the actual schema contract. Required
 `guiho-s-0035-cli-engineer-go` is unavailable in this runtime; actual CLI 0001,
 own instructions and Go patterns supply the scoped engineering guidance.
+
+## Execution and Testing Readback
+
+Source commits `32b1476` and `3eb918f` remove routine legacy deletion and bare
+agent bootstrap, gate housekeeping to the flag-free welcome, and correct the
+generated instruction template. Complete Go tests and vet pass under Go 1.26.5,
+`CGO_ENABLED=0`. Negative old-source tests fail on legacy deletion; the runtime
+snapshot suite checks real project and isolated home bytes, file sets, modes
+and regular-file mtimes, plus exact named-descriptor maintenance.
+
+Fresh GraphQL confirms issue #25 remains OPEN on Project #2, item
+`PVTI_lAHOBUk1ds4AULOgzg-Xbs4`, Component `xdocs` (`d907addf`) and Testing
+(`f874e9fb`); membership/field pagination is exhausted. Evidence:
+`/tmp/opencode/xdocs-testing-readback.json`. Independent review, task-binary
+acceptance and parent delivery authorization remain pending.
+
+The repository grants no descriptor writes (`documentation.directories: []`).
+No descriptor or YAML policy is changed by this unit; validation results and
+stale descriptor coverage must be reported rather than granting `.` implicitly.
+Ordinary docs changes here are directly task-authorized source guidance/records,
+not routine XDocs corpus writes.
+
+## Reversible Decisions
+
+- [Bare-welcome-only housekeeping](../questions/suffix-only-runtime-prerequisite/2026-10-03-runtime-housekeeping-boundary.md).
+- [Release-pinned resource guidance](../questions/suffix-only-runtime-prerequisite/2026-10-03-release-pinned-resource-guidance.md): packaged 0.12.0 skill/prompt guidance remains stale and needs a separately authorized artifact/release unit. No bump is authorized here.

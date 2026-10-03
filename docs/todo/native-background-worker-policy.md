@@ -3,7 +3,7 @@ name: Native Background Worker Policy
 purpose: Define the bounded XDocs deployment of the accepted native worker contract
 description: Tracks owning issue 24 and the operating policy acceptance and independent delivery gate.
 created: 2026-10-03
-flags: [in-progress]
+flags: [testing]
 tags: [mandume, native-policy]
 keywords: [OpenCode, background, Component, xdocs]
 ---
@@ -15,7 +15,7 @@ keywords: [OpenCode, background, Component, xdocs]
 ## Todo Index
 
 - Task: `11. Deploy Native Background Worker Policy`
-- Status: in progress
+- Status: testing
 - Index: [TODO.md](../../TODO.md)
 - GitHub project item: [Issue #24](https://github.com/CGuiho/xdocs/issues/24)
 - GitHub component: `xdocs`
@@ -48,3 +48,13 @@ source checks. Policy publication alone does not certify family readiness.
 2026-10-03 live GraphQL confirms issue #24 OPEN, Project #2 membership item
 `PVTI_lAHOBUk1ds4AULOgzg-XUvE`, Component `xdocs` (`d907addf`) and Status
 In Progress (`47fc9ee4`). A first HTTP 503 was retried successfully before writes.
+
+## Testing Readback
+
+Fresh GraphQL readback in this run confirms issue #24 remains OPEN on Project
+#2, item `PVTI_lAHOBUk1ds4AULOgzg-XUvE`, Component `xdocs` (`d907addf`), Status
+Testing (`f874e9fb`), with issue-membership and field pagination exhausted.
+Evidence: `/tmp/opencode/xdocs-testing-readback.json`. Native policy is deployed
+in `018a0cb`; binding/helpers are committed in `42d983a`. No child delegation
+was performed by this leaf; static policy proof is not provider execution proof.
+Independent review and parent push authorization remain pending.

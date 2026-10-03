@@ -41,8 +41,8 @@ preserved pending their separately owned reconciliation.
 | Status | Count |
 | --- | ---: |
 | todo | 1 |
-| in progress | 3 |
-| testing | 0 |
+| in progress | 1 |
+| testing | 2 |
 | stopped | 0 |
 | completed | 8 |
 
@@ -177,9 +177,9 @@ preserved pending their separately owned reconciliation.
 
 ### 11. Deploy Native Background Worker Policy
 
-- Status: in progress
+- Status: testing
 - Created: `2026-10-03T21:30:52Z`
-- Updated: `2026-10-03`
+- Updated: `2026-10-03T22:06:23Z`
 - Outcome: Use the accepted capable native OpenCode background worker policy with verified model, task and completion boundaries.
 - Spec: [docs/todo/native-background-worker-policy.md](docs/todo/native-background-worker-policy.md)
 - GitHub project item: [Issue #24](https://github.com/CGuiho/xdocs/issues/24)
@@ -188,9 +188,9 @@ preserved pending their separately owned reconciliation.
 
 ### 12. Preserve Non-Descriptor Files During Routine Workflows
 
-- Status: in progress
+- Status: testing
 - Created: `2026-10-03T21:51:05Z`
-- Updated: `2026-10-03`
+- Updated: `2026-10-03T22:06:23Z`
 - Outcome: Provide filesystem-proven suffix-only routine XDocs and data/help/version boundaries with an identified independently reviewable task binary.
 - Spec: [docs/todo/suffix-only-runtime-prerequisite.md](docs/todo/suffix-only-runtime-prerequisite.md)
 - GitHub project item: [Issue #25](https://github.com/CGuiho/xdocs/issues/25)
