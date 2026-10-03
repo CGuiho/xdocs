@@ -65,3 +65,34 @@ and Component `xdocs`: `/tmp/opencode/xdocs-final-task-readback.json`.
 Static semantics/link checks pass; live MiMo catalog is active with an empty
 variant list. This proves availability metadata, not a provider request.
 Joint [independent handoff](../reviews/handoff/2026-10-03-suffix-only-runtime-prerequisite.md).
+
+## Independent Review And Source Delivery
+
+The parent's separately dispatched native General reviewer read full actual
+Convention 0011, conventions 0002/0007/CLI 0001, owning instructions and the
+complete sixteen-commit diff. Connected active policy, both-role MiMo defaults,
+actual child permissions, explicit model/variant selection, native background
+completion, DND continuation and the no-CLI-escape boundary are accepted within
+this assigned unit. Five contradictory policy probes are rejected, including an
+unrelated negation masking a CLI launch, a primary-session label masking worker
+use, native shell waits and disabled harness completion. Typed YAML checks
+accept the actual string `notifications: off` and reject boolean/numeric/null/
+sequence substitutions. These are bounded checks, not provider execution proof.
+
+Fresh GitHub readback preserves issue #24 OPEN/Testing on Project #2, existing
+item `PVTI_lAHOBUk1ds4AULOgzg-XUvE`, Component `xdocs` (`d907addf`) and Testing
+(`f874e9fb`), with pagination exhausted. No Project option or assignment changed.
+Local task status remains testing pending human acceptance.
+
+Under explicit parent child-push authority, plain `git push` delivered exactly
+the reviewed range `a4f6e6dd..1d3a7b14`; HEAD, origin/main and live main equality
+were verified. No held/unowned ancestor or sparse delivery clone was needed.
+The server reported its configured PR-rule bypass on the normal push; no force,
+hook-bypass or special branch-protection option was requested. The old no-push
+statements above describe the completed implementer's earlier authority.
+
+Independent evidence and final owned review-mirror delivery identities:
+`/tmp/opencode/2026-10-04-readiness-xdocs-review-result.md` and `.json`.
+Runtime and documentation/resource limits remain in the separately owned
+[runtime prerequisite](suffix-only-runtime-prerequisite.md). This is not family
+readiness or human acceptance.
