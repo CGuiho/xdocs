@@ -79,12 +79,9 @@ architecture, planning, execution, review, validation, and release work.
   does not bump versions or mutate package manifests.
 - Supported commands: `init`, `scan`, `generate`, `merge`, `tree`, `list`, `meta`, `context`, `doctor`, `agent`, `upgrade`, `uninstall`.
 - `xdocs init` creates `xdocs.yaml` when missing and installs the bundled
-  skill for both supported agent tools. Every valid user-facing invocation
-  first removes a legacy `XDOCS.md` from the effective project directory. A
-  successful plain invocation also
-  idempotently bootstraps both global skill targets and the current
-  repository's bounded instruction block; other agent-resource changes use
-  explicit `xdocs agent` actions.
+  skill for both supported agent tools. Commands preserve legacy `XDOCS.md`;
+  no invocation automatically deletes it. Resource and bounded instruction
+  changes use explicitly authorized `init` or `xdocs agent` mutation actions.
 - `xdocs scan` walks the project tree while respecting `scan.exclude`, root and nested `.gitignore` files when enabled, and explicit descriptor candidates; it reports complete named `*.xdocs.md` coverage plus same-directory Markdown companion-document coverage without granting write permission.
 - `xdocs generate [path]` generates documentation for a specific directory or the entire project.
 - `xdocs merge [path]` merges xdocs descriptors from a directory into a single consolidated document.
@@ -97,8 +94,10 @@ architecture, planning, execution, review, validation, and release work.
 - `xdocs doctor [path]` runs CI-friendly health checks for descriptor validity, explicitly required companion-document metadata, tree integrity, and documented file existence; `--existing-frontmatter` audits legacy headers without authorizing writes.
 - `xdocs agent skill install|uninstall|update|list|show`, `agent instruction apply|remove|update|show`, and `agent prompt list|show` implement explicit RFC 0034 agent integration.
 - Skill mutations default global, use `--local` for project scope, and always target both `.agents/skills` and `.claude/skills`.
-- A bare xdocs invocation bootstraps shared agent resources, then prints the
-  exact startup banner. Data commands never mutate agent files.
+- A bare xdocs invocation prints the exact startup banner without agent
+  bootstrap. Only the argument- and flag-free welcome performs cache/update
+  scheduling and upgrade-journal housekeeping. Data/help/version commands and
+  flagged root invocations perform none of that housekeeping or resource mutation.
 - Cobra owns the single command catalog and routing. Typed Go structs, strict
   YAML/JSON decoding, and explicit validation protect structured boundaries.
 - Every scope supports `-h`/`--help`, `--help-tree`, `--help-tree-depth`, and `--help-docs`. Only root version uses `-v`/`--version`.
@@ -126,16 +125,18 @@ architecture, planning, execution, review, validation, and release work.
 
 ## Key Concepts
 
-- xdocs uses `xdocs.yaml` for configuration and named Markdown descriptors with YAML frontmatter as the only structured documentation metadata. Descriptors must be named `*.xdocs.md`; `.docs.md` and `.xdocs.md` by themselves are invalid candidates. Same-directory non-excluded plain `*.md` files are companion documents listed in the descriptor's `documents` metadata. Ordinary Markdown frontmatter is not required or written unless a matching `documentation.frontmatter` rule is explicitly authorized inside `documentation.directories`; legacy `ignore.rules` denials always win. A legacy `XDOCS.md` is not a descriptor; valid user-facing commands remove it before behavior, while direct package callers may treat a surviving file as ordinary Markdown. Use `xdocs meta [path] --documents --format json` when an agent needs descriptor and companion-document policy without reading full Markdown bodies.
+- xdocs uses `xdocs.yaml` for configuration and named Markdown descriptors with YAML frontmatter as the only structured documentation metadata. Descriptors must be named `*.xdocs.md`; `.docs.md` and `.xdocs.md` by themselves are invalid candidates. Same-directory non-excluded plain `*.md` files are companion documents listed in the descriptor's `documents` metadata. Ordinary Markdown frontmatter is not required unless a matching `documentation.frontmatter` rule is explicitly authorized inside `documentation.directories`; legacy `ignore.rules` denials always win. A legacy `XDOCS.md` is protected ordinary Markdown, not a descriptor; list it in the owning descriptor's `documents` map when non-excluded. Use `xdocs meta [path] --documents --format json` when an agent needs descriptor and companion-document policy without reading full Markdown bodies.
 - Metadata fields: `subject`, `description`, `parent`, `children`, `files`, `documents`, `tags`, `keywords`, `flags`, and optional `status`.
 - The displayed tree is a directory-containment hierarchy, not a dependency
   graph. It uses the nearest ancestor descriptor so malformed, orphaned, and
   duplicate metadata cannot hide a discovered file; `doctor` validates
   `subject`/`parent`/`children` relationships separately.
 - Configuration lives in `xdocs.yaml`. Sections: `extensions`, `ai`, `documentation`, `ignore`, `scan`, and `project`. `documentation.directories` defaults to `[]` and grants descriptor maintenance only within listed repository-relative directories and descendants; `documentation.frontmatter` defaults to `[]` and grants companion metadata only for matching files or directories inside those grants. `ignore.gitignore` defaults to `true`; strict `ignore.rules` objects use `pattern`, `kind`, and `frontmatter: false`.
-- Agent resource operations are not configuration-driven. The plain root
-  bootstrap and `init` setup are the only implicit/setup boundaries; other
-  mutations are explicit.
+- Agent resource operations are not configuration-driven. Only explicit
+  `init` setup and `agent` mutation actions change those resources; the plain
+  welcome does not. Routine descriptor maintenance is an explicitly authorized
+  agent-authored suffix edit followed by read-only CLI validation. Keep reports
+  on stdout and ordinary Markdown/frontmatter untouched under Convention 0011.
 - AI mode (`ai.mode`): `"auto"` (default, AI updates docs automatically) or `"prompt"` (AI announces updates and waits).
 - Runtime CLI dependencies: Cobra and `go.yaml.in/yaml/v3`.
 
@@ -147,6 +148,11 @@ architecture, planning, execution, review, validation, and release work.
   as `guiho-i-xdocs.md` and `guiho-s-xdocs.zip`. Skill mutation always
   addresses both supported tool paths. Releases contain exactly eleven assets.
 - The skill `metadata.version` must match the Git release version.
+- The packaged 0.12.0 skill and `prompts/agents.md` retain historical legacy
+  deletion/bare-bootstrap guidance. This bounded prerequisite does not authorize
+  artifact or release version bumps; follow current `DOCS.md`, command help and
+  Convention 0011 for the runtime boundary. Resource reconciliation is a separate
+  release-gated gap, not permission to run implicit setup during validation.
 - Versioning is handled by Mirror through Git only. The canonical tag format
   is `xdocs/vX.Y.Z`; `package.json` and `jsr.json` are not version sources or
   outputs.
@@ -220,20 +226,46 @@ repository's AGENTS.md GUIHO Project section.
 This project uses **xdocs** for structured, machine-readable documentation.
 Load the `guiho-s-xdocs` agent skill when working with structured
 documentation, named `*.xdocs.md` descriptors, companion documents,
-repository scanning, metadata discovery, or validation. `xdocs.yaml`
-configures behavior while named descriptors own documentation metadata. Every
-user-facing xdocs command removes a legacy `XDOCS.md` file from the
-effective project directory before performing its requested behavior.
+repository scanning, metadata discovery, or validation. Use exactly one named descriptor per directory. `xdocs.yaml` configures behavior while named
+descriptors own documentation metadata. A legacy `XDOCS.md` is ordinary
+Markdown, not a descriptor: commands preserve it and never delete it automatically.
 
 The project configuration is `xdocs.yaml`. Respect `ai.mode`:
-`prompt` requires confirmation before documentation writes, while
-`auto` permits immediate descriptor maintenance only inside explicitly
-authorized documentation directories. Also respect
-`ignore.gitignore` and every `ignore.rules` entry: excluded paths are
-outside the xdocs corpus, while `frontmatter: false` keeps matching documents
-tracked without adding or requiring YAML frontmatter. Use `xdocs scan`,
-`xdocs meta`, `xdocs context`, `xdocs tree`, and
-`xdocs doctor` to discover and validate documentation.
+`prompt` asks before already-authorized documentation writes, while
+`auto` performs them immediately. Neither mode grants permission.
+`documentation.directories` lists repository-relative directories whose
+non-excluded subtrees may receive descriptor writes; `.` grants the whole
+project and an empty list grants none. `documentation.frontmatter` contains
+explicit `{pattern, kind}` rules for ordinary Markdown metadata, and those
+rules work only inside an authorized directory. A legacy `ignore.rules` entry
+with `frontmatter: false` always denies frontmatter and wins over an opt-in.
+Keep ordinary Markdown listed in descriptor `documents` metadata without
+adding headers unless both explicit grants match. Respect
+`ignore.gitignore` and every `ignore.rules` entry.
+
+Read-only `xdocs scan`, `xdocs meta`, `xdocs context`,
+and `xdocs doctor` operations, plus `xdocs tree` without
+`--output`, discover independently of the write allowlist. `xdocs tree` walks every non-excluded directory to arbitrary depth,
+retains every named descriptor, and reports malformed
+or orphaned metadata without hiding paths. `meta --existing-frontmatter` and
+`doctor --existing-frontmatter` audit existing ordinary Markdown headers
+without requiring missing headers or writing repairs. `generate`,
+`merge`, and `tree` print reports to stdout unless one exact
+`--output` path is requested; that report path does not authorize any other
+document writes and a generated report is never a descriptor.
+
+Routine maintenance is suffix-only: author only explicitly authorized named
+`*.xdocs.md` files and keep reports on stdout. Data, help and version
+commands do not bootstrap agent resources, clear upgrade journals or schedule
+update workers. A plain invocation prints the welcome without agent bootstrap;
+only that argument- and flag-free welcome performs runtime update housekeeping.
+It is not an all-filesystem read-only command.
+
+The explicit `xdocs init` creates missing configuration and installs
+the skill; `xdocs agent` mutation actions manage resources and bounded
+instructions. These separately authorized setup actions do not grant arbitrary
+Markdown metadata edits. Inspect this runtime's help and documentation when
+older installed skill guidance describes legacy deletion or bare bootstrap.
 <!-- END XDOCS -->
 
 <!-- BEGIN MIRROR — DO NOT EDIT THIS SECTION -->
