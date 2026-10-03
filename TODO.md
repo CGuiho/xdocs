@@ -179,12 +179,12 @@ preserved pending their separately owned reconciliation.
 
 - Status: testing
 - Created: `2026-10-03T21:30:52Z`
-- Updated: `2026-10-03T22:20:51Z`
+- Updated: `2026-10-03T22:58:42Z`
 - Outcome: Use the accepted capable native OpenCode background worker policy with verified model, task and completion boundaries.
 - Spec: [docs/todo/native-background-worker-policy.md](docs/todo/native-background-worker-policy.md)
 - GitHub project item: [Issue #24](https://github.com/CGuiho/xdocs/issues/24)
 - GitHub component: `xdocs`
-- Delivery: owned `main` commits; no push until parent dispatches fresh independent review.
+- Delivery: sixteen-commit source range independently reviewed and plain-pushed under explicit parent authority; OPEN/Testing remains pending human acceptance. Final review-mirror refs are recorded in `/tmp/opencode/2026-10-04-readiness-xdocs-review-result.json`.
 - Related files:
   - [docs/reviews/handoff/2026-10-03-suffix-only-runtime-prerequisite.md](docs/reviews/handoff/2026-10-03-suffix-only-runtime-prerequisite.md) - Joint independent policy/runtime review entry point.
 
@@ -192,12 +192,12 @@ preserved pending their separately owned reconciliation.
 
 - Status: testing
 - Created: `2026-10-03T21:51:05Z`
-- Updated: `2026-10-03T22:20:51Z`
+- Updated: `2026-10-03T22:58:42Z`
 - Outcome: Provide filesystem-proven suffix-only routine XDocs and data/help/version boundaries with an identified independently reviewable task binary.
 - Spec: [docs/todo/suffix-only-runtime-prerequisite.md](docs/todo/suffix-only-runtime-prerequisite.md)
 - GitHub project item: [Issue #25](https://github.com/CGuiho/xdocs/issues/25)
 - GitHub component: `xdocs`
-- Delivery: no push/global binary replacement before fresh independent review.
+- Delivery: independently reviewed source delivered; exact existing `/usr/local/bin/xdocs` atomically activated with verified prior-binary backup and installed filesystem smoke. Current task build is not an official release; issue remains OPEN/Testing.
 - Related files:
   - [docs/validation/suffix-only-runtime-prerequisite.md](docs/validation/suffix-only-runtime-prerequisite.md) - Go/runtime filesystem checks, task build and descriptor failures.
   - [docs/reviews/implementation/suffix-only-runtime-prerequisite-review.md](docs/reviews/implementation/suffix-only-runtime-prerequisite-review.md) - Technical self-review and open findings.
