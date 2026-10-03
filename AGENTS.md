@@ -197,7 +197,7 @@ Native Go structured-documentation CLI for XDocs.
 ### Parent Context
 
 - Parent AGENTS: [../guiho/AGENTS.md](../guiho/AGENTS.md)
-- Parent TODO: [../guiho/TODO.md](../guiho/TODO.md)
+- Parent TODO: [../guiho/todo.md](../guiho/todo.md)
 - Local TODO: [./TODO.md](./TODO.md)
 
 For the full project map, sibling components, package index, service index,
