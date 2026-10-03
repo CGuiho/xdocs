@@ -257,19 +257,30 @@ GUIHO XDocs.
 
 Managed by the GUIHO Mandume swarm ([CGuiho/mandume](https://github.com/CGuiho/mandume)); the full worker-registry example lives at `example/AGENTS.md` there.
 
+Read the actual [GUIHO Convention 0011](../guiho/conventions/guiho-convention-0011-agent-readiness.md)
+and [canonical model registry 0007](../guiho/conventions/guiho-convention-0007-models.md)
+before readiness or delegation work. OpenCode is the only currently supported
+agent harness; this section is the authoritative worker registry. Use its built-in
+subagent tool and a capable authorized native agent whose actual permissions cover
+the brief. General supports broad shell/write work; read-only Explore/Explorer
+permissions do not establish another agent's capabilities. Parent authority never
+proves child permission.
+
 ### Mode
 
 ```yaml
 execution: dnd  # dnd | interruptible — orchestrator NEVER stops during execution/review
-notifications: off  # off | on
-harness: opencode  # only harness, YOLO, full permission
+notifications: off  # human-facing notifications only; child completion stays enabled
+harness: opencode  # only current harness; native background subagents always
 tmux-session: xdocs  # orchestrator session on su-57; convention = this project's name
 ```
 
 ### Coordination
 
 - GitHub repository: https://github.com/CGuiho/xdocs.git
-- GitHub Project: https://github.com/users/CGuiho/projects/2 — main GUIHO project; XDocs is governed there. It is the source of truth for new items (`TODO.md` mirrors executable state; every item carries its issue URL)
+- GitHub Project: https://github.com/users/CGuiho/projects/2 — the authoritative source of truth for task state, ownership, priority, scope and Project fields; `TODO.md` and local task records mirror live readbacks.
+- GitHub component: `xdocs` — exact existing Component option on Project #2.
+- Every task is a real GitHub issue in its owning repository, attached to this Project with exactly one nonblank Component. A draft item alone is insufficient; Repository and Component are distinct. Read back membership, Component and Status after every mutation.
 - To-do file: `TODO.md` (repo root)
 - Reserved port: pending — reserve in `apps.md` (`CGuiho/guiho`)
 
@@ -277,15 +288,27 @@ tmux-session: xdocs  # orchestrator session on su-57; convention = this project'
 
 | Worker       | Class      | Model (opencode ID)                                                                                     | Thinking | Usage        |
 | ------------ | ---------- | --------------------------------------------------------------------------------------------------------------------- | -------- | ------------ |
-| `mastermind` | mastermind | Muse Spark 1.3 Contributor (`vercel/meta/muse-spark-1.3-contributor`, Vercel AI Gateway, first-pick mastermind) | max      | api-always   |
-| `engineer`   | workhorse  | DeepSeek V4.1 Flash (`opencode/deepseek-v4-flash`)                                                                    | max      | api-always   |
-| `engineer`   | workhorse  | GLM 5.3 Flash (`opencode/glm-5.3-flash`)
+| `mastermind` | mastermind | MiMo-V2.6-Pro (`xiaomi/mimo-v2.6-pro`, direct Xiaomi API) | provider default; no variant | CG-authorized default; availability subject to provider/account |
+| `engineer` | workhorse | MiMo-V2.6-Pro (`xiaomi/mimo-v2.6-pro`, direct Xiaomi API) | provider default; no variant | CG-authorized default; availability subject to provider/account |
 
-> All three worker models serve as both mastermind and workhorse (order: Muse Spark → GLM → DeepSeek). Canonical roster, class assignments, and IDs live in `guiho-convention-0007-models.md` (`CGuiho/guiho`, `conventions/`) — the single place CG changes the models.                                                                              | max      | api-always   |
+Both roles retain their judgment/labor distinction and use the same authorized
+default. The former Muse Spark (`vercel/meta/muse-spark-1.3-contributor`), GLM
+(`opencode/glm-5.3-flash`) and DeepSeek (`opencode/deepseek-v4-flash`) roster is
+inactive history only, never fallback capacity. Convention 0007 is the single
+model authority. Check the actual model catalog and native tool schema; pass the
+exact authorized provider/model and available reasoning variant explicitly.
+MiMo advertises no variants: omit that parameter and record provider-default
+thinking; never fabricate `max`/`xhigh`. `openai/gpt-6.1-sol#xhigh` is expressly
+authorized only for the current native-rollout/readiness task, not a future
+default or silent fallback. Record provider failures and continue independent
+units without substituting an unauthorized model.
 
 ### Contract
 
-- The orchestrator is pure orchestration on `main`, always working, always ready to answer CG; subagents are the workers above, called with full permission via `guiho-s-0440-hand-off`.
-- Never stop during execution/review: questions are answered with the safest reversible choice and ledgered under `docs/questions/`. Questions to CG only when CG is present and available, or during brainstorming.
+- Work on `main`. Include `Mode: dnd`, the actual Convention 0011, owning instructions, task identity, exclusive paths, model/variant decision, required capabilities, acceptance/checks and commit/push authority in every owned-unit brief.
+- Launch native background child sessions; harness completion notifications resume the parent to inspect the actual session result, failures, scoped diff, checks, issue/Project/Component/Status readbacks and owned commits, integrate and choose the next ready unit. Human notifications off never disables child completion.
+- No native polling, sleeping, shell waits or per-worker file tailing. No active CLI-worker exception exists for a capability gap, permission denial, provider failure or earlier CLI request. Record the exact failure, select an already-authorized capable native agent where possible, fail the affected unit safely and continue independent work without host permission changes or silent model fallback.
+- Other agent-harness adapters are inactive/historical. CLI workers are dormant future policy only if CG later authorizes a genuinely native-less harness. Ordinary Git/gh/Go/XDocs/RunX tools and primary OpenCode CLI session startup are distinct from worker delegation.
+- Never ask CG or wait for a wake-up during DND execution/technical review. Resolve reversible evidence-grounded decisions under `docs/questions/` and continue; record actual security/data-loss or impossible-specification blockers under `docs/issues/`. Technical self-review precedes later human review.
+- Commit only completed coherent owned work under `guiho-s-0032-git-commit`; child pushes require explicit parent authority and independent review of the complete outgoing ancestry. Never push held/unowned ranges, force-push, rewrite history, create branches or bypass hooks.
 - Use the Mandume skills (`guiho-s-mandume` + lifecycle skills) and the Essentials skills (`guiho-s-0001-guiho`, `guiho-s-0004-working-with-cg`, `guiho-s-0040-explorer`, `guiho-s-0032-git-commit`). Conventions: `conventions/` in `CGuiho/guiho` (`apps.md` for ports).
-
