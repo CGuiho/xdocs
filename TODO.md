@@ -41,7 +41,7 @@ preserved pending their separately owned reconciliation.
 | Status | Count |
 | --- | ---: |
 | todo | 1 |
-| in progress | 2 |
+| in progress | 3 |
 | testing | 0 |
 | stopped | 0 |
 | completed | 8 |
@@ -185,6 +185,17 @@ preserved pending their separately owned reconciliation.
 - GitHub project item: [Issue #24](https://github.com/CGuiho/xdocs/issues/24)
 - GitHub component: `xdocs`
 - Delivery: owned `main` commits; no push until parent dispatches fresh independent review.
+
+### 12. Preserve Non-Descriptor Files During Routine Workflows
+
+- Status: in progress
+- Created: `2026-10-03T21:51:05Z`
+- Updated: `2026-10-03`
+- Outcome: Provide filesystem-proven suffix-only routine XDocs and data/help/version boundaries with an identified independently reviewable task binary.
+- Spec: [docs/todo/suffix-only-runtime-prerequisite.md](docs/todo/suffix-only-runtime-prerequisite.md)
+- GitHub project item: [Issue #25](https://github.com/CGuiho/xdocs/issues/25)
+- GitHub component: `xdocs`
+- Delivery: no push/global binary replacement before fresh independent review.
 
 ## Completion Archive
 
