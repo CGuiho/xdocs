@@ -58,3 +58,10 @@ Evidence: `/tmp/opencode/xdocs-testing-readback.json`. Native policy is deployed
 in `018a0cb`; binding/helpers are committed in `42d983a`. No child delegation
 was performed by this leaf; static policy proof is not provider execution proof.
 Independent review and parent push authorization remain pending.
+
+Final readback after the validation comment retains OPEN/Testing, Project #2
+and Component `xdocs`: `/tmp/opencode/xdocs-final-task-readback.json`.
+[Remote evidence comment](https://github.com/CGuiho/xdocs/issues/24#issuecomment-5974069217).
+Static semantics/link checks pass; live MiMo catalog is active with an empty
+variant list. This proves availability metadata, not a provider request.
+Joint [independent handoff](../reviews/handoff/2026-10-03-suffix-only-runtime-prerequisite.md).

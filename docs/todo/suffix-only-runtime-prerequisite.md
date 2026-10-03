@@ -88,3 +88,26 @@ not routine XDocs corpus writes.
 
 - [Bare-welcome-only housekeeping](../questions/suffix-only-runtime-prerequisite/2026-10-03-runtime-housekeeping-boundary.md).
 - [Release-pinned resource guidance](../questions/suffix-only-runtime-prerequisite/2026-10-03-release-pinned-resource-guidance.md): packaged 0.12.0 skill/prompt guidance remains stale and needs a separately authorized artifact/release unit. No bump is authorized here.
+
+## Final Validation and Review Handoff
+
+The identified task binary passes 60 routine-command filesystem checks across
+missing/corrupt/expired caches and nine failure/rejected-output cases without
+disable variables or routine worker guards. Its exact source/build identity,
+suffix-only maintenance proof and negative regression evidence are in the
+[validation record](../validation/suffix-only-runtime-prerequisite.md).
+[Self-review](../reviews/implementation/suffix-only-runtime-prerequisite-review.md)
+and [independent handoff](../reviews/handoff/2026-10-03-suffix-only-runtime-prerequisite.md)
+are committed separately from runtime sources.
+
+Scoped `docs/todo` strict meta/doctor fail with exit 2 because the two task specs
+are not yet in its `documents` map. Empty descriptor grants prevent routine
+repair; the new record directories also need explicitly scoped setup coverage.
+This is an open documentation finding, not suppressed validation. Runtime tests
+and source checks pass; full family readiness and global installation are not
+claimed. Packaged guidance remains the separately authorized resource gap.
+
+Final readback after the [evidence comment](https://github.com/CGuiho/xdocs/issues/25#issuecomment-5974069214)
+retains OPEN/Testing, Project #2 and Component `xdocs`:
+`/tmp/opencode/xdocs-final-task-readback.json`. No push, release or global
+replacement occurred; independent binary acceptance/delivery remain pending.
