@@ -142,6 +142,11 @@ func TestInstructionTemplateStatesExplicitDocumentationAuthorization(t *testing.
 		"xdocs tree",
 		"existing-frontmatter",
 		"--output",
+		"commands preserve it and never delete it automatically",
+		"Routine maintenance is suffix-only",
+		"commands do not bootstrap agent resources, clear upgrade journals or schedule",
+		"argument- and flag-free welcome",
+		"not an all-filesystem read-only command",
 	} {
 		if !strings.Contains(InstructionTemplate, required) {
 			t.Errorf("instruction template omits %q", required)
@@ -149,6 +154,9 @@ func TestInstructionTemplateStatesExplicitDocumentationAuthorization(t *testing.
 	}
 	if strings.Contains(InstructionTemplate, "requires confirmation before documentation writes") {
 		t.Error("instruction template still treats ai.mode as the authorization policy")
+	}
+	if strings.Contains(InstructionTemplate, "removes a legacy") {
+		t.Error("instruction template still teaches automatic legacy deletion")
 	}
 }
 

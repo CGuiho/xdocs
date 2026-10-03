@@ -27,9 +27,8 @@ This project uses **xdocs** for structured, machine-readable documentation.
 Load the ` + "`guiho-s-xdocs`" + ` agent skill when working with structured
 documentation, named ` + "`*.xdocs.md`" + ` descriptors, companion documents,
 repository scanning, metadata discovery, or validation. Use exactly one named descriptor per directory. ` + "`xdocs.yaml`" + ` configures behavior while named
-descriptors own documentation metadata. Every
-user-facing xdocs command removes a legacy ` + "`XDOCS.md`" + ` file from the
-effective project directory before performing its requested behavior.
+descriptors own documentation metadata. A legacy ` + "`XDOCS.md`" + ` is ordinary
+Markdown, not a descriptor: commands preserve it and never delete it automatically.
 
 The project configuration is ` + "`xdocs.yaml`" + `. Respect ` + "`ai.mode`" + `:
 ` + "`prompt`" + ` asks before already-authorized documentation writes, while
@@ -55,8 +54,18 @@ without requiring missing headers or writing repairs. ` + "`generate`" + `,
 ` + "`--output`" + ` path is requested; that report path does not authorize any other
 document writes and a generated report is never a descriptor.
 
-The explicit ` + "`xdocs init`" + ` agent-resource bootstrap
-is a setup exception. It does not authorize arbitrary Markdown metadata edits.
+Routine maintenance is suffix-only: author only explicitly authorized named
+` + "`*.xdocs.md`" + ` files and keep reports on stdout. Data, help and version
+commands do not bootstrap agent resources, clear upgrade journals or schedule
+update workers. A plain invocation prints the welcome without agent bootstrap;
+only that argument- and flag-free welcome performs runtime update housekeeping.
+It is not an all-filesystem read-only command.
+
+The explicit ` + "`xdocs init`" + ` creates missing configuration and installs
+the skill; ` + "`xdocs agent`" + ` mutation actions manage resources and bounded
+instructions. These separately authorized setup actions do not grant arbitrary
+Markdown metadata edits. Inspect this runtime's help and documentation when
+older installed skill guidance describes legacy deletion or bare bootstrap.
 `
 
 type Service struct {
