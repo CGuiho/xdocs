@@ -14,14 +14,24 @@ keywords:
   - RFC 0034
 ---
 
-Copyright (c) 2026 GUIHO Technologies as represented by Cristóvão GUIHO
-All Rights Reserved.
+#### &copy; 2026 [GUIHO](https://guiho.co) as represented by [Cristóvão GUIHO](https://guiho.co/cguiho) All Rights Reserved.
 
 # GUIHO XDocs TODO List
 
+## GitHub Project
+
+- GitHub repository: `CGuiho/xdocs`
+- URL: https://github.com/users/CGuiho/projects/2
+- GitHub component: `xdocs`
+
+GitHub is authoritative for task state; this ledger is a working mirror after
+live readback. Every new task is a real owning-repository issue attached to this
+Project with Component set. Historical task identities/statuses below are
+preserved pending their separately owned reconciliation.
+
 ## Parent TODO
 
-- Parent: [../guiho/TODO.md](../guiho/TODO.md)
+- Parent: [../guiho/todo.md](../guiho/todo.md)
 - Parent AGENTS: [../guiho/AGENTS.md](../guiho/AGENTS.md)
 - Local AGENTS: [./AGENTS.md](./AGENTS.md)
 - Local context: Structured documentation package and CLI for @guiho/xdocs.
@@ -31,7 +41,7 @@ All Rights Reserved.
 | Status | Count |
 | --- | ---: |
 | todo | 1 |
-| in progress | 1 |
+| in progress | 2 |
 | testing | 0 |
 | stopped | 0 |
 | completed | 8 |
@@ -164,6 +174,17 @@ All Rights Reserved.
 - Review: [docs/reviews/implementation/explicit-documentation-authorization-review.md](docs/reviews/implementation/explicit-documentation-authorization-review.md)
 - External: [CGuiho/xdocs#21](https://github.com/CGuiho/xdocs/issues/21)
 - Acceptance: [CG human acceptance 2026-09-19](docs/reviews/human/2026-09-19-explicit-documentation-authorization-acceptance.md); released as XDocs 0.12.0.
+
+### 11. Deploy Native Background Worker Policy
+
+- Status: in progress
+- Created: `2026-10-03T21:30:52Z`
+- Updated: `2026-10-03`
+- Outcome: Use the accepted capable native OpenCode background worker policy with verified model, task and completion boundaries.
+- Spec: [docs/todo/native-background-worker-policy.md](docs/todo/native-background-worker-policy.md)
+- GitHub project item: [Issue #24](https://github.com/CGuiho/xdocs/issues/24)
+- GitHub component: `xdocs`
+- Delivery: owned `main` commits; no push until parent dispatches fresh independent review.
 
 ## Completion Archive
 
