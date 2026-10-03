@@ -37,12 +37,12 @@ xdocs
 Hello Windows - xdocs v0.9.0
 ```
 
-A plain argument-free invocation first ensures the embedded
-`guiho-s-xdocs` skill is current in both global agent locations and reconciles
-the bounded XDocs instruction block in the current repository. It updates both
-`AGENTS.md` and `CLAUDE.md` when both exist, the one that exists otherwise, or
-creates `AGENTS.md`. Repeating the invocation leaves already-current files
-untouched. Malformed managed markers are refused instead of guessed at.
+A plain argument-free invocation prints the welcome without installing skills
+or reconciling repository instructions. Only this argument- and flag-free
+welcome reads update notices, schedules a bounded detached update worker and
+reports/clears a prior upgrade journal. It preserves project files but is not
+an all-filesystem read-only command. Data/help/version and flagged root
+invocations skip that runtime housekeeping, even with missing or corrupt caches.
 
 ```bash
 xdocs init
@@ -53,8 +53,9 @@ xdocs doctor
 
 `xdocs init` creates `xdocs.yaml` when it is missing, then installs the skill
 globally by default. Use `xdocs init --local` for project-local skill targets.
-Every valid user-facing invocation removes a legacy `XDOCS.md` from the
-effective project directory before performing its requested behavior.
+Every invocation preserves a legacy `XDOCS.md` in the effective project
+directory. It is ordinary Markdown, not a descriptor; list a non-excluded
+existing legacy file in the owning descriptor's `documents` map.
 Configuration lives in `xdocs.yaml`; named `*.xdocs.md` descriptors own
 documentation metadata. The generated configuration starts with no
 documentation write grants, so initialization does not authorize descriptor or
@@ -210,8 +211,9 @@ Every scope supports `-h`/`--help`, `--help-tree`,
 `--help-tree-depth <positive-integer>`, and `--help-docs`. Only the root
 supports `-v`/`--version`. Use `--format text|json|markdown` for stable output.
 
-`scan`, `meta`, `context`, and `doctor` are read-only. Without `--output`,
-`tree` is also read-only: it walks all non-excluded directories to arbitrary
+`scan`, `list`, `meta`, `context`, and `doctor` are read-only, including project
+and agent resources, cache, leases and upgrade journals. Without `--output`,
+`generate`, `merge`, and `tree` are also read-only. The tree walks all non-excluded directories to arbitrary
 depth, includes every discovered named descriptor, and reports malformed or orphaned metadata without hiding a node. `meta --existing-frontmatter` and
 `doctor --existing-frontmatter` audit existing ordinary Markdown headers only:
 missing headers remain valid, malformed existing headers are reported, and no
@@ -222,6 +224,18 @@ repair or ownership is inferred.
 it does not authorize metadata edits or additional files. Descriptor-shaped
 destinations are rejected, and a rejected destination is left byte-for-byte
 unchanged.
+
+For suffix-only readiness work, keep reports on stdout and author only the
+exact named `*.xdocs.md` files already authorized by the task and literal
+`documentation.directories` grants. Keep `documentation.frontmatter: []`,
+existing exclusions and ignore denials. The CLI validates those manual edits;
+`generate` and `merge` render reports rather than maintain descriptors.
+
+```bash
+xdocs meta docs --documents --strict --format json
+xdocs tree --format json
+xdocs doctor docs --format json
+```
 
 ## Agents
 
@@ -236,25 +250,30 @@ The binary embeds:
 Skill operations target both `.agents/skills/guiho-s-xdocs` and
 `.claude/skills/guiho-s-xdocs`. Instruction operations use bounded managed
 blocks, preserve every byte outside the block and its LF/CRLF convention, and
-write replacements atomically. The plain root invocation is the shared
-bootstrap boundary; help, version, data commands, explicit agent management,
-upgrade, and uninstall do not run bootstrap. Legacy `XDOCS.md` cleanup occurs
-before this distinction; bootstrap never scans or changes named descriptors
-or companion documents.
+write replacements atomically. Only explicitly authorized `init` and `agent`
+mutation actions change these resources. Welcome, help, version and data
+commands do not bootstrap them or delete legacy documents.
 
 The managed instruction block teaches agents to inspect the documentation
 allowlist before writing. Applying it never adds frontmatter to `AGENTS.md` or
 other ordinary Markdown and does not grant corpus write permission. The
 explicit `init` agent bootstrap behavior is a setup exception.
 
+The packaged 0.12.0 skill and `prompts/agents.md` still describe historical
+legacy deletion/bare bootstrap. This source-only prerequisite changes no
+artifact or release version. Use this README, [DOCS.md](DOCS.md), current
+command help and GUIHO Convention 0011 for the new runtime boundary; refreshing
+release-pinned agent resources remains separately gated work.
+
 ## Updates and upgrades
 
-Ordinary commands perform no foreground network request. They read a validated
-local cache and start a bounded detached worker. Explicit `upgrade` commands
+Only the argument- and flag-free welcome reads the local update cache and may
+start a bounded detached worker; it performs no foreground network request.
+Routine data/help/version commands do neither. Explicit `upgrade` commands
 resolve `xdocs/vX.Y.Z` releases, verify SHA-256, replace atomically on Unix, and
 stage replacement after process exit on Windows. Ownership-safe leases prevent
 duplicate background workers, upgrade locks prevent concurrent replacements,
-and the next invocation reports the final result of a detached Windows
+and the next argument- and flag-free welcome reports the final result of a detached Windows
 replacement.
 
 ## Release
