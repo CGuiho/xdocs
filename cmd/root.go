@@ -47,14 +47,12 @@ type commonOptions struct {
 
 var errHelpRendered = errors.New("developer context help rendered")
 
-var errVersionRendered = errors.New("version rendered")
-
 func Execute(info BuildInfo, resources fs.FS) error {
 	root := NewRootCommand(Dependencies{
 		In: os.Stdin, Out: os.Stdout, Err: os.Stderr, Resources: resources,
 	}, info)
 	err := root.Execute()
-	if errors.Is(err, errHelpRendered) || errors.Is(err, errVersionRendered) {
+	if errors.Is(err, errHelpRendered) {
 		return nil
 	}
 	return err
@@ -73,8 +71,8 @@ func NewRootCommand(deps Dependencies, info BuildInfo) *cobra.Command {
 	root := &cobra.Command{
 		Use:   "xdocs",
 		Short: "Structured documentation for codebases and AI agents.",
-		Long: "Structured documentation for codebases and AI agents. A plain invocation " +
-			"ensures the global XDocs skill and this repository's managed agent instructions before printing the welcome.",
+		Long: "Structured documentation for codebases and AI agents. Data, help and version commands preserve project and agent files. " +
+			"Use explicit init and agent actions for setup; a plain invocation prints the welcome and performs runtime update housekeeping only.",
 		Version:       info.Version,
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -98,7 +96,13 @@ func NewRootCommand(deps Dependencies, info BuildInfo) *cobra.Command {
 			if err := validateFormat(options.format); err != nil {
 				return err
 			}
-			if !internalProtocolCommand(command) {
+			if _, err := resolveEffectiveCWD(options, deps); err != nil {
+				return err
+			}
+			// Only an argument-free welcome performs runtime housekeeping. Data,
+			// help, version and explicit actions never clear journals or schedule
+			// an update worker, regardless of cache state or configuration.
+			if command == command.Root() && plainRootInvocation(command) {
 				if completion, found, err := upgrade.ReadAndClearCompletion(); err != nil {
 					fmt.Fprintf(command.ErrOrStderr(), "Warning: could not read the prior XDocs upgrade result: %v\n", err)
 				} else if found {
@@ -116,11 +120,6 @@ func NewRootCommand(deps Dependencies, info BuildInfo) *cobra.Command {
 			return nil
 		},
 		RunE: func(command *cobra.Command, _ []string) error {
-			if plainRootInvocation(command) {
-				if _, err := agents.Bootstrap(options.cwd); err != nil {
-					return err
-				}
-			}
 			if options.format == "json" {
 				return writeJSON(command, map[string]any{
 					"command": "xdocs", "version": info.Version,
@@ -177,201 +176,7 @@ func NewRootCommand(deps Dependencies, info BuildInfo) *cobra.Command {
 	root.AddCommand(newUpdateWorkerCommand())
 	root.AddCommand(newWindowsReplacementCommand())
 
-	versionFlag := &versionCleanupValue{options: options, deps: deps}
-	installLegacyCleanupVersionHook(root, options, deps, versionFlag)
-	root.PersistentPreRunE = wrapLegacyCleanupPreRun(root.PersistentPreRunE, options, deps, versionFlag)
-	installLegacyCleanupHelpHook(root, options, deps, versionFlag)
-	for _, child := range root.Commands() {
-		wrapLegacyCleanupCommandWithCarrier(child, options, deps, versionFlag)
-	}
 	return root
-}
-
-// installLegacyCleanupHelpHook covers every help rendering path, including
-// Cobra's early --help exit that runs before PersistentPreRunE. The hook is
-// installed on every command so the HelpFunc lookup always finds the wrapper
-// on the executed command itself, regardless of which ancestor Cobra asks.
-func installLegacyCleanupHelpHook(root *cobra.Command, options *commonOptions, deps Dependencies, carrier *versionCleanupValue) {
-	var visit func(command *cobra.Command)
-	visit = func(command *cobra.Command) {
-		help := command.HelpFunc()
-		command.SetHelpFunc(func(cmd *cobra.Command, args []string) {
-			if !internalProtocolCommand(cmd) {
-				if err := cleanupForHelpArgs(cmd, options, deps); err != nil {
-					if carrier != nil {
-						carrier.cleanupErr = err
-						carrier.requested = true
-					}
-					return
-				}
-			}
-			help(cmd, args)
-		})
-		for _, child := range command.Commands() {
-			visit(child)
-		}
-	}
-	visit(root)
-}
-
-// installLegacyCleanupVersionHook removes the legacy index on Cobra's early
-// --version exit. Cobra checks the version flag inside execute() before
-// PersistentPreRunE, so predefine the version flag with a NoOptDefVal hook:
-// pflag invokes the flag's value setter during parsing, which runs after the
-// effective --cwd flag is parsed regardless of flag order. Valid invocations
-// clean exactly once; invalid syntax still fails as usage in Cobra.
-func installLegacyCleanupVersionHook(root *cobra.Command, options *commonOptions, deps Dependencies, flag *versionCleanupValue) {
-	if existing := root.Flags().Lookup("version"); existing != nil {
-		existing.NoOptDefVal = "true"
-		return
-	}
-	root.Flags().VarPF(flag, "version", "v", "version for "+root.DisplayName())
-	root.Flags().Lookup("version").NoOptDefVal = "true"
-	_ = options
-	_ = deps
-}
-
-// versionCleanupValue marks a version request and removes the legacy index
-// from the effective --cwd at parse time. It reports unset until Cobra parses
-// --version, so normal invocations never render the version template early.
-type versionCleanupValue struct {
-	options    *commonOptions
-	deps       Dependencies
-	requested  bool
-	cleanupErr error
-}
-
-func (value versionCleanupValue) String() string { return "false" }
-
-func (value versionCleanupValue) Type() string { return "bool" }
-
-func (value versionCleanupValue) IsBoolFlag() bool { return true }
-
-func (value *versionCleanupValue) Set(raw string) error {
-	value.requested = raw == "true"
-	if value.requested {
-		if value.options.cwd == "." && value.deps.WorkingDirectory != "" {
-			value.options.cwd = value.deps.WorkingDirectory
-		}
-		if absolute, err := filepath.Abs(value.options.cwd); err == nil {
-			value.options.cwd = absolute
-			value.cleanupErr = removeLegacyRootIndex(absolute)
-		}
-	}
-	return nil
-}
-
-// wrapLegacyCleanupPreRun runs invocation-time legacy cleanup before the
-// shared persistent hook. The cleanup key is the effective --cwd: the flag
-// value when set, otherwise the injected working directory.
-func wrapLegacyCleanupPreRun(
-	hook func(*cobra.Command, []string) error,
-	options *commonOptions,
-	deps Dependencies,
-	versionFlag *versionCleanupValue,
-) func(*cobra.Command, []string) error {
-	return func(command *cobra.Command, args []string) error {
-		if versionFlag != nil && versionFlag.requested {
-			if versionFlag.cleanupErr != nil {
-				err := versionFlag.cleanupErr
-				versionFlag.requested = false
-				versionFlag.cleanupErr = nil
-				return err
-			}
-			if helpRequested(command) {
-				return hook(command, args)
-			}
-			fmt.Fprintf(command.OutOrStdout(), "%s v%s\n", command.Root().Name(), command.Root().Version)
-			return errVersionRendered
-		}
-		cwd, err := resolveEffectiveCWD(options, deps)
-		if err != nil {
-			return err
-		}
-		if !internalProtocolCommand(command) {
-			if err := removeLegacyRootIndex(cwd); err != nil {
-				return err
-			}
-		}
-		return hook(command, args)
-	}
-}
-
-// wrapLegacyCleanupCommand folds the effective --cwd cleanup into the help
-// path of one command subtree. Cobra's --help exit runs before
-// PersistentPreRunE, so the help wrapper cleans before rendering. Cleanup
-// failures are recorded on the shared version-flag carrier so the pending
-// help exit surfaces them in the mutation category instead of silently
-// rendering help over an undeleted directory.
-func wrapLegacyCleanupCommand(command *cobra.Command, options *commonOptions, deps Dependencies) {
-	wrapLegacyCleanupCommandWithCarrier(command, options, deps, nil)
-}
-
-func wrapLegacyCleanupCommandWithCarrier(command *cobra.Command, options *commonOptions, deps Dependencies, carrier *versionCleanupValue) {
-	help := command.HelpFunc()
-	command.SetHelpFunc(func(cmd *cobra.Command, args []string) {
-		if err := cleanupForHelpArgs(cmd, options, deps); err != nil {
-			if carrier != nil {
-				carrier.cleanupErr = err
-				carrier.requested = true
-				return
-			}
-			help(cmd, args)
-			return
-		}
-		help(cmd, args)
-	})
-	if command.Version != "" {
-		_ = command.Version
-	}
-	for _, child := range command.Commands() {
-		wrapLegacyCleanupCommandWithCarrier(child, options, deps, carrier)
-	}
-}
-
-// cleanupForHelpArgs removes the legacy index for help output of one command.
-// It reads the effective --cwd the same way Cobra's help path sees it:
-// persistent --cwd belongs to the executed (leaf) command, so inspect that
-// command's merged flag set and fall back to the injected directory.
-func helpRequested(command *cobra.Command) bool {
-	if command == nil {
-		return false
-	}
-	if help, err := command.Flags().GetBool("help"); err == nil && help {
-		return true
-	}
-	if root := command.Root(); root != nil && root != command {
-		if help, err := root.Flags().GetBool("help"); err == nil && help {
-			return true
-		}
-	}
-	return false
-}
-
-func cleanupForHelpArgs(command *cobra.Command, options *commonOptions, deps Dependencies) error {
-	cwd := options.cwd
-	if command != nil {
-		if value, err := command.Flags().GetString("cwd"); err == nil && command.Flags().Changed("cwd") {
-			cwd = value
-		} else if root := command.Root(); root != nil {
-			if value, err := root.PersistentFlags().GetString("cwd"); err == nil && root.PersistentFlags().Changed("cwd") {
-				cwd = value
-			}
-		}
-	}
-	if cwd == "" || cwd == "." {
-		if deps.WorkingDirectory != "" {
-			cwd = deps.WorkingDirectory
-		}
-	}
-	if cwd == "" {
-		return nil
-	}
-	absolute, err := filepath.Abs(cwd)
-	if err != nil {
-		return apperror.Wrap(apperror.Usage, "resolve --cwd", err)
-	}
-	return removeLegacyRootIndex(absolute)
 }
 
 func plainRootInvocation(command *cobra.Command) bool {
@@ -389,31 +194,6 @@ func resolveEffectiveCWD(options *commonOptions, deps Dependencies) (string, err
 	}
 	options.cwd = absolute
 	return absolute, nil
-}
-
-func internalProtocolCommand(command *cobra.Command) bool {
-	return command.Name() == "__update-worker" || command.Name() == "__replace-windows"
-}
-
-func removeLegacyRootIndex(cwd string) error {
-	path := filepath.Join(cwd, "XDOCS.md")
-	info, err := os.Lstat(path)
-	if os.IsNotExist(err) {
-		return nil
-	}
-	if err != nil {
-		return apperror.Wrap(apperror.Mutation, "inspect legacy XDOCS.md", err)
-	}
-	if info.IsDir() {
-		return apperror.New(apperror.Mutation, fmt.Sprintf("legacy XDOCS.md path is a directory: %s", path))
-	}
-	if !info.Mode().IsRegular() && info.Mode()&os.ModeSymlink == 0 {
-		return apperror.New(apperror.Mutation, fmt.Sprintf("legacy XDOCS.md path is not a regular file or symbolic link: %s", path))
-	}
-	if err := os.Remove(path); err != nil {
-		return apperror.Wrap(apperror.Mutation, "remove legacy XDOCS.md", err)
-	}
-	return nil
 }
 
 func noArgs(_ *cobra.Command, args []string) error {
