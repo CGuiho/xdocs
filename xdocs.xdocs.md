@@ -52,6 +52,8 @@ flags: []
 status: stable
 ---
 
+
+#### &copy; 2026 [GUIHO](https://guiho.co) as represented by [Cristóvão GUIHO](https://guiho.co/cguiho) All Rights Reserved.
 The repository root ships the native Go XDocs CLI. Git tags in the
 `xdocs/vX.Y.Z` namespace are the only version authority. Package manifests and
 the TypeScript tree are historical migration references only.

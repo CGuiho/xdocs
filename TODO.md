@@ -209,3 +209,26 @@ Completed tasks and their task-owned evidence are registered in
 [docs/todo/done/done.md](docs/todo/done/done.md). The Go rewrite and shared
 agent bootstrap are archived there, together with the Git-aware ignore and
 frontmatter opt-out feature released as XDocs 0.10.0.
+
+## Readiness Task Seed — 2026-10-04
+
+### 13. Set up verified agent readiness for xdocs
+
+- Status: in progress
+- Created: `2026-10-04T01:20:32Z`
+- Updated: `2026-10-04T01:20:35.062932+00:00`
+- Outcome: Complete evidence-based Convention 0011 readiness within the adopted owning scope.
+- Spec: [docs/todo/agent-readiness.md](docs/todo/agent-readiness.md)
+- GitHub project item: [Issue #26](https://github.com/CGuiho/xdocs/issues/26)
+- GitHub component: `xdocs`
+- Project item ID: `PVTI_lAHOBUk1ds4AULOgzg-YlaE`
+- Readback: owning issue OPEN; GUIHO Project #2; exact Component; In Progress.
+- Seed delivery: local main commits only; independent parent review/delivery pending. Full setup remains open.
+
+## Readiness Seed Status Summary
+
+| Scope | in progress |
+| --- | ---: |
+| Newly bound readiness issue only | 1 |
+
+Earlier summary rows remain the historical helper snapshot; GitHub is authoritative for all existing task states. This bounded seed does not resynchronize old tasks.

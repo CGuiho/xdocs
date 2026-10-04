@@ -26,6 +26,8 @@ flags: []
 status: stable
 ---
 
+
+#### &copy; 2026 [GUIHO](https://guiho.co) as represented by [Cristóvão GUIHO](https://guiho.co/cguiho) All Rights Reserved.
 The `docs/` directory stores durable xdocs project notes. Plain Markdown
 documents directly in this directory are listed in `documents`; categorized
 subdirectories such as `decisions/`, `superpowers/`, and `todo/` have their own
