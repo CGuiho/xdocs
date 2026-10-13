@@ -19,6 +19,9 @@ const (
 	ansiCream  = "\x1b[38;2;237;224;212m"
 	ansiSage   = "\x1b[38;2;101;109;74m"
 	ansiForest = "\x1b[38;2;65;72;51m"
+
+	// ansiAccent is the xdocs primary accent: the warm brown logo tone.
+	ansiAccent = ansiBrown + ansiBold
 )
 
 var platformLabels = map[string]string{
@@ -83,45 +86,39 @@ func render(platform, architecture, version string, withColor bool) string {
 	architecture = displayValue(archLabels, architecture)
 	version = strings.TrimPrefix(strings.TrimSpace(version), "v")
 
-	innerWidth := 56
-	for _, line := range xdocsLogo {
-		if w := len([]rune(line)); w+4 > innerWidth {
-			innerWidth = w + 4
-		}
-	}
 	tagline := "Structured documentation for codebases and AI agents"
-	if len([]rune(tagline))+4 > innerWidth {
-		innerWidth = len([]rune(tagline)) + 4
-	}
 
 	var out strings.Builder
-	// Two blank lines before — as requested
-	out.WriteString("\n\n")
+	// One blank line before, so the welcome never touches the prompt line
+	out.WriteString("\n")
 
 	for i, line := range xdocsLogo {
 		color := ""
 		if i < len(logoColors) {
 			color = logoColors[i]
 		}
-		out.WriteString(colorize(withColor, center(line, innerWidth), color))
+		out.WriteString(colorize(withColor, line, color))
 		out.WriteByte('\n')
 	}
-	out.WriteString(colorize(withColor, center(tagline, innerWidth), ansiTan+ansiDim))
+	out.WriteString(colorize(withColor, tagline, ansiTan+ansiDim))
 	out.WriteByte('\n')
-	out.WriteString(colorize(withColor, center("GUIHO  ·  Cristóvão GUIHO", innerWidth), ansiSage))
-	out.WriteString("\n\n\n")
+	out.WriteString(colorize(withColor, "GUIHO  ·  Cristóvão GUIHO", ansiSage))
+	out.WriteString("\n\n")
 
-	// Details — organization, platform, version
-	writeDetail(&out, withColor, "organization", "GUIHO", ansiCream+ansiBold)
-	writeDetail(&out, withColor, "platform", platform+" "+architecture, ansiCream)
-	writeDetail(&out, withColor, "version", "v"+version, ansiBrown+ansiBold)
+	// Details — platform, version, author
+	writeDetail(&out, withColor, "Platform", colorize(withColor, platform+" "+architecture, ansiCream))
+	writeDetail(&out, withColor, "Version", colorize(withColor, "v"+version, ansiAccent))
+	writeDetail(&out, withColor, "Author",
+		colorize(withColor, "GUIHO (", ansiCream)+
+			colorize(withColor, "www.guiho.co", ansiAccent)+
+			colorize(withColor, ")", ansiCream))
 	out.WriteByte('\n')
 	out.WriteString("Run ")
 	out.WriteString(colorize(withColor, "xdocs --help", ansiCream+ansiBold))
 	out.WriteString(" to see available commands.")
 	out.WriteString("\n")
-	// Two blank lines after — as requested
-	out.WriteString("\n\n")
+	// One blank line after, so the welcome never touches the next prompt
+	out.WriteString("\n")
 	return out.String()
 }
 
@@ -132,17 +129,6 @@ func displayValue(labels map[string]string, value string) string {
 	return value
 }
 
-func center(value string, width int) string {
-	w := len([]rune(value))
-	if w >= width {
-		return value
-	}
-	pad := width - w
-	// left pad half, right is implicit via center visual; we only left-pad like genius
-	left := pad / 2
-	return strings.Repeat(" ", left) + value
-}
-
 func colorize(enabled bool, value, codes string) string {
 	if !enabled || codes == "" {
 		return value
@@ -150,15 +136,12 @@ func colorize(enabled bool, value, codes string) string {
 	return codes + value + ansiReset
 }
 
-func writeDetail(out *strings.Builder, withColor bool, label, value, valueColor string) {
-	const labelWidth = 12
-	if withColor {
-		// labels in forest (subtle earth), values in cream/brown accent
-		out.WriteString(colorize(true, fmt.Sprintf("  %-12s", label), ansiForest))
-		out.WriteString("  ")
-		out.WriteString(colorize(true, value, valueColor))
-		out.WriteByte('\n')
-		return
-	}
-	fmt.Fprintf(out, "  %-12s  %s\n", label, value)
+// detailLabelWidth fits the longest detail label ("Platform") so values align.
+const detailLabelWidth = 8
+
+// writeDetail writes one detail row; value is already colourized by the caller.
+func writeDetail(out *strings.Builder, withColor bool, label, value string) {
+	// labels in forest (subtle earth), values in cream/brown accent
+	padded := colorize(withColor, fmt.Sprintf("%-*s", detailLabelWidth, label), ansiForest)
+	fmt.Fprintf(out, "%s  %s\n", padded, value)
 }
