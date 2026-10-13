@@ -392,18 +392,21 @@ func TestNoArgumentVersionAndCatalog(t *testing.T) {
 	for _, required := range []string{
 		"████╗", "Structured documentation for codebases and AI agents",
 		"GUIHO", "Cristóvão GUIHO",
-		"organization", "platform", "x64", "version", "v0.8.0",
+		"\n\nPlatform  ", "x64", "\nVersion   v0.8.0\nAuthor    GUIHO (www.guiho.co)\n\n",
 		"Run xdocs --help to see available commands.",
 	} {
 		if !strings.Contains(out, required) {
 			t.Fatalf("welcome output omits %q:\n%s", required, out)
 		}
 	}
-	if !strings.HasPrefix(out, "\n\n") {
-		t.Fatalf("welcome output does not start with two blank lines: %q", out)
+	if strings.Contains(out, "organization") || strings.Contains(out, "Creator") {
+		t.Fatalf("welcome output still shows a creator/organization detail line:\n%s", out)
 	}
-	if !strings.HasSuffix(out, "\n\n") {
-		t.Fatalf("welcome output does not end with two blank lines: %q", out)
+	if !strings.HasPrefix(out, "\n██") || strings.HasPrefix(out, "\n\n") {
+		t.Fatalf("welcome output does not start with exactly one blank line: %q", out)
+	}
+	if !strings.HasSuffix(out, "commands.\n\n") || strings.HasSuffix(out, "\n\n\n") {
+		t.Fatalf("welcome output does not end with exactly one blank line: %q", out)
 	}
 	if strings.Contains(out, "Hello Windows") || strings.Contains(out, "\x1b[") {
 		t.Fatalf("welcome output should be beautiful borderless without legacy text or ANSI in non-terminal mode: %q", out)
