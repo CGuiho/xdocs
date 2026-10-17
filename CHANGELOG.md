@@ -16,8 +16,16 @@ keywords:
 
 # GUIHO XDocs Changelog
 
-## Unreleased
+## 0.12.1 - 2026-10-17
 
+- Left-align the bare `xdocs` welcome window to match the corrected sibling
+  hello windows: the logo rows, tagline and `GUIHO · Cristóvão GUIHO`
+  attribution now start at column 0 instead of receiving centering padding,
+  the detail rows print capitalised `Platform`, `Version` and `Author`
+  labels with aligned values, `Author` shows `GUIHO (www.guiho.co)` with the
+  website in the accent colour, the `organization`/`Creator` row is removed,
+  and the window is framed by exactly one leading and one trailing blank
+  line. Exact plain-text layout and colouring are pinned by tests.
 - Remove the special `XDOCS.md` root-index concept: `xdocs init` no longer
   creates or reports a root index, and every valid user-facing invocation
   silently removes a legacy `XDOCS.md` from the effective project directory
