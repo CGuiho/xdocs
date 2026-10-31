@@ -26,15 +26,11 @@ and the conventions under its `conventions/` directory that apply to the task.
 The conventions in Cristóvão GUIHO's [cguiho/guiho repository](https://github.com/cguiho/guiho)
 are the shared engineering authority.
 
-Locate that repository using the current platform:
+Locate that repository at `<local path>` — the local checkout of
+`CGuiho/guiho` — or fall back to GitHub:
+[cguiho/guiho](https://github.com/cguiho/guiho).
 
-- Linux: `/root/SWE/GUIHO`.
-- Windows: `/c/SWE/GUIHO` (`C:\SWE\GUIHO`).
-- GitHub fallback: [cguiho/guiho](https://github.com/cguiho/guiho).
-
-Prefer the local checkout. Paths are case-sensitive on Linux; if the preferred
-path is absent, discover the actual checkout casing (for example,
-`/root/swe/guiho` on this machine). If no local checkout is available, read the
+Prefer the local checkout. If no local checkout is available, read the
 conventions from GitHub.
 
 Read `conventions/guiho-convention-0000-swe.md` for general engineering work
@@ -196,9 +192,10 @@ Native Go structured-documentation CLI for XDocs.
 
 ### Parent Context
 
-- Parent AGENTS: [../guiho/AGENTS.md](../guiho/AGENTS.md)
-- Parent TODO: [../guiho/todo.md](../guiho/todo.md)
+- Parent AGENTS: `AGENTS.md` in `CGuiho/guiho`
+- Parent TODO: `todo.md` in `CGuiho/guiho`
 - Local TODO: [./TODO.md](./TODO.md)
+- Internal records: [`docs/internal-records.md`](docs/internal-records.md) — the plans, question ledgers, review handoffs, validation evidence and completed-task archive live in the private GUIHO repository `CGuiho/guiho` under `docs/projects/xdocs/`.
 
 For the full project map, sibling components, package index, service index,
 project-wide TODOs, and cross-repository coordination rules, read the parent
@@ -289,9 +286,10 @@ GUIHO XDocs.
 
 Managed by the GUIHO Mandume swarm ([CGuiho/mandume](https://github.com/CGuiho/mandume)); the full worker-registry example lives at `example/AGENTS.md` there.
 
-Read the actual [GUIHO Convention 0011](../guiho/conventions/guiho-convention-0011-agent-readiness.md)
-and [canonical model registry 0007](../guiho/conventions/guiho-convention-0007-models.md)
-before readiness or delegation work. OpenCode is the only currently supported
+Read the actual [GUIHO Convention 0011](https://github.com/CGuiho/guiho/blob/main/conventions/guiho-convention-0011-agent-readiness.md)
+and [canonical model registry 0007](https://github.com/CGuiho/guiho/blob/main/conventions/guiho-convention-0007-models.md)
+in `CGuiho/guiho` (`conventions/`, local checkout at `<local path>`) before
+readiness or delegation work. OpenCode is the only currently supported
 agent harness; this section is the authoritative worker registry. Use its built-in
 subagent tool and a capable authorized native agent whose actual permissions cover
 the brief. General supports broad shell/write work; read-only Explore/Explorer
@@ -304,7 +302,7 @@ proves child permission.
 execution: dnd  # dnd | interruptible — orchestrator NEVER stops during execution/review
 notifications: off  # human-facing notifications only; child completion stays enabled
 harness: opencode  # only current harness; native background subagents always
-tmux-session: xdocs  # orchestrator session on su-57; convention = this project's name
+tmux-session: xdocs  # orchestrator session on <host>; convention = this project's name
 ```
 
 ### Coordination
@@ -341,6 +339,6 @@ units without substituting an unauthorized model.
 - Launch native background child sessions; harness completion notifications resume the parent to inspect the actual session result, failures, scoped diff, checks, issue/Project/Component/Status readbacks and owned commits, integrate and choose the next ready unit. Human notifications off never disables child completion.
 - No native polling, sleeping, shell waits or per-worker file tailing. No active CLI-worker exception exists for a capability gap, permission denial, provider failure or earlier CLI request. Record the exact failure, select an already-authorized capable native agent where possible, fail the affected unit safely and continue independent work without host permission changes or silent model fallback.
 - Other agent-harness adapters are inactive/historical. CLI workers are dormant future policy only if CG later authorizes a genuinely native-less harness. Ordinary Git/gh/Go/XDocs/RunX tools and primary OpenCode CLI session startup are distinct from worker delegation.
-- Never ask CG or wait for a wake-up during DND execution/technical review. Resolve reversible evidence-grounded decisions under `docs/questions/` and continue; record actual security/data-loss or impossible-specification blockers under `docs/issues/`. Technical self-review precedes later human review.
+- Never ask CG or wait for a wake-up during DND execution/technical review. Resolve reversible evidence-grounded decisions under `docs/projects/xdocs/questions/` in `CGuiho/guiho` and continue; record actual security/data-loss or impossible-specification blockers under `docs/projects/xdocs/` in `CGuiho/guiho`. Technical self-review precedes later human review.
 - Commit only completed coherent owned work under `guiho-s-0032-git-commit`; child pushes require explicit parent authority and independent review of the complete outgoing ancestry. Never push held/unowned ranges, force-push, rewrite history, create branches or bypass hooks.
 - Use the Mandume skills (`guiho-s-mandume` + lifecycle skills) and the Essentials skills (`guiho-s-0001-guiho`, `guiho-s-0004-working-with-cg`, `guiho-s-0040-explorer`, `guiho-s-0032-git-commit`). Conventions: `conventions/` in `CGuiho/guiho` (`apps.md` for ports).

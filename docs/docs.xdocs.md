@@ -1,20 +1,17 @@
 ---
 subject: xdocs-docs
-description: Durable project documentation for xdocs behavior, design notes, and implementation context.
+description: Durable project documentation for xdocs behavior, design notes, and implementation context, plus the pointer to the internal lifecycle records kept in the private GUIHO repository.
 parent: xdocs-package
 children:
   - xdocs-architecture-docs
   - xdocs-decisions
   - xdocs-migrations
-  - xdocs-plans
-  - xdocs-questions
-  - xdocs-reviews
   - xdocs-superpowers
   - xdocs-todo
-  - xdocs-validation
 files: {}
 documents:
   2026-07-05-xdocs-document-model.md: Defines the named descriptor plus companion Markdown document model for xdocs modules.
+  internal-records.md: Where the internal lifecycle records live: the private GUIHO repository CGuiho/guiho, under docs/projects/xdocs/.
 tags:
   - documentation
   - design
@@ -31,4 +28,7 @@ status: stable
 The `docs/` directory stores durable xdocs project notes. Plain Markdown
 documents directly in this directory are listed in `documents`; categorized
 subdirectories such as `decisions/`, `superpowers/`, and `todo/` have their own
-xdocs descriptors.
+xdocs descriptors. The planning, question-ledger, review and validation trees
+moved to the private GUIHO repository `CGuiho/guiho` under
+`docs/projects/xdocs/`; see
+[internal-records.md](internal-records.md).

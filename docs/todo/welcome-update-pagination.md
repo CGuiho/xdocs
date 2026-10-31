@@ -38,9 +38,9 @@ notices, and an eight-item paginated release catalog.
 
 ## References
 
-- [Implementation plan](../plans/xdocs-0.7.0-welcome-update-pagination.md)
-- [Plan review](../reviews/plans/xdocs-0.7.0-welcome-update-pagination-review.md)
-- [Validation](../validation/xdocs-0.7.0-welcome-update-pagination.md)
+- Implementation plan (`docs/projects/xdocs/plans/xdocs-0.7.0-welcome-update-pagination.md` in private `CGuiho/guiho`)
+- Plan review (`docs/projects/xdocs/reviews/plans/xdocs-0.7.0-welcome-update-pagination-review.md` in private `CGuiho/guiho`)
+- Validation (`docs/projects/xdocs/validation/xdocs-0.7.0-welcome-update-pagination.md` in private `CGuiho/guiho`)
 - [Release](https://github.com/CGuiho/xdocs/releases/tag/%40guiho%2Fxdocs%400.7.0)
 - [Issue 15 evidence](https://github.com/CGuiho/xdocs/issues/15#issuecomment-5061538257)
 - [Issue 16 evidence](https://github.com/CGuiho/xdocs/issues/16#issuecomment-5061538669)

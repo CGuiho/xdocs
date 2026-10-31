@@ -99,7 +99,7 @@ overridden `guiho-s-xdocs.md` and `guiho-i-xdocs.md` Markdown release assets.
 
 ## Dependencies And Context
 
-- [Executable migration plan](../plans/rfc-0034-cli-compliance-migration.md)
+- Executable migration plan (`docs/projects/xdocs/plans/rfc-0034-cli-compliance-migration.md` in private `CGuiho/guiho`)
 - `guiho-a-0001-swe` is the coordinating Software Engineer/SWE agent.
 - `guiho-s-0034-cli-engineer` is the mandatory specialist skill.
 - Existing Citty, prompt embedding, agent skill installation, metadata
@@ -137,8 +137,8 @@ overridden `guiho-s-xdocs.md` and `guiho-i-xdocs.md` Markdown release assets.
 ## Completion evidence
 
 - [Implementation notes](./rfc-0034-cli-compliance-migration-implementation.md)
-- [Implementation review](../reviews/implementation/rfc-0034-cli-compliance-migration-review.md)
-- [Validation report](../validation/rfc-0034-cli-compliance-migration.md)
+- Implementation review (`docs/projects/xdocs/reviews/implementation/rfc-0034-cli-compliance-migration-review.md` in private `CGuiho/guiho`)
+- Validation report (`docs/projects/xdocs/validation/rfc-0034-cli-compliance-migration.md` in private `CGuiho/guiho`)
 - [Downstream handoff](../migrations/xdocs-yaml-downstream-handoff.md)
 
 ## After Finishing
@@ -150,13 +150,13 @@ overridden `guiho-s-xdocs.md` and `guiho-i-xdocs.md` Markdown release assets.
 
 ## Related Files
 
-- [Implementation plan](../plans/rfc-0034-cli-compliance-migration.md) -
+- Implementation plan (`docs/projects/xdocs/plans/rfc-0034-cli-compliance-migration.md` in private `CGuiho/guiho`) -
   Ordered implementation units and validation gates.
-- [Previous Citty plan](../plans/citty-cli-migration.md) - Current command
+- Previous Citty plan (`docs/projects/xdocs/plans/citty-cli-migration.md` in private `CGuiho/guiho`) - Current command
   migration baseline to supersede where incompatible.
-- [Upgrade reliability plan](../plans/upgrade-reliability-implementation.md) -
+- Upgrade reliability plan (`docs/projects/xdocs/plans/upgrade-reliability-implementation.md` in private `CGuiho/guiho`) -
   Existing transactional behavior to preserve and extend.
-- [Plan review](../reviews/plans/rfc-0034-cli-compliance-migration-review.md) -
+- Plan review (`docs/projects/xdocs/reviews/plans/rfc-0034-cli-compliance-migration-review.md` in private `CGuiho/guiho`) -
   Ready-for-execution review of Bun-only, prompt, distribution, and
   self-documentation sequencing.
 

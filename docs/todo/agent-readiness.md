@@ -31,7 +31,7 @@ keywords:
 - GitHub project item: [Issue #26](https://github.com/CGuiho/xdocs/issues/26)
 - GitHub component: `xdocs`
 - Issue node: `I_kwDOSuQCIs8AAAABU3WnDg`
-- Project item: `PVTI_lAHOBUk1ds4AULOgzg-YlaE`
+- Project item: `<project id>`
 - Component option: `d907addf`
 - Readback: `2026-10-04T01:20:35.062932+00:00`; OPEN / Project #2 GUIHO / In Progress.
 

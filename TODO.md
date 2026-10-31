@@ -31,8 +31,8 @@ preserved pending their separately owned reconciliation.
 
 ## Parent TODO
 
-- Parent: [../guiho/todo.md](../guiho/todo.md)
-- Parent AGENTS: [../guiho/AGENTS.md](../guiho/AGENTS.md)
+- Parent: `todo.md` in `CGuiho/guiho`
+- Parent AGENTS: `AGENTS.md` in `CGuiho/guiho`
 - Local AGENTS: [./AGENTS.md](./AGENTS.md)
 - Local context: Structured documentation package and CLI for @guiho/xdocs.
 
@@ -64,8 +64,8 @@ preserved pending their separately owned reconciliation.
 - Outcome: Replace xdocs handwritten argument parsing and manual command routing with Citty while preserving command behavior, structured output, agent automation, native distribution, and library compatibility.
 - Spec: [docs/todo/citty-cli-migration.md](docs/todo/citty-cli-migration.md)
 - Related files:
-  - [docs/plans/citty-cli-migration.md](docs/plans/citty-cli-migration.md) - Approved executable migration plan.
-  - [docs/reviews/plans/citty-cli-migration-review.md](docs/reviews/plans/citty-cli-migration-review.md) - Plan readiness review.
+  - `docs/projects/xdocs/plans/citty-cli-migration.md` (private `CGuiho/guiho`) - Approved executable migration plan.
+  - `docs/projects/xdocs/reviews/plans/citty-cli-migration-review.md` (private `CGuiho/guiho`) - Plan readiness review.
 - Implementation: [docs/todo/citty-cli-migration-implementation.md](docs/todo/citty-cli-migration-implementation.md)
 
 ### 3. Make Self-Upgrade Reliable and Recoverable
@@ -77,8 +77,8 @@ preserved pending their separately owned reconciliation.
 - Spec: [docs/todo/upgrade-reliability.md](docs/todo/upgrade-reliability.md)
 - Related files:
   - [docs/superpowers/specs/2026-07-15-upgrade-reliability-design.md](docs/superpowers/specs/2026-07-15-upgrade-reliability-design.md) - Approved behavior and architecture contract.
-  - [docs/plans/upgrade-reliability-implementation.md](docs/plans/upgrade-reliability-implementation.md) - Approved executable implementation plan.
-  - [docs/reviews/plans/upgrade-reliability-implementation-review.md](docs/reviews/plans/upgrade-reliability-implementation-review.md) - Plan readiness review.
+  - `docs/projects/xdocs/plans/upgrade-reliability-implementation.md` (private `CGuiho/guiho`) - Approved executable implementation plan.
+  - `docs/projects/xdocs/reviews/plans/upgrade-reliability-implementation-review.md` (private `CGuiho/guiho`) - Plan readiness review.
 - External: GitHub issues [CGuiho/xdocs#9](https://github.com/CGuiho/xdocs/issues/9) and [CGuiho/xdocs#10](https://github.com/CGuiho/xdocs/issues/10)
 - Implementation: [docs/todo/upgrade-reliability-implementation.md](docs/todo/upgrade-reliability-implementation.md)
 
@@ -91,11 +91,11 @@ preserved pending their separately owned reconciliation.
 - Spec: [docs/todo/rfc-0034-cli-compliance-migration.md](docs/todo/rfc-0034-cli-compliance-migration.md)
 - External: GitHub issues [CGuiho/xdocs#7](https://github.com/CGuiho/xdocs/issues/7), [CGuiho/xdocs#8](https://github.com/CGuiho/xdocs/issues/8), [CGuiho/xdocs#11](https://github.com/CGuiho/xdocs/issues/11), and [CGuiho/xdocs#12](https://github.com/CGuiho/xdocs/issues/12)
 - Related files:
-  - [docs/plans/rfc-0034-cli-compliance-migration.md](docs/plans/rfc-0034-cli-compliance-migration.md) - Approved step-by-step migration plan.
-  - [docs/reviews/plans/rfc-0034-cli-compliance-migration-review.md](docs/reviews/plans/rfc-0034-cli-compliance-migration-review.md) - Ready-for-execution plan review.
+  - `docs/projects/xdocs/plans/rfc-0034-cli-compliance-migration.md` (private `CGuiho/guiho`) - Approved step-by-step migration plan.
+  - `docs/projects/xdocs/reviews/plans/rfc-0034-cli-compliance-migration-review.md` (private `CGuiho/guiho`) - Ready-for-execution plan review.
 - Implementation: [docs/todo/rfc-0034-cli-compliance-migration-implementation.md](docs/todo/rfc-0034-cli-compliance-migration-implementation.md)
-- Review: [docs/reviews/implementation/rfc-0034-cli-compliance-migration-review.md](docs/reviews/implementation/rfc-0034-cli-compliance-migration-review.md)
-- Validation: [docs/validation/rfc-0034-cli-compliance-migration.md](docs/validation/rfc-0034-cli-compliance-migration.md)
+- Review: `docs/projects/xdocs/reviews/implementation/rfc-0034-cli-compliance-migration-review.md` (private `CGuiho/guiho`)
+- Validation: `docs/projects/xdocs/validation/rfc-0034-cli-compliance-migration.md` (private `CGuiho/guiho`)
 - Downstream handoff: [docs/migrations/xdocs-yaml-downstream-handoff.md](docs/migrations/xdocs-yaml-downstream-handoff.md)
 
 ### 5. Simplify Public Native Installation
@@ -114,7 +114,7 @@ preserved pending their separately owned reconciliation.
 - Outcome: Route the internal update worker outside Citty, coalesce cache-scoped checks, enforce timeout and ownership-safe stale recovery, and eliminate persistent recursive worker chains.
 - Spec: [docs/todo/background-update-worker-cpu-safety.md](docs/todo/background-update-worker-cpu-safety.md)
 - External: [CGuiho/xdocs#14](https://github.com/CGuiho/xdocs/issues/14)
-- Validation: [docs/validation/background-update-worker-cpu-safety.md](docs/validation/background-update-worker-cpu-safety.md)
+- Validation: `docs/projects/xdocs/validation/background-update-worker-cpu-safety.md` (private `CGuiho/guiho`)
 - Release: [@guiho/xdocs@0.6.7](https://github.com/CGuiho/xdocs/releases/tag/%40guiho%2Fxdocs%400.6.7)
 
 ### 7. Deliver The Welcome, Reliable Update Notice, And Paginated Release Catalog
@@ -125,7 +125,7 @@ preserved pending their separately owned reconciliation.
 - Outcome: Ship the deterministic welcome window, reliable stable-only cached
   update notice, and eight-item `upgrade list` pagination in XDocs 0.7.0.
 - Spec: [docs/todo/welcome-update-pagination.md](docs/todo/welcome-update-pagination.md)
-- Plan: [docs/plans/xdocs-0.7.0-welcome-update-pagination.md](docs/plans/xdocs-0.7.0-welcome-update-pagination.md)
+- Plan: `docs/projects/xdocs/plans/xdocs-0.7.0-welcome-update-pagination.md` (private `CGuiho/guiho`)
 - External: [CGuiho/xdocs#15](https://github.com/CGuiho/xdocs/issues/15) and
   [CGuiho/xdocs#16](https://github.com/CGuiho/xdocs/issues/16)
 - Release: [@guiho/xdocs@0.7.0](https://github.com/CGuiho/xdocs/releases/tag/%40guiho%2Fxdocs%400.7.0)
@@ -158,10 +158,10 @@ preserved pending their separately owned reconciliation.
 - Architecture: [docs/architecture/guiho-cli-convention-0001-compliance-architecture.md](docs/architecture/guiho-cli-convention-0001-compliance-architecture.md)
 - Architecture review: Ready for planning; accepted SHA-256
   `8532586ae3b91614443835f2e510b2cefb5e264c876e263f427b9a38a045700a`.
-- Plan: [docs/plans/guiho-cli-convention-0001-compliance-migration.md](docs/plans/guiho-cli-convention-0001-compliance-migration.md)
+- Plan: `docs/projects/xdocs/plans/guiho-cli-convention-0001-compliance-migration.md` (private `CGuiho/guiho`)
 - Plan review: revised to address all recorded findings; awaiting fresh
   `guiho-a-0047-plan-reviewer` exact-tree verdict before implementation.
-- Audit: [docs/reviews/implementation/guiho-cli-convention-0001-compliance-review.md](docs/reviews/implementation/guiho-cli-convention-0001-compliance-review.md)
+- Audit: `docs/projects/xdocs/reviews/implementation/guiho-cli-convention-0001-compliance-review.md` (private `CGuiho/guiho`)
 
 ### 10. Enforce Explicit Documentation Authorization And Complete Trees
 
@@ -169,11 +169,11 @@ preserved pending their separately owned reconciliation.
 - Created: `2026-09-12`
 - Updated: `2026-09-19`
 - Outcome: Require explicit documentation directory and companion-frontmatter opt-ins, preserve ordinary Markdown, guard report destinations, and display every discovered named descriptor through arbitrary depth.
-- Plan: [docs/plans/explicit-documentation-authorization.md](docs/plans/explicit-documentation-authorization.md)
+- Plan: `docs/projects/xdocs/plans/explicit-documentation-authorization.md` (private `CGuiho/guiho`)
 
-- Review: [docs/reviews/implementation/explicit-documentation-authorization-review.md](docs/reviews/implementation/explicit-documentation-authorization-review.md)
+- Review: `docs/projects/xdocs/reviews/implementation/explicit-documentation-authorization-review.md` (private `CGuiho/guiho`)
 - External: [CGuiho/xdocs#21](https://github.com/CGuiho/xdocs/issues/21)
-- Acceptance: [CG human acceptance 2026-09-19](docs/reviews/human/2026-09-19-explicit-documentation-authorization-acceptance.md); released as XDocs 0.12.0.
+- Acceptance: CG human acceptance 2026-09-19 (`docs/projects/xdocs/reviews/human/2026-09-19-explicit-documentation-authorization-acceptance.md` in private `CGuiho/guiho`); released as XDocs 0.12.0.
 
 ### 11. Deploy Native Background Worker Policy
 
@@ -184,9 +184,9 @@ preserved pending their separately owned reconciliation.
 - Spec: [docs/todo/native-background-worker-policy.md](docs/todo/native-background-worker-policy.md)
 - GitHub project item: [Issue #24](https://github.com/CGuiho/xdocs/issues/24)
 - GitHub component: `xdocs`
-- Delivery: sixteen-commit source range independently reviewed and plain-pushed under explicit parent authority; OPEN/Testing remains pending human acceptance. Final review-mirror refs are recorded in `/tmp/opencode/2026-10-04-readiness-xdocs-review-result.json`.
+- Delivery: sixteen-commit source range independently reviewed and plain-pushed under explicit parent authority; OPEN/Testing remains pending human acceptance. Final review-mirror refs are recorded in `<local path>/2026-10-04-readiness-xdocs-review-result.json`.
 - Related files:
-  - [docs/reviews/handoff/2026-10-03-suffix-only-runtime-prerequisite.md](docs/reviews/handoff/2026-10-03-suffix-only-runtime-prerequisite.md) - Joint independent policy/runtime review entry point.
+  - `docs/projects/xdocs/reviews/handoff/2026-10-03-suffix-only-runtime-prerequisite.md` (private `CGuiho/guiho`) - Joint independent policy/runtime review entry point.
 
 ### 12. Preserve Non-Descriptor Files During Routine Workflows
 
@@ -199,14 +199,15 @@ preserved pending their separately owned reconciliation.
 - GitHub component: `xdocs`
 - Delivery: independently reviewed source delivered; exact existing `/usr/local/bin/xdocs` atomically activated with verified prior-binary backup and installed filesystem smoke. Current task build is not an official release; issue remains OPEN/Testing.
 - Related files:
-  - [docs/validation/suffix-only-runtime-prerequisite.md](docs/validation/suffix-only-runtime-prerequisite.md) - Go/runtime filesystem checks, task build and descriptor failures.
-  - [docs/reviews/implementation/suffix-only-runtime-prerequisite-review.md](docs/reviews/implementation/suffix-only-runtime-prerequisite-review.md) - Technical self-review and open findings.
-  - [docs/reviews/handoff/2026-10-03-suffix-only-runtime-prerequisite.md](docs/reviews/handoff/2026-10-03-suffix-only-runtime-prerequisite.md) - Exact safe commands and independent review hold.
+  - `docs/projects/xdocs/validation/suffix-only-runtime-prerequisite.md` (private `CGuiho/guiho`) - Go/runtime filesystem checks, task build and descriptor failures.
+  - `docs/projects/xdocs/reviews/implementation/suffix-only-runtime-prerequisite-review.md` (private `CGuiho/guiho`) - Technical self-review and open findings.
+  - `docs/projects/xdocs/reviews/handoff/2026-10-03-suffix-only-runtime-prerequisite.md` (private `CGuiho/guiho`) - Exact safe commands and independent review hold.
 
 ## Completion Archive
 
-Completed tasks and their task-owned evidence are registered in
-[docs/todo/done/done.md](docs/todo/done/done.md). The Go rewrite and shared
+Completed tasks and their task-owned evidence are registered in the
+completion registry `docs/projects/xdocs/todo/done/done.md` in the private
+GUIHO repository `CGuiho/guiho`. The Go rewrite and shared
 agent bootstrap are archived there, together with the Git-aware ignore and
 frontmatter opt-out feature released as XDocs 0.10.0.
 
@@ -221,7 +222,7 @@ frontmatter opt-out feature released as XDocs 0.10.0.
 - Spec: [docs/todo/agent-readiness.md](docs/todo/agent-readiness.md)
 - GitHub project item: [Issue #26](https://github.com/CGuiho/xdocs/issues/26)
 - GitHub component: `xdocs`
-- Project item ID: `PVTI_lAHOBUk1ds4AULOgzg-YlaE`
+- Project item ID: `<project id>`
 - Readback: owning issue OPEN; GUIHO Project #2; exact Component; In Progress.
 - Seed delivery: local main commits only; independent parent review/delivery pending. Full setup remains open.
 

@@ -30,8 +30,9 @@ completion notifications. DND human-off preserves child completion; there is no
 CLI-worker, permission-denial or silent-model-fallback escape. MiMo is the
 both-role provider-default/no-variant model; former models are inactive history.
 
-Read the actual [Convention 0011](../../../guiho/conventions/guiho-convention-0011-agent-readiness.md)
-and [models 0007](../../../guiho/conventions/guiho-convention-0007-models.md).
+Read the actual Convention 0011 (`conventions/guiho-convention-0011-agent-readiness.md`
+in `CGuiho/guiho`) and models 0007 (`conventions/guiho-convention-0007-models.md`
+in `CGuiho/guiho`).
 Review policy semantics, links and scoped diff. Keep the real owning issue OPEN,
 Project membership and Component verified, then move to Testing for independent
 review. Commit only owned coherent work on `main`; parent expressly withholds
@@ -46,25 +47,25 @@ source checks. Policy publication alone does not certify family readiness.
 ## Initial Readback
 
 2026-10-03 live GraphQL confirms issue #24 OPEN, Project #2 membership item
-`PVTI_lAHOBUk1ds4AULOgzg-XUvE`, Component `xdocs` (`d907addf`) and Status
+`<project id>`, Component `xdocs` (`d907addf`) and Status
 In Progress (`47fc9ee4`). A first HTTP 503 was retried successfully before writes.
 
 ## Testing Readback
 
 Fresh GraphQL readback in this run confirms issue #24 remains OPEN on Project
-#2, item `PVTI_lAHOBUk1ds4AULOgzg-XUvE`, Component `xdocs` (`d907addf`), Status
+#2, item `<project id>`, Component `xdocs` (`d907addf`), Status
 Testing (`f874e9fb`), with issue-membership and field pagination exhausted.
-Evidence: `/tmp/opencode/xdocs-testing-readback.json`. Native policy is deployed
+Evidence: `<local path>/xdocs-testing-readback.json`. Native policy is deployed
 in `018a0cb`; binding/helpers are committed in `42d983a`. No child delegation
 was performed by this leaf; static policy proof is not provider execution proof.
 Independent review and parent push authorization remain pending.
 
 Final readback after the validation comment retains OPEN/Testing, Project #2
-and Component `xdocs`: `/tmp/opencode/xdocs-final-task-readback.json`.
+and Component `xdocs`: `<local path>/xdocs-final-task-readback.json`.
 [Remote evidence comment](https://github.com/CGuiho/xdocs/issues/24#issuecomment-5974069217).
 Static semantics/link checks pass; live MiMo catalog is active with an empty
 variant list. This proves availability metadata, not a provider request.
-Joint [independent handoff](../reviews/handoff/2026-10-03-suffix-only-runtime-prerequisite.md).
+Joint independent handoff (`docs/projects/xdocs/reviews/handoff/2026-10-03-suffix-only-runtime-prerequisite.md` in private `CGuiho/guiho`).
 
 ## Independent Review And Source Delivery
 
@@ -80,7 +81,7 @@ accept the actual string `notifications: off` and reject boolean/numeric/null/
 sequence substitutions. These are bounded checks, not provider execution proof.
 
 Fresh GitHub readback preserves issue #24 OPEN/Testing on Project #2, existing
-item `PVTI_lAHOBUk1ds4AULOgzg-XUvE`, Component `xdocs` (`d907addf`) and Testing
+item `<project id>`, Component `xdocs` (`d907addf`) and Testing
 (`f874e9fb`), with pagination exhausted. No Project option or assignment changed.
 Local task status remains testing pending human acceptance.
 
@@ -92,7 +93,7 @@ hook-bypass or special branch-protection option was requested. The old no-push
 statements above describe the completed implementer's earlier authority.
 
 Independent evidence and final owned review-mirror delivery identities:
-`/tmp/opencode/2026-10-04-readiness-xdocs-review-result.md` and `.json`.
+`<local path>/2026-10-04-readiness-xdocs-review-result.md` and `.json`.
 Runtime and documentation/resource limits remain in the separately owned
 [runtime prerequisite](suffix-only-runtime-prerequisite.md). This is not family
 readiness or human acceptance.

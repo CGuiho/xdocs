@@ -22,7 +22,7 @@ owner: xdocs-todo
 ## Summary
 
 Execution record for [TODO task 3](../../TODO.md) and the approved
-[upgrade reliability plan](../plans/upgrade-reliability-implementation.md).
+upgrade reliability plan (`docs/projects/xdocs/plans/upgrade-reliability-implementation.md` in private `CGuiho/guiho`).
 
 ## Decisions
 
@@ -108,6 +108,6 @@ published native binary can receive a post-release smoke test.
 ## References
 
 - [Task specification](upgrade-reliability.md)
-- [Implementation plan](../plans/upgrade-reliability-implementation.md)
-- [Plan review](../reviews/plans/upgrade-reliability-implementation-review.md)
+- Implementation plan (`docs/projects/xdocs/plans/upgrade-reliability-implementation.md` in private `CGuiho/guiho`)
+- Plan review (`docs/projects/xdocs/reviews/plans/upgrade-reliability-implementation-review.md` in private `CGuiho/guiho`)
 - [Approved design](../superpowers/specs/2026-07-15-upgrade-reliability-design.md)

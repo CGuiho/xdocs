@@ -50,15 +50,15 @@ keywords:
 
 - Convention: `docs/architecture/guiho-cli-convention-0001.xdocs.md`
 - Current-state audit:
-  `docs/reviews/implementation/guiho-cli-convention-0001-compliance-review.md`
+  `docs/projects/xdocs/reviews/implementation/guiho-cli-convention-0001-compliance-review.md` (private `CGuiho/guiho`)
 - Accepted architecture:
   `docs/architecture/guiho-cli-convention-0001-compliance-architecture.md`
 - Architecture review:
-  `docs/reviews/architecture/guiho-cli-convention-0001-compliance-architecture-review.md`
+  `docs/projects/xdocs/reviews/architecture/guiho-cli-convention-0001-compliance-architecture-review.md` (private `CGuiho/guiho`)
 - Revised implementation plan:
-  `docs/plans/guiho-cli-convention-0001-compliance-migration.md`
+  `docs/projects/xdocs/plans/guiho-cli-convention-0001-compliance-migration.md` (private `CGuiho/guiho`)
 - Plan review:
-  `docs/reviews/plans/guiho-cli-convention-0001-compliance-migration-review.md`
+  `docs/projects/xdocs/reviews/plans/guiho-cli-convention-0001-compliance-migration-review.md` (private `CGuiho/guiho`)
 
 The required `guiho-a-0043-software-architect` role was invoked twice but did
 not return a usable artifact. The coordinating SWE therefore materialized the
@@ -198,15 +198,15 @@ contract.
 ## Evidence artifacts
 
 - Per-unit question ledgers:
-  `docs/questions/guiho-cli-convention-0001-compliance-migration/`
+  `docs/projects/xdocs/questions/guiho-cli-convention-0001-compliance-migration/` (private `CGuiho/guiho`)
 - Per-unit implementation logs:
   `docs/todo/guiho-cli-convention-0001-compliance-migration/`
 - Per-unit implementation reviews:
-  `docs/reviews/implementation/guiho-cli-convention-0001-compliance-migration/`
+  `docs/projects/xdocs/reviews/implementation/guiho-cli-convention-0001-compliance-migration/` (private `CGuiho/guiho`)
 - Per-unit validation reports:
-  `docs/validation/guiho-cli-convention-0001-compliance-migration/`
+  `docs/projects/xdocs/validation/guiho-cli-convention-0001-compliance-migration/` (private `CGuiho/guiho`)
 - Aggregate plan review:
-  `docs/reviews/plans/guiho-cli-convention-0001-compliance-migration-review.md`
+  `docs/projects/xdocs/reviews/plans/guiho-cli-convention-0001-compliance-migration-review.md` (private `CGuiho/guiho`)
 
 Do not mark this task complete until every planned evidence artifact exists,
 all exact-head gates pass, and the authorized remote next-minor outcome is

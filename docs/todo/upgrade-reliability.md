@@ -86,8 +86,8 @@ installer, and inspect all stable and prerelease versions through `upgrade list`
 ## Related Files
 
 - [Upgrade reliability design](../superpowers/specs/2026-07-15-upgrade-reliability-design.md) - Approved architecture and behavior contract.
-- [Implementation plan](../plans/upgrade-reliability-implementation.md) - Executable units and validation gates.
-- [Plan review](../reviews/plans/upgrade-reliability-implementation-review.md) - Readiness and risk review.
+- Implementation plan (`docs/projects/xdocs/plans/upgrade-reliability-implementation.md` in private `CGuiho/guiho`) - Executable units and validation gates.
+- Plan review (`docs/projects/xdocs/reviews/plans/upgrade-reliability-implementation-review.md` in private `CGuiho/guiho`) - Readiness and risk review.
 - [Implementation notes](upgrade-reliability-implementation.md) - Progress and validation evidence.
 
 ## Dependencies and Context

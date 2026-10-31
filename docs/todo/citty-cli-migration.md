@@ -215,5 +215,5 @@ worker remains an internal route.
 - [TODO.md](../../TODO.md)
 - [Improve JSON Output Coverage](improve-json-output-coverage.md)
 - [xdocs package documentation](../../DOCS.md)
-- [Citty migration plan](../plans/citty-cli-migration.md)
+- Citty migration plan (`docs/projects/xdocs/plans/citty-cli-migration.md` in private `CGuiho/guiho`)
 - [Citty migration implementation notes](citty-cli-migration-implementation.md)

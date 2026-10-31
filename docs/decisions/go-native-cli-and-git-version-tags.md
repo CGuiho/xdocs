@@ -61,4 +61,4 @@ version source without a new accepted decision.
 ## References
 
 - [Go rewrite architecture](../architecture/xdocs-go-rewrite.md)
-- [Implementation plan](../plans/xdocs-go-rewrite.md)
+- Implementation plan (`docs/projects/xdocs/plans/xdocs-go-rewrite.md` in private `CGuiho/guiho`)

@@ -42,5 +42,5 @@ preserving the 0.7.0 pagination and structured-output contracts.
 
 ## References
 
-- [Implementation review](../reviews/implementation/simple-upgrade-list-output-review.md)
-- [Validation](../validation/simple-upgrade-list-output.md)
+- Implementation review (`docs/projects/xdocs/reviews/implementation/simple-upgrade-list-output-review.md` in private `CGuiho/guiho`)
+- Validation (`docs/projects/xdocs/validation/simple-upgrade-list-output.md` in private `CGuiho/guiho`)

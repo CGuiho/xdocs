@@ -23,7 +23,7 @@ owner: xdocs-todo
 ## Summary
 
 Execution record for [TODO task 2](../../TODO.md) and the approved
-[Citty migration plan](../plans/citty-cli-migration.md).
+Citty migration plan (`docs/projects/xdocs/plans/citty-cli-migration.md` in private `CGuiho/guiho`).
 
 ## Decisions
 
@@ -76,5 +76,5 @@ separate actions and were not performed by this implementation task.
 ## References
 
 - [Task specification](citty-cli-migration.md)
-- [Migration plan](../plans/citty-cli-migration.md)
-- [Plan review](../reviews/plans/citty-cli-migration-review.md)
+- Migration plan (`docs/projects/xdocs/plans/citty-cli-migration.md` in private `CGuiho/guiho`)
+- Plan review (`docs/projects/xdocs/reviews/plans/citty-cli-migration-review.md` in private `CGuiho/guiho`)

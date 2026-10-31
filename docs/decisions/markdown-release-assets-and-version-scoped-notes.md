@@ -86,7 +86,7 @@ content validation, isolated tests, and exact-version release notes.
 
 ## References
 
-- [RFC 0034 migration plan](../plans/rfc-0034-cli-compliance-migration.md)
+- RFC 0034 migration plan (`docs/projects/xdocs/plans/rfc-0034-cli-compliance-migration.md` in private `CGuiho/guiho`)
 - [XDocs changelog](../../CHANGELOG.md)
 - [Publish workflow](../../.github/workflows/publish.yml)
 - [Release asset builder](../../devops/build-binaries.ts)

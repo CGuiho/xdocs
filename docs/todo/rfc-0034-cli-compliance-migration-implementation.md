@@ -114,6 +114,6 @@ assets, strict metadata, and doctor with zero errors or warnings.
 
 See:
 
-- [Implementation review](../reviews/implementation/rfc-0034-cli-compliance-migration-review.md)
-- [Validation report](../validation/rfc-0034-cli-compliance-migration.md)
+- Implementation review (`docs/projects/xdocs/reviews/implementation/rfc-0034-cli-compliance-migration-review.md` in private `CGuiho/guiho`)
+- Validation report (`docs/projects/xdocs/validation/rfc-0034-cli-compliance-migration.md` in private `CGuiho/guiho`)
 - [Downstream handoff](../migrations/xdocs-yaml-downstream-handoff.md)

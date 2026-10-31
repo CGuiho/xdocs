@@ -5,11 +5,27 @@
 # Environment-related
 .env
 **/.env
+.env.*
+!.env.example
+!.env.*.example
 .env.keys
 .tmp/
 _opencode_workspace/
 .tmp-home/
 .tmp-opencode/
+
+# Plaintext configuration and secrets — never commit (the `*.unencrypted.*`
+# sibling of a pair is human-owned plaintext and stays out of the repository;
+# `.env` holds raw credentials).
+*.unencrypted.json
+*.unencrypted.jsonc
+
+# Key material
+*.pem
+*.p12
+*.pfx
+id_rsa
+id_ed25519
 
 # Application-related
 **/.temp/

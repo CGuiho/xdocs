@@ -1,9 +1,8 @@
 ---
 subject: xdocs-todo
-description: Durable task specifications linked from the xdocs TODO index.
+description: Durable task specifications linked from the xdocs TODO index; the completion archive lives in the private GUIHO repository.
 parent: xdocs-docs
-children:
-  - xdocs-todo-done
+children: []
 files: {}
 documents:
   background-update-worker-cpu-safety.md: Defines the non-recursive bounded worker,
@@ -69,4 +68,6 @@ status: stable
 #### &copy; 2026 [GUIHO](https://guiho.co) as represented by [Cristóvão GUIHO](https://guiho.co/cguiho) All Rights Reserved.
 The `docs/todo/` directory stores task specifications linked from `TODO.md`.
 These files keep the TODO index concise while preserving acceptance signals,
-scope, and context for future implementation sessions.
+scope, and context for future implementation sessions. The permanent completion
+registry moved to the private GUIHO repository `CGuiho/guiho`, under
+`docs/projects/xdocs/todo/done/`.

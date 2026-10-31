@@ -25,7 +25,7 @@ keywords: [suffix-only, XDOCS.md, housekeeping, stdout]
 ## Outcome and Scope Waiver
 
 Parent explicitly authorized bounded owning-tool source reconciliation under
-`/tmp/opencode/2026-10-03-readiness-tool-prerequisite-contract.md`, XDocs only,
+`<local path>/2026-10-03-readiness-tool-prerequisite-contract.md`, XDocs only,
 Mode:dnd. This waives a full new planning cycle for this specific prerequisite.
 It is separate from native operating policy and the existing CLI-convention
 migration task. Read actual GUIHO Convention 0011, 0002, 0007 and CLI 0001.
@@ -56,7 +56,7 @@ Preserve all existing allowlists, frontmatter opt-ins/denials and exclusions.
 ## Initial Readback and Context Gaps
 
 Live GraphQL confirms issue #25 OPEN, Project #2 item
-`PVTI_lAHOBUk1ds4AULOgzg-Xbs4`, Component `xdocs` (`d907addf`) and In Progress
+`<project id>`, Component `xdocs` (`d907addf`) and In Progress
 (`47fc9ee4`). Fresh worktree was clean `main` at remote-equal `a4f6e6dd`.
 No local MEMORY/rules or current configuration JSON Schema exists; strict typed
 Go decoding/semantic validation is the actual schema contract. Required
@@ -73,9 +73,9 @@ snapshot suite checks real project and isolated home bytes, file sets, modes
 and regular-file mtimes, plus exact named-descriptor maintenance.
 
 Fresh GraphQL confirms issue #25 remains OPEN on Project #2, item
-`PVTI_lAHOBUk1ds4AULOgzg-Xbs4`, Component `xdocs` (`d907addf`) and Testing
+`<project id>`, Component `xdocs` (`d907addf`) and Testing
 (`f874e9fb`); membership/field pagination is exhausted. Evidence:
-`/tmp/opencode/xdocs-testing-readback.json`. Independent review, task-binary
+`<local path>/xdocs-testing-readback.json`. Independent review, task-binary
 acceptance and parent delivery authorization remain pending.
 
 The repository grants no descriptor writes (`documentation.directories: []`).
@@ -86,8 +86,8 @@ not routine XDocs corpus writes.
 
 ## Reversible Decisions
 
-- [Bare-welcome-only housekeeping](../questions/suffix-only-runtime-prerequisite/2026-10-03-runtime-housekeeping-boundary.md).
-- [Release-pinned resource guidance](../questions/suffix-only-runtime-prerequisite/2026-10-03-release-pinned-resource-guidance.md): packaged 0.12.0 skill/prompt guidance remains stale and needs a separately authorized artifact/release unit. No bump is authorized here.
+- Bare-welcome-only housekeeping (`docs/projects/xdocs/questions/suffix-only-runtime-prerequisite/2026-10-03-runtime-housekeeping-boundary.md` in private `CGuiho/guiho`).
+- Release-pinned resource guidance (`docs/projects/xdocs/questions/suffix-only-runtime-prerequisite/2026-10-03-release-pinned-resource-guidance.md` in private `CGuiho/guiho`): packaged 0.12.0 skill/prompt guidance remains stale and needs a separately authorized artifact/release unit. No bump is authorized here.
 
 ## Final Validation and Review Handoff
 
@@ -95,9 +95,9 @@ The identified task binary passes 60 routine-command filesystem checks across
 missing/corrupt/expired caches and nine failure/rejected-output cases without
 disable variables or routine worker guards. Its exact source/build identity,
 suffix-only maintenance proof and negative regression evidence are in the
-[validation record](../validation/suffix-only-runtime-prerequisite.md).
-[Self-review](../reviews/implementation/suffix-only-runtime-prerequisite-review.md)
-and [independent handoff](../reviews/handoff/2026-10-03-suffix-only-runtime-prerequisite.md)
+validation record (`docs/projects/xdocs/validation/suffix-only-runtime-prerequisite.md` in private `CGuiho/guiho`).
+Self-review (`docs/projects/xdocs/reviews/implementation/suffix-only-runtime-prerequisite-review.md` in private `CGuiho/guiho`)
+and independent handoff (`docs/projects/xdocs/reviews/handoff/2026-10-03-suffix-only-runtime-prerequisite.md` in private `CGuiho/guiho`)
 are committed separately from runtime sources.
 
 Scoped `docs/todo` strict meta/doctor fail with exit 2 because the two task specs
@@ -109,7 +109,7 @@ claimed. Packaged guidance remains the separately authorized resource gap.
 
 Final readback after the [evidence comment](https://github.com/CGuiho/xdocs/issues/25#issuecomment-5974069214)
 retains OPEN/Testing, Project #2 and Component `xdocs`:
-`/tmp/opencode/xdocs-final-task-readback.json`. No push, release or global
+`<local path>/xdocs-final-task-readback.json`. No push, release or global
 replacement occurred; independent binary acceptance/delivery remain pending.
 
 ## Independent Runtime Acceptance And Exact Local Activation
@@ -136,7 +136,7 @@ the existing regular PATH target `/usr/local/bin/xdocs` was atomically replaced.
 Candidate and installed SHA-256:
 `c3ec5013d9034ab1dff87f5d3572ed41513078616a60d0ebd83006cfe1ce4622`.
 Prior executable backup:
-`/tmp/opencode/xdocs-readiness-original-backup-agcgzh9b/xdocs-before-activation`,
+`<local path>/xdocs-readiness-original-backup-agcgzh9b/xdocs-before-activation`,
 SHA-256 `b1232c9624f0a86458bfeb659ea172ba769a61cd7de132e5e205c357c8d302da`.
 Mode and owner were retained; no PATH/provider/permission settings changed.
 Necessary installed smoke preserves the same real filesystem boundary, including
@@ -164,4 +164,4 @@ Fresh readback retains issue #25 OPEN/Testing on Project #2, Component `xdocs`,
 the same item and option IDs; human acceptance and family readiness remain
 pending. Full commands, snapshots, local skill dispositions, build provenance,
 activation and reviewed push/ref evidence are in
-`/tmp/opencode/2026-10-04-readiness-xdocs-review-result.md` and `.json`.
+`<local path>/2026-10-04-readiness-xdocs-review-result.md` and `.json`.
