@@ -316,22 +316,19 @@ tmux-session: xdocs  # orchestrator session on <host>; convention = this project
 
 ### Workers
 
-| Worker       | Class      | Model (opencode ID)                                                                                     | Thinking | Usage        |
-| ------------ | ---------- | --------------------------------------------------------------------------------------------------------------------- | -------- | ------------ |
-| `mastermind` | mastermind | MiMo-V2.6-Pro (`xiaomi/mimo-v2.6-pro`, direct Xiaomi API) | provider default; no variant | CG-authorized default; availability subject to provider/account |
-| `engineer` | workhorse | MiMo-V2.6-Pro (`xiaomi/mimo-v2.6-pro`, direct Xiaomi API) | provider default; no variant | CG-authorized default; availability subject to provider/account |
+| Worker       | Class      | Model | Thinking | Usage        |
+| ------------ | ---------- | ----- | -------- | ------------ |
+| `mastermind` | mastermind | see Convention 0007 | see Convention 0007 | CG-authorized default; availability subject to provider/account |
+| `engineer` | workhorse | see Convention 0007 | see Convention 0007 | CG-authorized default; availability subject to provider/account |
 
 Both roles retain their judgment/labor distinction and use the same authorized
-default. The former Muse Spark (`vercel/meta/muse-spark-1.3-contributor`), GLM
-(`opencode/glm-5.3-flash`) and DeepSeek (`opencode/deepseek-v4-flash`) roster is
-inactive history only, never fallback capacity. Convention 0007 is the single
-model authority. Check the actual model catalog and native tool schema; pass the
+default. Model selection: read Convention 0007 — Models
+(`conventions/guiho-convention-0007-models.md`) in `CGuiho/guiho` — the single
+source of truth. Never duplicate the model list here; verify the live catalog
+before dispatch. Check the actual model catalog and native tool schema; pass the
 exact authorized provider/model and available reasoning variant explicitly.
-MiMo advertises no variants: omit that parameter and record provider-default
-thinking; never fabricate `max`/`xhigh`. `openai/gpt-6.1-sol#xhigh` is expressly
-authorized only for the current native-rollout/readiness task, not a future
-default or silent fallback. Record provider failures and continue independent
-units without substituting an unauthorized model.
+Record provider failures and continue independent units without substituting an
+unauthorized model.
 
 ### Contract
 
