@@ -309,6 +309,50 @@ func TestLoadRejectsMultipleDocuments(t *testing.T) {
 	}
 }
 
+func TestScanExcludeSupportsFileGlobs(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, Filename)
+	content := "schema: 1\nscan:\n  exclude:\n    - node_modules\n    - docs/\n    - AGENTS.md\n    - \"**/CHANGELOG.md\"\n    - README.md\n    - \"docs/*.md\"\n"
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := Load(root, "", true)
+	if err != nil {
+		t.Fatalf("file-glob scan.exclude entries were rejected: %v", err)
+	}
+	want := []string{"node_modules", "docs", "AGENTS.md", "**/CHANGELOG.md", "README.md", "docs/*.md"}
+	if len(cfg.Exclude) != len(want) {
+		t.Fatalf("exclude = %#v, want %#v", cfg.Exclude, want)
+	}
+	for index, expected := range want {
+		if cfg.Exclude[index] != expected {
+			t.Fatalf("exclude[%d] = %q, want %q (all: %#v)", index, cfg.Exclude[index], expected, cfg.Exclude)
+		}
+	}
+}
+
+func TestScanExcludeRejectsInvalidEntries(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, Filename)
+	invalid := []string{
+		"schema: 1\nscan:\n  exclude: ['']\n",
+		"schema: 1\nscan:\n  exclude: ['docs\\\\private']\n",
+		"schema: 1\nscan:\n  exclude: ['/AGENTS.md']\n",
+		"schema: 1\nscan:\n  exclude: ['../AGENTS.md']\n",
+		"schema: 1\nscan:\n  exclude: ['docs//private']\n",
+		"schema: 1\nscan:\n  exclude: ['docs/./private']\n",
+		"schema: 1\nscan:\n  exclude: ['docs/[abc']\n",
+	}
+	for _, content := range invalid {
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := Load(root, "", true); err == nil {
+			t.Fatalf("invalid scan.exclude entry accepted:\n%s", content)
+		}
+	}
+}
+
 func TestLoadDistinguishesMissingSectionsFromExplicitEmptyValues(t *testing.T) {
 	root := t.TempDir()
 	path := filepath.Join(root, Filename)

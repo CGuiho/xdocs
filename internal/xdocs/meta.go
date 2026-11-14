@@ -56,7 +56,7 @@ func ScanMetadata(cfg config.Config, options MetaOptions) (MetaResult, error) {
 			return nil
 		}
 		if entry.IsDir() {
-			if (path != cfg.CWD && excluded(entry.Name(), cfg.Exclude)) || (path != cfg.CWD && policy.ignored(path, true)) {
+			if path != cfg.CWD && (policy.scanExcluded(path, true) || policy.ignored(path, true)) {
 				return filepath.SkipDir
 			}
 			if err := policy.loadGitignore(path); err != nil {
@@ -64,7 +64,7 @@ func ScanMetadata(cfg config.Config, options MetaOptions) (MetaResult, error) {
 			}
 			return nil
 		}
-		if policy.ignored(path, false) {
+		if policy.ignored(path, false) || policy.scanExcluded(path, false) {
 			return nil
 		}
 		if entry.Type()&os.ModeSymlink != 0 {
@@ -88,7 +88,7 @@ func ScanMetadata(cfg config.Config, options MetaOptions) (MetaResult, error) {
 		return MetaResult{}, err
 	}
 	sort.Slice(result.Descriptors, func(i, j int) bool { return result.Descriptors[i].RelativePath < result.Descriptors[j].RelativePath })
-	enrichMeta(result.Descriptors, documents, includeDocuments, options.ExistingFrontmatter, cfg.CWD)
+	enrichMeta(result.Descriptors, documents, includeDocuments, options.ExistingFrontmatter, cfg.CWD, policy)
 	if options.ExistingFrontmatter {
 		for _, document := range allMarkdownDocuments(documents) {
 			result.Documents = append(result.Documents, parseDocument(document.Path, cfg.CWD, "", document.FrontmatterRequired, true))
@@ -177,7 +177,7 @@ func parseMetaDescriptor(path, root string) MetaDescriptor {
 	return result
 }
 
-func enrichMeta(descriptors []MetaDescriptor, documents map[string][]MarkdownDocument, includeDocuments, existingFrontmatter bool, root string) {
+func enrichMeta(descriptors []MetaDescriptor, documents map[string][]MarkdownDocument, includeDocuments, existingFrontmatter bool, root string, policy *pathPolicy) {
 	byDirectory := map[string][]int{}
 	for index := range descriptors {
 		byDirectory[descriptors[index].Directory] = append(byDirectory[descriptors[index].Directory], index)
@@ -198,7 +198,7 @@ func enrichMeta(descriptors []MetaDescriptor, documents map[string][]MarkdownDoc
 		actual := map[string]MarkdownDocument{}
 		for _, document := range documents[descriptor.Directory] {
 			actual[document.Name] = document
-			if _, ok := descriptor.Metadata.Documents[document.Name]; !ok {
+			if _, ok := descriptor.Metadata.Documents[document.Name]; !ok && !policy.ignoreRuleMatches(document.Path) {
 				descriptor.Errors = append(descriptor.Errors, fmt.Sprintf(`Undocumented Markdown document: "%s" must be listed in the "documents" metadata map.`, document.Name))
 			}
 		}

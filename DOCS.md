@@ -116,7 +116,11 @@ multiple YAML documents, and then validates:
 - each `ignore.rules` entry has a non-empty, syntactically valid,
   repository-relative forward-slash glob, `kind` set to `file` or `directory`,
   and `frontmatter` explicitly set to `false`;
-- exclusions are non-empty directory names;
+- `scan.exclude` entries are non-empty repository-relative forward-slash
+  globs or directory names. A bare name such as `vendor` or `AGENTS.md`
+  matches a file or directory basename at any depth, while an entry with a
+  `/` such as `**/AGENTS.md` or `docs/*.md` matches the repository-relative
+  path;
 - project name is a string.
 
 Global state and update cache live under `~/.guiho/xdocs/`.
@@ -166,10 +170,22 @@ Ignore-rule patterns are repository-relative forward-slash globs. A pattern
 without `/` matches a basename at any depth. A `directory` rule applies to all
 descendant Markdown files and may use an optional trailing `/` for clarity.
 Malformed globs fail configuration loading. `frontmatter: false` does not exclude a document:
-the file stays discovered, must remain in its descriptor's `documents` map,
-appears in list/meta/context results, and is reported as valid without reading
-or validating frontmatter. Any explicit rules list replaces the presets;
+the file stays discovered, needs no frontmatter, and does not have to be listed
+in its descriptor's `documents` map; when it is listed, it appears in
+list/meta/context results and is reported as valid without reading or
+validating frontmatter. `doctor` therefore accepts these files whether or not
+they are listed. Any explicit rules list replaces the presets;
 `ignore.rules: []` removes them without adding replacements.
+
+`scan.exclude` is the full-exclusion mechanism: entries hide matching files
+and directories from counts, discovery, descriptor metadata projections,
+list, meta, context, tree, generate, and doctor, exactly like `.gitignore`
+exclusions. Add a bare filename such as `AGENTS.md` or a rooted glob such as
+`**/AGENTS.md` to keep a standalone file out of discovery entirely instead of
+merely excusing it from the `documents` map. A `scan.exclude` entry that is
+listed in a descriptor's `files` or `documents` map is stripped from the
+metadata projection, so doctor reports neither a missing-document error nor a
+coverage error for it.
 
 For example, a `cloud.md` file and every Markdown document below a selected
 directory can opt out while remaining tracked:
@@ -203,8 +219,9 @@ There is no special root descriptor. A new directory descriptor should use the d
 `.docs.md` files are invalid. Multiple named descriptors in one directory are
 invalid. The descriptor body carries useful directory context; xdocs does not
 create a separate summary or detail file for it. Every plain sibling Markdown
-document not excluded by `.gitignore` must be declared, and every declared
-non-excluded document must exist.
+document not excluded by `.gitignore`, `scan.exclude`, or a matching
+`ignore.rules` entry must be declared, and every declared non-excluded
+document must exist.
 
 Companion documents require `name`, `purpose`, `description`, `created`
 (`YYYY-MM-DD`), `owner`, `flags`, `tags`, and `keywords` only when an explicit

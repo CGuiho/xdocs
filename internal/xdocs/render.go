@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 
@@ -96,10 +97,10 @@ func Generate(cfg config.Config, scan ScanResult, target string) (string, error)
 			return "", fmt.Errorf("read generate target %s: %w", filepath.ToSlash(targetPath), err)
 		}
 		for _, entry := range entries {
-			if strings.HasPrefix(entry.Name(), ".") || (entry.IsDir() && excluded(entry.Name(), cfg.Exclude)) {
+			if strings.HasPrefix(entry.Name(), ".") {
 				continue
 			}
-			if policy.ignored(filepath.Join(targetPath, entry.Name()), entry.IsDir()) {
+			if policy.ignored(filepath.Join(targetPath, entry.Name()), entry.IsDir()) || policy.scanExcluded(filepath.Join(targetPath, entry.Name()), entry.IsDir()) {
 				continue
 			}
 			lines = append(lines, "- `"+entry.Name()+"`")
@@ -114,13 +115,8 @@ func scanExcludedPath(root, target string, values []string) bool {
 	if err != nil || relative == "." || relative == "" {
 		return false
 	}
-	parts := strings.Split(filepath.Clean(relative), string(filepath.Separator))
-	for _, part := range parts {
-		if excluded(part, values) {
-			return true
-		}
-	}
-	return false
+	rules := compileExcludeRules(values, runtime.GOOS == "windows")
+	return scanExcludedRelative(rules, filepath.ToSlash(filepath.Clean(relative)))
 }
 
 func Merge(scan ScanResult, root, target string) (string, int) {
