@@ -127,16 +127,27 @@ unless both opt-ins match.
 `ignore.gitignore` defaults to `true`, so Git-ignored files and directories do
 not enter xdocs discovery, metadata, context, or health checks. Each strict
 `ignore.rules` object has a repository-relative `pattern`, a `kind` of `file`
-or `directory`, and `frontmatter: false`. These matches remain discoverable and
-must still be listed in descriptor metadata, but xdocs never requires or
-recommends YAML frontmatter for them. A pattern without `/` matches that name
-at any depth, and a directory rule applies to all descendants and may end in
-`/`. Malformed globs fail configuration loading. Any explicit rules list
-replaces the three presets; use `ignore.rules: []` to remove them without
+or `directory`, and `frontmatter: false`. These matches remain discoverable,
+never require YAML frontmatter, and do not have to be listed in descriptor
+metadata; when they are listed, they stay tracked in list/meta/context
+results, and `doctor` accepts them either way. A pattern without `/` matches
+that name at any depth, and a directory rule applies to all descendants and
+may end in `/`. Malformed globs fail configuration loading. Any explicit rules
+list replaces the three presets; use `ignore.rules: []` to remove them without
 adding replacements.
 
+`scan.exclude` is the full-exclusion mechanism. Entries are repository-relative
+forward-slash globs or directory names: a bare name such as `vendor` or
+`AGENTS.md` matches a file or directory basename at any depth, while an entry
+with a `/` such as `**/AGENTS.md` or `docs/*.md` matches the repository-relative
+path. Matching files and directories are hidden from discovery, metadata,
+context, health checks, and report destinations, like Git-ignored paths. Use
+`scan.exclude` to remove a standalone file from discovery entirely instead of
+only excusing it from the descriptor's `documents` map.
+
 For example, these rules keep `cloud.md` and every Markdown file under
-`docs/legacy` tracked without xdocs-owned frontmatter:
+`docs/legacy` tracked without xdocs-owned frontmatter or a listing
+requirement:
 
 ```yaml
 ignore:
@@ -181,8 +192,9 @@ usage context. Do not create a separate summary or detail Markdown file for
 that context. The bare `.xdocs.md` name and legacy `.docs.md` files are invalid
 descriptors. There is no special root descriptor.
 
-Every non-excluded plain sibling Markdown file must be declared in `documents`,
-whether or not it has frontmatter. Ordinary Markdown needs the standard
+Every plain sibling Markdown file not excluded by `.gitignore`, `scan.exclude`,
+or a matching `ignore.rules` entry must be declared in `documents`, whether
+or not it has frontmatter. Ordinary Markdown needs the standard
 frontmatter fields only when an explicit `documentation.frontmatter` rule and
 an authorized directory match. The default legacy denials protect `README.md`,
 `AGENTS.md`, and `CLAUDE.md`; do not add frontmatter to those or other user

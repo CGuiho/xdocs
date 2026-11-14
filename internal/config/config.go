@@ -313,11 +313,15 @@ func decode(path string) (Config, error) {
 	if raw.Scan != nil {
 		exclude = append([]string(nil), raw.Scan.Exclude...)
 	}
-	for _, name := range exclude {
-		if strings.TrimSpace(name) == "" || strings.ContainsAny(name, `/\`) {
-			return Config{}, apperror.New(apperror.Configuration, "scan.exclude entries must be non-empty directory names")
+	normalizedExclude := make([]string, 0, len(exclude))
+	for index, entry := range exclude {
+		validated, err := validateExcludeEntry(index, entry)
+		if err != nil {
+			return Config{}, err
 		}
+		normalizedExclude = append(normalizedExclude, validated)
 	}
+	exclude = normalizedExclude
 	projectName := ""
 	if raw.Project != nil {
 		projectName = strings.TrimSpace(raw.Project.Name)
@@ -335,6 +339,36 @@ func decode(path string) (Config, error) {
 		Exclude:       exclude,
 		Project:       projectName,
 	}, nil
+}
+
+// validateExcludeEntry normalizes one scan.exclude entry. Entries are
+// repository-relative forward-slash globs: a bare name such as "vendor" or
+// "AGENTS.md" matches a file or directory basename at any depth, while an
+// entry containing "/" such as "**/AGENTS.md" or "docs/*.md" matches the
+// repository-relative path. A single trailing "/" is accepted for directory
+// clarity and normalized away.
+func validateExcludeEntry(index int, value string) (string, error) {
+	label := fmt.Sprintf("scan.exclude[%d]", index)
+	pattern := strings.TrimSpace(value)
+	if pattern == "" {
+		return "", apperror.New(apperror.Configuration, label+" must be a non-empty repository-relative glob or directory name")
+	}
+	if strings.Contains(pattern, `\`) || invalidRepositoryPath(pattern) {
+		return "", apperror.New(apperror.Configuration, label+" must use forward slashes and be relative to the repository")
+	}
+	pattern = strings.TrimSuffix(pattern, "/")
+	if pattern == "" {
+		return "", apperror.New(apperror.Configuration, label+" must be a non-empty repository-relative glob or directory name")
+	}
+	for _, part := range strings.Split(pattern, "/") {
+		if part == "" || part == "." || part == ".." {
+			return "", apperror.New(apperror.Configuration, label+" must not contain empty, current-directory, or parent path segments")
+		}
+	}
+	if _, err := path.Match(pattern, ""); err != nil {
+		return "", apperror.New(apperror.Configuration, label+" is not a valid glob: "+err.Error())
+	}
+	return pattern, nil
 }
 
 func validateDocumentationDirectory(index int, value string) (string, error) {

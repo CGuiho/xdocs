@@ -35,7 +35,7 @@ func ScanProject(cfg config.Config) (ScanResult, error) {
 			return nil
 		}
 		if entry.IsDir() {
-			if path != cfg.CWD && (excluded(entry.Name(), cfg.Exclude) || policy.ignored(path, true)) {
+			if path != cfg.CWD && (policy.scanExcluded(path, true) || policy.ignored(path, true)) {
 				return filepath.SkipDir
 			}
 			if err := policy.loadGitignore(path); err != nil {
@@ -44,7 +44,7 @@ func ScanProject(cfg config.Config) (ScanResult, error) {
 			directories = append(directories, path)
 			return nil
 		}
-		if policy.ignored(path, false) {
+		if policy.ignored(path, false) || policy.scanExcluded(path, false) {
 			return nil
 		}
 		if entry.Type()&os.ModeSymlink != 0 {
@@ -78,7 +78,7 @@ func ScanProject(cfg config.Config) (ScanResult, error) {
 	sort.Slice(result.MarkdownDocuments, func(i, j int) bool {
 		return result.MarkdownDocuments[i].RelativePath < result.MarkdownDocuments[j].RelativePath
 	})
-	enrichFiles(result.XDocsFiles, documentsByDirectory)
+	enrichFiles(result.XDocsFiles, documentsByDirectory, policy)
 
 	covered := map[string]bool{}
 	for _, file := range result.XDocsFiles {
@@ -115,16 +115,7 @@ func IsPlainMarkdown(path string) bool {
 	return strings.HasSuffix(lower, ".md") && !IsDescriptorCandidate(path)
 }
 
-func excluded(name string, values []string) bool {
-	for _, value := range values {
-		if name == value {
-			return true
-		}
-	}
-	return false
-}
-
-func enrichFiles(files []File, documents map[string][]MarkdownDocument) {
+func enrichFiles(files []File, documents map[string][]MarkdownDocument, policy *pathPolicy) {
 	byDirectory := map[string][]int{}
 	for index := range files {
 		if !IsDescriptorCandidate(files[index].Path) {
@@ -148,19 +139,19 @@ func enrichFiles(files []File, documents map[string][]MarkdownDocument) {
 		}
 		file.Documents = append([]MarkdownDocument(nil), documents[file.Directory]...)
 		sort.Slice(file.Documents, func(i, j int) bool { return file.Documents[i].Name < file.Documents[j].Name })
-		validateDocumentReferences(file)
+		validateDocumentReferences(file, policy)
 		file.Valid = file.Metadata != nil && len(file.Errors) == 0
 	}
 }
 
-func validateDocumentReferences(file *File) {
+func validateDocumentReferences(file *File, policy *pathPolicy) {
 	if file.Metadata == nil {
 		return
 	}
 	actual := map[string]bool{}
 	for _, document := range file.Documents {
 		actual[document.Name] = true
-		if _, ok := file.Metadata.Documents[document.Name]; !ok {
+		if _, ok := file.Metadata.Documents[document.Name]; !ok && !policy.ignoreRuleMatches(document.Path) {
 			file.Errors = append(file.Errors, fmt.Sprintf(`Undocumented Markdown document: "%s" must be listed in the "documents" metadata map.`, document.Name))
 		}
 	}

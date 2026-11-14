@@ -18,6 +18,7 @@ type pathPolicy struct {
 	useGitignore       bool
 	gitignoreRules     []gitignoreRule
 	frontmatterRules   []configuredIgnoreRule
+	excludeRules       []excludeRule
 	documentationDirs  []string
 	documentationRules []configuredDocumentationRule
 	loaded             map[string]bool
@@ -44,12 +45,18 @@ type configuredDocumentationRule struct {
 	pattern  *regexp.Regexp
 }
 
+type excludeRule struct {
+	hasSlash bool
+	pattern  *regexp.Regexp
+}
+
 func newPathPolicy(cfg config.Config, target string) (*pathPolicy, error) {
 	policy := &pathPolicy{
 		root:               filepath.Clean(cfg.CWD),
 		useGitignore:       cfg.Gitignore,
 		gitignoreRules:     []gitignoreRule{},
 		frontmatterRules:   []configuredIgnoreRule{},
+		excludeRules:       compileExcludeRules(cfg.Exclude, runtime.GOOS == "windows"),
 		documentationDirs:  append([]string(nil), cfg.Documentation.Directories...),
 		documentationRules: []configuredDocumentationRule{},
 		loaded:             map[string]bool{},
@@ -88,7 +95,7 @@ func newPathPolicy(cfg config.Config, target string) (*pathPolicy, error) {
 			continue
 		}
 		directory = filepath.Join(directory, filepath.FromSlash(part))
-		if excluded(part, cfg.Exclude) || policy.ignored(directory, true) {
+		if policy.scanExcluded(directory, true) || policy.ignored(directory, true) {
 			return policy, nil
 		}
 		if err := policy.loadGitignore(directory); err != nil {
@@ -227,21 +234,26 @@ func relativeToBase(relative, base string) (string, bool) {
 	return strings.TrimPrefix(relative, prefix), true
 }
 
-func (policy *pathPolicy) frontmatterRequired(pathname string) bool {
+// ignoreRuleMatches reports whether any legacy ignore.rules entry matches
+// the file at pathname: a file rule matches the file's relative path (or
+// its basename when the pattern has no slash), and a directory rule matches
+// any ancestor directory. A match is an explicit denial: xdocs never
+// requires frontmatter for the file, and doctor does not require the file to
+// be listed in its descriptor's documents map. A file that is listed anyway
+// stays tracked exactly as before.
+func (policy *pathPolicy) ignoreRuleMatches(pathname string) bool {
 	relative := slashRelative(policy.root, pathname)
-	// Legacy ignore rules are explicit denials and always win over the new
-	// opt-in policy.
 	for _, rule := range policy.frontmatterRules {
 		if rule.kind == "file" {
 			if matchConfiguredPattern(rule, relative) {
-				return false
+				return true
 			}
 			continue
 		}
 		directory := path.Dir(relative)
 		for directory != "." && directory != "/" && directory != "" {
 			if matchConfiguredPattern(rule, directory) {
-				return false
+				return true
 			}
 			next := path.Dir(directory)
 			if next == directory {
@@ -249,6 +261,16 @@ func (policy *pathPolicy) frontmatterRequired(pathname string) bool {
 			}
 			directory = next
 		}
+	}
+	return false
+}
+
+func (policy *pathPolicy) frontmatterRequired(pathname string) bool {
+	relative := slashRelative(policy.root, pathname)
+	// Legacy ignore rules are explicit denials and always win over the new
+	// opt-in policy.
+	if policy.ignoreRuleMatches(pathname) {
+		return false
 	}
 	if !policy.documentationDirectoryAuthorized(path.Dir(relative)) {
 		return false
@@ -315,6 +337,62 @@ func matchConfiguredPattern(rule configuredIgnoreRule, relative string) bool {
 		return rule.pattern.MatchString(relative)
 	}
 	return rule.pattern.MatchString(path.Base(relative))
+}
+
+func compileExcludeRules(values []string, ignoreCase bool) []excludeRule {
+	rules := make([]excludeRule, 0, len(values))
+	for _, value := range values {
+		pattern := strings.TrimSpace(value)
+		if pattern == "" {
+			continue
+		}
+		pattern = strings.TrimSuffix(pattern, "/")
+		if pattern == "" {
+			continue
+		}
+		rules = append(rules, excludeRule{
+			hasSlash: strings.Contains(pattern, "/"), pattern: compileGlob(pattern, ignoreCase),
+		})
+	}
+	return rules
+}
+
+// scanExcluded reports whether pathname is removed from scanning by a
+// scan.exclude entry. Every path prefix is checked so that an excluded
+// ancestor directory excludes everything beneath it, while file globs such
+// as "AGENTS.md" or "**/AGENTS.md" exclude matching files wherever they
+// live.
+func (policy *pathPolicy) scanExcluded(pathname string, directory bool) bool {
+	relative := slashRelative(policy.root, pathname)
+	if relative == "." || relative == "/" || relative == "" || strings.HasPrefix(relative, "../") {
+		return false
+	}
+	return scanExcludedRelative(policy.excludeRules, relative)
+}
+
+func scanExcludedRelative(rules []excludeRule, relative string) bool {
+	parts := strings.Split(relative, "/")
+	for index := 1; index <= len(parts); index++ {
+		if matchExcludeRules(rules, strings.Join(parts[:index], "/")) {
+			return true
+		}
+	}
+	return false
+}
+
+func matchExcludeRules(rules []excludeRule, relative string) bool {
+	for _, rule := range rules {
+		if rule.hasSlash {
+			if rule.pattern.MatchString(relative) {
+				return true
+			}
+			continue
+		}
+		if rule.pattern.MatchString(path.Base(relative)) {
+			return true
+		}
+	}
+	return false
 }
 
 func matchConfiguredDocumentationPattern(rule configuredDocumentationRule, relative string) bool {
@@ -411,12 +489,14 @@ func filterMetadata(metadata *Metadata, frontmatter Frontmatter, directory strin
 		return
 	}
 	for name := range metadata.Files {
-		if policy.ignored(filepath.Join(directory, name), false) {
+		full := filepath.Join(directory, name)
+		if policy.ignored(full, false) || policy.scanExcluded(full, false) {
 			delete(metadata.Files, name)
 		}
 	}
 	for name := range metadata.Documents {
-		if policy.ignored(filepath.Join(directory, name), false) {
+		full := filepath.Join(directory, name)
+		if policy.ignored(full, false) || policy.scanExcluded(full, false) {
 			delete(metadata.Documents, name)
 		}
 	}
@@ -435,7 +515,8 @@ func filterFrontmatterReferences(frontmatter Frontmatter, field, directory strin
 		return
 	}
 	ignored := func(name string) bool {
-		return policy.ignored(filepath.Join(directory, name), false)
+		full := filepath.Join(directory, name)
+		return policy.ignored(full, false) || policy.scanExcluded(full, false)
 	}
 	switch references := value.(type) {
 	case Frontmatter:
